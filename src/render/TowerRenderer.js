@@ -3,6 +3,41 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { getBlockTexture, NUMBER_COLORS } from './TextureGenerator.js';
 
+const LEVEL_THEMES = [
+    {
+        // Level 1: Cool Midnight
+        bg: 0x090d16,
+        ambient: 0xffffff,
+        ambientInt: 0.7,
+        rim: 0x38bdf8,
+        plate: 0x1e293b
+    },
+    {
+        // Level 2: Neon Twilight
+        bg: 0x110d1e,
+        ambient: 0xf3e8ff,
+        ambientInt: 0.75,
+        rim: 0xa855f7,
+        plate: 0x2e1065
+    },
+    {
+        // Level 3: Ember Sunset
+        bg: 0x180b0b,
+        ambient: 0xffedd5,
+        ambientInt: 0.75,
+        rim: 0xf97316,
+        plate: 0x451a03
+    },
+    {
+        // Level 4: Emerald Aurora
+        bg: 0x061a14,
+        ambient: 0xecfdf5,
+        ambientInt: 0.75,
+        rim: 0x10b981,
+        plate: 0x064e3b
+    }
+];
+
 export class TowerRenderer {
     /**
      * @param {HTMLElement} container 
@@ -16,6 +51,9 @@ export class TowerRenderer {
         this.camera = null;
         this.renderer = null;
         this.controls = null;
+        this.ambientLight = null;
+        this.dirLight = null;
+        this.rimLight = null;
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
 
@@ -53,13 +91,13 @@ export class TowerRenderer {
 
     _initScene() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0f172a); // Deep modern slate
+        this.scene.background = new THREE.Color(LEVEL_THEMES[0].bg);
 
         const width = this.container.clientWidth || window.innerWidth;
         const height = this.container.clientHeight || window.innerHeight;
 
         this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        this.camera.position.set(12, 16, 18);
+        this.camera.position.set(12, 14, 18);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(width, height);
@@ -69,27 +107,50 @@ export class TowerRenderer {
         this.container.appendChild(this.renderer.domElement);
 
         // Ambient & Directional Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        this.scene.add(ambientLight);
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        this.scene.add(this.ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(15, 25, 15);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 60;
-        dirLight.shadow.camera.left = -15;
-        dirLight.shadow.camera.right = 15;
-        dirLight.shadow.camera.top = 15;
-        dirLight.shadow.camera.bottom = -15;
-        dirLight.shadow.bias = -0.0005;
-        this.scene.add(dirLight);
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.dirLight.position.set(15, 25, 15);
+        this.dirLight.castShadow = true;
+        this.dirLight.shadow.mapSize.width = 2048;
+        this.dirLight.shadow.mapSize.height = 2048;
+        this.dirLight.shadow.camera.near = 0.5;
+        this.dirLight.shadow.camera.far = 60;
+        this.dirLight.shadow.camera.left = -15;
+        this.dirLight.shadow.camera.right = 15;
+        this.dirLight.shadow.camera.top = 15;
+        this.dirLight.shadow.camera.bottom = -15;
+        this.dirLight.shadow.bias = -0.0005;
+        this.scene.add(this.dirLight);
 
         // Secondary soft rim light
-        const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
-        rimLight.position.set(-15, 10, -15);
-        this.scene.add(rimLight);
+        this.rimLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
+        this.rimLight.position.set(-15, 10, -15);
+        this.scene.add(this.rimLight);
+    }
+
+    /**
+     * Dynamically smoothly transitions visual atmosphere based on current level.
+     * @param {number} level 
+     */
+    applyLevelTheme(level = 1) {
+        const themeIdx = (level - 1) % LEVEL_THEMES.length;
+        const theme = LEVEL_THEMES[themeIdx];
+
+        if (this.scene && this.scene.background) {
+            this.scene.background.set(theme.bg);
+        }
+        if (this.ambientLight) {
+            this.ambientLight.color.set(theme.ambient);
+            this.ambientLight.intensity = theme.ambientInt;
+        }
+        if (this.rimLight) {
+            this.rimLight.color.set(theme.rim);
+        }
+        if (this.basePlate && this.basePlate.material) {
+            this.basePlate.material.color.set(theme.plate);
+        }
     }
 
     _initControls() {

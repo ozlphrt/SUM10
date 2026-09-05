@@ -58,6 +58,7 @@ class Sum10Game {
 
         this.topology = generator.generate();
         this.renderer.setTopology(this.topology);
+        this.renderer.applyLevelTheme(level);
 
         this.updateStats();
         this.showToast(`🏰 Level ${level} — Find pairs summing to 10!`, 2200);
