@@ -278,6 +278,69 @@ body, html {
     pointer-events: auto;
 }
 
+.camera-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 4px 6px;
+    pointer-events: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.btn-icon-subtle {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-subtle:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: scale(1.08);
+}
+
+.btn-icon-subtle:active {
+    transform: scale(0.92);
+}
+
+.btn-subtle {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-subtle:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--accent-cyan);
+}
+
+.btn-subtle:active {
+    transform: scale(0.96);
+}
+
 .actions-group {
     display: flex;
     gap: 10px;

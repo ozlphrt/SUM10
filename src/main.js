@@ -22,6 +22,28 @@ class Sum10Game {
         this.btnCloseModal = document.getElementById('btn-close-modal');
         this.levelGrid = document.getElementById('level-grid');
 
+        // Camera View Controls
+        this.btnCamAlign = document.getElementById('btn-cam-align');
+        this.btnCamLeft = document.getElementById('btn-cam-left');
+        this.btnCamRight = document.getElementById('btn-cam-right');
+
+        if (this.btnCamAlign) {
+            this.btnCamAlign.addEventListener('click', () => {
+                this.renderer.snapCameraToNearestAngle();
+                this.showToast('🎯 View aligned', 1000);
+            });
+        }
+        if (this.btnCamLeft) {
+            this.btnCamLeft.addEventListener('click', () => {
+                this.renderer.rotateCamera90(-1);
+            });
+        }
+        if (this.btnCamRight) {
+            this.btnCamRight.addEventListener('click', () => {
+                this.renderer.rotateCamera90(1);
+            });
+        }
+
         if (this.iconSound) {
             this.iconSound.textContent = sound.enabled ? '🔊' : '🔇';
         }

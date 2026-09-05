@@ -204,6 +204,98 @@ export class TowerRenderer {
         this.camera.position.copy(basePos);
     }
 
+    /**
+     * Smoothly animates the camera to align with the nearest cardinal or 45° corner angle.
+     * @param {Function} [onComplete]
+     */
+    snapCameraToNearestAngle(onComplete) {
+        if (this._isCameraAnimating) return;
+        this._isCameraAnimating = true;
+
+        const target = this.controls.target.clone();
+        const rel = this.camera.position.clone().sub(target);
+        const radiusXZ = Math.hypot(rel.x, rel.z);
+        const currentAngle = Math.atan2(rel.x, rel.z);
+
+        // Snap to nearest 45-degree angle (isometric corners & faces)
+        const step = Math.PI / 4;
+        const targetAngle = Math.round(currentAngle / step) * step;
+
+        const targetX = target.x + radiusXZ * Math.sin(targetAngle);
+        const targetZ = target.z + radiusXZ * Math.cos(targetAngle);
+        const targetY = target.y + Math.max(radiusXZ * 0.55, rel.y);
+
+        const startPos = this.camera.position.clone();
+        const destPos = new THREE.Vector3(targetX, targetY, targetZ);
+        const startTime = performance.now();
+        const duration = 320;
+
+        const animateSnap = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI); // smooth cosine ease
+
+            this.camera.position.lerpVectors(startPos, destPos, ease);
+            this.controls.update();
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animateSnap);
+            } else {
+                this._isCameraAnimating = false;
+                if (onComplete) onComplete();
+            }
+        };
+
+        requestAnimationFrame(animateSnap);
+    }
+
+    /**
+     * Smoothly rotates the camera 90 degrees left (-1) or right (+1).
+     * @param {number} direction - 1 for right, -1 for left
+     * @param {Function} [onComplete]
+     */
+    rotateCamera90(direction = 1, onComplete) {
+        if (this._isCameraAnimating) return;
+        this._isCameraAnimating = true;
+
+        const target = this.controls.target.clone();
+        const rel = this.camera.position.clone().sub(target);
+        const radiusXZ = Math.hypot(rel.x, rel.z);
+        const currentAngle = Math.atan2(rel.x, rel.z);
+
+        // Advance by 90 degrees (Math.PI / 2) from the nearest 45° step
+        const step = Math.PI / 4;
+        const snappedCurrent = Math.round(currentAngle / step) * step;
+        const targetAngle = snappedCurrent + direction * (Math.PI / 2);
+
+        const targetX = target.x + radiusXZ * Math.sin(targetAngle);
+        const targetZ = target.z + radiusXZ * Math.cos(targetAngle);
+        const targetY = this.camera.position.y;
+
+        const startPos = this.camera.position.clone();
+        const destPos = new THREE.Vector3(targetX, targetY, targetZ);
+        const startTime = performance.now();
+        const duration = 320;
+
+        const animateRotate = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+            this.camera.position.lerpVectors(startPos, destPos, ease);
+            this.controls.update();
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animateRotate);
+            } else {
+                this._isCameraAnimating = false;
+                if (onComplete) onComplete();
+            }
+        };
+
+        requestAnimationFrame(animateRotate);
+    }
+
     _handleClick(e) {
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
