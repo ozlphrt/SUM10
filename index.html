@@ -13,8 +13,20 @@
     <div id="canvas-container"></div>
 
     <div class="hud-overlay">
-        <!-- Ultra-Minimalist Floating Top Bar -->
-        <header class="hud-top zen-bar">
+        <!-- Dynamic Toast Notification (Top) -->
+        <div class="toast-wrapper">
+            <div id="toast-msg" class="toast-msg">Select a block</div>
+        </div>
+
+        <!-- Deadlock Shuffle Button (Floats right above action dock) -->
+        <div class="shuffle-wrapper">
+            <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
+                <span>🌋 Shuffle Blocks</span>
+            </button>
+        </div>
+
+        <!-- Floating Bottom Action Dock -->
+        <nav class="hud-dock">
             <!-- Level Selector -->
             <button id="pill-level" class="zen-btn-level" type="button" title="Select Level">
                 <span class="zen-lvl-label">LVL</span>
@@ -43,19 +55,7 @@
                     <span id="icon-theme">🌙</span>
                 </button>
             </div>
-        </header>
-
-        <!-- Dynamic Floating Toast / Notification -->
-        <div class="toast-wrapper">
-            <div id="toast-msg" class="toast-msg">Select a block</div>
-        </div>
-
-        <!-- Bottom Controls (Clean, minimal, deadlock shuffle only) -->
-        <footer class="hud-footer">
-            <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
-                <span>🌋 Shuffle</span>
-            </button>
-        </footer>
+        </nav>
     </div>
 
     <!-- Level Select Modal -->
