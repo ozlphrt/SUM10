@@ -21,6 +21,11 @@ class Sum10Game {
         this.selectedBlock = null;
         this.isProcessingMatch = false;
 
+        // Combo multiplier state
+        this.comboCount = 0;
+        this.lastMatchTime = 0;
+        this.COMBO_WINDOW_MS = 4000;
+
         this.renderer = new TowerRenderer(this.container, {
             onBlockClick: (block) => this.handleBlockClick(block)
         });
@@ -180,12 +185,29 @@ class Sum10Game {
 
             // Both have clear paths: MATCH & FLY OUT!
             this.isProcessingMatch = true;
+
+            // Calculate combo streak within 4-second window
+            const now = performance.now();
+            if (now - this.lastMatchTime <= this.COMBO_WINDOW_MS) {
+                this.comboCount++;
+            } else {
+                this.comboCount = 1;
+            }
+            this.lastMatchTime = now;
+
+            const basePoints = isWildMatch ? 150 : 100;
+            const pointsEarned = basePoints * this.comboCount;
+
             if (isWildMatch) {
                 sound.playWildChime();
-                this.showToast(`🌟 WILDCARD MATCH! ${firstDisp} + ${secondDisp} = 10! Flying out!`);
             } else {
-                sound.playMatch();
-                this.showToast(`✨ ${first.value} + ${second.value} = 10! Flying out!`);
+                sound.playMatch(this.comboCount);
+            }
+
+            if (this.comboCount > 1) {
+                this.showToast(`🔥 COMBO x${this.comboCount}! +${pointsEarned} PTS!`, 2000);
+            } else {
+                this.showToast(`✨ ${firstDisp} + ${secondDisp} = 10! +${pointsEarned} PTS`, 1600);
             }
 
             setTimeout(() => {
@@ -194,7 +216,7 @@ class Sum10Game {
                 this.topology.removeBlock(first.id);
                 this.topology.removeBlock(second.id);
 
-                this.score += isWildMatch ? 150 : 100;
+                this.score += pointsEarned;
                 this.selectedBlock = null;
                 this._updateSelectionUI(null, null);
                 this.updateStats();

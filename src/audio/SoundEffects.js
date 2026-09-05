@@ -40,28 +40,29 @@ class SoundEffects {
         osc.stop(now + 0.08);
     }
 
-    playMatch() {
+    playMatch(combo = 1) {
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        // Two-note joyful arpeggio
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        notes.forEach((freq, idx) => {
+        // Pitch scales up with combo multiplier
+        const pitchMult = 1.0 + Math.min(1.0, (combo - 1) * 0.18);
+        const baseNotes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        baseNotes.forEach((freq, idx) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            const noteStart = now + idx * 0.06;
+            const noteStart = now + idx * 0.055;
 
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, noteStart);
+            osc.frequency.setValueAtTime(freq * pitchMult, noteStart);
 
             gain.gain.setValueAtTime(0.25, noteStart);
-            gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.25);
+            gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.22);
 
             osc.connect(gain);
             gain.connect(this.ctx.destination);
 
             osc.start(noteStart);
-            osc.stop(noteStart + 0.25);
+            osc.stop(noteStart + 0.22);
         });
     }
 
