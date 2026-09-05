@@ -81,14 +81,33 @@ export class TopologyGenerator {
     }
 
     /**
-     * Generates a pair of numbers between 1 and 9 that sum to 10.
-     * Possible pairs: (1, 9), (2, 8), (3, 7), (4, 6), (5, 5).
-     * @returns {[number, number]}
+     * Generates a pair for the specified game mode.
+     * @param {string} mode - 'sum10', 'sum20', 'shapes', or 'alphabet'
+     * @returns {[number|string, number|string]}
      */
-    _generateSum10Pair() {
-        const v1 = this._randInt(1, 9);
-        const v2 = 10 - v1;
-        return [v1, v2];
+    _generatePairForMode(mode = 'sum10') {
+        if (mode === 'sum20') {
+            // Numbers 1 to 19 summing to 20
+            const v1 = this._randInt(1, 19);
+            const v2 = 20 - v1;
+            return [v1, v2];
+        } else if (mode === 'shapes') {
+            // Minimalist geometric shapes: circle, triangle, square, diamond, star, hexagon
+            const SHAPES = ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'];
+            const shape = SHAPES[this._randInt(0, SHAPES.length - 1)];
+            return [shape, shape]; // Identical matching pairs
+        } else if (mode === 'alphabet') {
+            // Mirror cipher: A <-> Z, B <-> Y, C <-> X, ..., M <-> N
+            const idx = this._randInt(0, 12); // A through M
+            const char1 = String.fromCharCode(65 + idx);
+            const char2 = String.fromCharCode(90 - idx);
+            return Math.random() < 0.5 ? [char1, char2] : [char2, char1];
+        } else {
+            // Default sum10: 1 to 9 summing to 10
+            const v1 = this._randInt(1, 9);
+            const v2 = 10 - v1;
+            return [v1, v2];
+        }
     }
 
     /**
@@ -201,9 +220,10 @@ export class TopologyGenerator {
 
         const maxLayers = Math.max(10, Math.ceil(gridSize * 1.8));
 
-        const topology = new GridTopology({ gridSize, maxLayers });
+        const mode = overrideConfig.mode || this.mode || 'sum10';
+        topology.mode = mode;
 
-        // 1. Generate value pairs (e.g. 10 pairs = 20 blocks, all summing to 10 in pairs)
+        // 1. Generate value pairs (e.g. 10 pairs = 20 blocks, all summing/matching in pairs)
         const blockSpecs = [];
         let idCounter = 1;
 
@@ -217,21 +237,21 @@ export class TopologyGenerator {
             // Add a Bomb block
             blockSpecs.push({
                 id: `b_${idCounter++}`,
-                value: 5, // nominal value
+                value: mode === 'sum20' ? 10 : (mode === 'shapes' ? 'circle' : (mode === 'alphabet' ? 'A' : 5)),
                 length: 1, // bombs are compact 1-cell blocks
                 type: 'bomb'
             });
             // Add a Wildcard block
             blockSpecs.push({
                 id: `b_${idCounter++}`,
-                value: 10, // wildcard matches anything
+                value: '★', // wildcard matches anything
                 length: 1,
                 type: 'wild'
             });
         }
 
         for (let p = 0; p < pairsToGenerate; p++) {
-            const [v1, v2] = this._generateSum10Pair();
+            const [v1, v2] = this._generatePairForMode(mode);
             blockSpecs.push(
                 { id: `b_${idCounter++}`, value: v1, length: this._sampleLength(), type: 'normal' },
                 { id: `b_${idCounter++}`, value: v2, length: this._sampleLength(), type: 'normal' }
@@ -402,6 +422,8 @@ export class TopologyGenerator {
 
         const pairedIds = new Set();
 
+        const mode = topology.mode || 'sum10';
+
         // 1. First Pass: Pair touching adjacent neighbors (greedy maximal matching)
         for (const block of normalBlocks) {
             if (pairedIds.has(block.id)) continue;
@@ -411,8 +433,7 @@ export class TopologyGenerator {
 
             if (neighbors.length > 0) {
                 const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
-                const v1 = this._randInt(1, 9);
-                const v2 = 10 - v1;
+                const [v1, v2] = this._generatePairForMode(mode);
                 block.value = v1;
                 partner.value = v2;
                 pairedIds.add(block.id);
@@ -426,8 +447,7 @@ export class TopologyGenerator {
         for (let i = 0; i < unpaired.length - 1; i += 2) {
             const b1 = unpaired[i];
             const b2 = unpaired[i + 1];
-            const v1 = this._randInt(1, 9);
-            const v2 = 10 - v1;
+            const [v1, v2] = this._generatePairForMode(mode);
             b1.value = v1;
             b2.value = v2;
             pairedIds.add(b1.id);

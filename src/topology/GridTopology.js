@@ -407,10 +407,61 @@ export class GridTopology {
      * @returns {boolean}
      */
     /**
+     * Checks if two block values or types form a valid match for the current game mode.
+     * @param {BlockModel} b1 
+     * @param {BlockModel} b2 
+     * @returns {boolean}
+     */
+    isMatch(b1, b2) {
+        if (!b1 || !b2) return false;
+        // Wildcard blocks pair with anything
+        if (b1.type === 'wild' || b2.type === 'wild') return true;
+
+        const mode = this.mode || 'sum10';
+        if (mode === 'sum20') {
+            return Number(b1.value) + Number(b2.value) === 20;
+        } else if (mode === 'shapes') {
+            return String(b1.value) === String(b2.value);
+        } else if (mode === 'alphabet') {
+            // Mirror cipher: charCode1 + charCode2 === 65 + 90 = 155
+            const c1 = String(b1.value).toUpperCase().charCodeAt(0);
+            const c2 = String(b2.value).toUpperCase().charCodeAt(0);
+            return c1 + c2 === 155;
+        } else {
+            // Default sum10
+            return Number(b1.value) + Number(b2.value) === 10;
+        }
+    }
+
+    /**
+     * Helper to generate a matching pair for the current mode.
+     * @returns {[number|string, number|string]}
+     */
+    _generatePair() {
+        const mode = this.mode || 'sum10';
+        if (mode === 'sum20') {
+            const v1 = Math.floor(Math.random() * 19) + 1;
+            return [v1, 20 - v1];
+        } else if (mode === 'shapes') {
+            const SHAPES = ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'];
+            const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            return [s, s];
+        } else if (mode === 'alphabet') {
+            const idx = Math.floor(Math.random() * 13);
+            const char1 = String.fromCharCode(65 + idx);
+            const char2 = String.fromCharCode(90 - idx);
+            return Math.random() < 0.5 ? [char1, char2] : [char2, char1];
+        } else {
+            const v1 = Math.floor(Math.random() * 9) + 1;
+            return [v1, 10 - v1];
+        }
+    }
+
+    /**
      * Checks if there is at least one playable move right now:
      * - Any active bomb (can always be detonated)
      * - Any unblocked Wildcard paired with any unblocked block that can slide out jointly
-     * - Any pair of blocks summing to 10 that can be paired AND can both slide out jointly
+     * - Any pair of blocks matching mode rules that can be paired AND can both slide out jointly
      * @returns {boolean}
      */
     hasAnyValidMove() {
@@ -430,9 +481,8 @@ export class GridTopology {
                 // 1. Must be eligible for pairing (adjacent, or endgame <= 2, or isolated)
                 if (!this.canBlocksBePaired(b1, b2)) continue;
 
-                // 2. Must form a valid match (Wildcard or sum === 10)
-                const isWild = b1.type === 'wild' || b2.type === 'wild';
-                if (!isWild && b1.value + b2.value !== 10) continue;
+                // 2. Must form a valid match based on mode
+                if (!this.isMatch(b1, b2)) continue;
 
                 // 3. Both blocks must have an unobstructed slide path when considering each other
                 const exit1 = this.canBlockSlideOut(b1, b2);
@@ -448,7 +498,7 @@ export class GridTopology {
 
     /**
      * Shuffles values among remaining blocks to break deadlocks and guarantee
-     * that at least one clear exit pair can be paired and sums to 10.
+     * that at least one clear exit pair can be paired and matches current mode rules.
      */
     shuffleDeadlock() {
         const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
@@ -469,9 +519,9 @@ export class GridTopology {
                     const exit1 = this.canBlockSlideOut(b1, b2);
                     const exit2 = this.canBlockSlideOut(b2, b1);
                     if (exit1.canExit && exit2.canExit) {
-                        const v1 = Math.floor(Math.random() * 9) + 1;
+                        const [v1, v2] = this._generatePair();
                         b1.value = v1;
-                        b2.value = 10 - v1;
+                        b2.value = v2;
                         pairedIds.add(b1.id);
                         pairedIds.add(b2.id);
                         paired = true;
@@ -493,9 +543,9 @@ export class GridTopology {
                         const exit1 = this.canBlockSlideOut(b1, b2);
                         const exit2 = this.canBlockSlideOut(b2, b1);
                         if (exit1.canExit && exit2.canExit) {
-                            const v1 = Math.floor(Math.random() * 9) + 1;
+                            const [v1, v2] = this._generatePair();
                             b1.value = v1;
-                            b2.value = 10 - v1;
+                            b2.value = v2;
                             pairedIds.add(b1.id);
                             pairedIds.add(b2.id);
                             paired = true;
@@ -513,9 +563,9 @@ export class GridTopology {
                 const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
                 if (neighbors.length > 0) {
                     const b2 = neighbors[0];
-                    const v1 = Math.floor(Math.random() * 9) + 1;
+                    const [v1, v2] = this._generatePair();
                     b1.value = v1;
-                    b2.value = 10 - v1;
+                    b2.value = v2;
                     pairedIds.add(b1.id);
                     pairedIds.add(b2.id);
                     paired = true;
@@ -528,19 +578,18 @@ export class GridTopology {
         if (!paired && active.length >= 2) {
             const b1 = active[0];
             const b2 = active[1];
-            const v1 = Math.floor(Math.random() * 9) + 1;
+            const [v1, v2] = this._generatePair();
             b1.value = v1;
-            b2.value = 10 - v1;
+            b2.value = v2;
             pairedIds.add(b1.id);
             pairedIds.add(b2.id);
             paired = true;
         }
 
-        // 5. Shuffle values of remaining active blocks in pairs summing to 10
+        // 5. Shuffle values of remaining active blocks in pairs matching current mode rules
         const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
         for (let i = 0; i < remainingNormal.length - 1; i += 2) {
-            const v1 = Math.floor(Math.random() * 9) + 1;
-            const v2 = 10 - v1;
+            const [v1, v2] = this._generatePair();
             remainingNormal[i].value = v1;
             remainingNormal[i + 1].value = v2;
         }
@@ -548,7 +597,7 @@ export class GridTopology {
         if (remainingNormal.length % 2 === 1) {
             const oddBlock = remainingNormal[remainingNormal.length - 1];
             oddBlock.type = 'wild';
-            oddBlock.value = 10;
+            oddBlock.value = '★';
         }
     }
 

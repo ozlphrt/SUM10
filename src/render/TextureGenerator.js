@@ -135,8 +135,82 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
+    } else if (typeof value === 'string' && ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'].includes(value)) {
+        // GEOMETRIC SHAPES MODE
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 74, 0, Math.PI * 2);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 8;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        const cx = width / 2;
+        const cy = height / 2;
+
+        if (value === 'circle') {
+            ctx.beginPath();
+            ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (value === 'triangle') {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 44);
+            ctx.lineTo(cx + 42, cy + 34);
+            ctx.lineTo(cx - 42, cy + 34);
+            ctx.closePath();
+            ctx.fill();
+        } else if (value === 'square') {
+            ctx.beginPath();
+            ctx.roundRect(cx - 36, cy - 36, 72, 72, 8);
+            ctx.fill();
+        } else if (value === 'diamond') {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 46);
+            ctx.lineTo(cx + 40, cy);
+            ctx.lineTo(cx, cy + 46);
+            ctx.lineTo(cx - 40, cy);
+            ctx.closePath();
+            ctx.fill();
+        } else if (value === 'star') {
+            ctx.beginPath();
+            const spikes = 5;
+            const outerRadius = 45;
+            const innerRadius = 22;
+            let rot = (Math.PI / 2) * 3;
+            const step = Math.PI / spikes;
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                let x = cx + Math.cos(rot) * outerRadius;
+                let y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        } else if (value === 'hexagon') {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const hx = cx + 42 * Math.cos(angle);
+                const hy = cy + 42 * Math.sin(angle);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
     } else {
-        // PURE MINIMAL WHITE DOMINO (Debossed Dark Charcoal Numeral)
+        // PURE MINIMAL WHITE DOMINO (Debossed Dark Charcoal Numeral or Letter)
         // Subtle central debossed circular dish (classic domino spinner / pip well)
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, 74, 0, Math.PI * 2);
@@ -146,16 +220,22 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.strokeStyle = '#e2e8f0';
         ctx.stroke();
 
-        // High-contrast engraved dark charcoal numeral
+        // High-contrast engraved dark charcoal numeral or letter
+        const valStr = String(value);
         ctx.fillStyle = '#0f172a';
-        ctx.font = '900 114px "Outfit", "Inter", -apple-system, sans-serif';
+        // Dynamically scale font size: 2-digit numbers fit comfortably inside pip dish
+        if (valStr.length >= 2) {
+            ctx.font = '900 88px "Outfit", "Inter", -apple-system, sans-serif';
+        } else {
+            ctx.font = '900 114px "Outfit", "Inter", -apple-system, sans-serif';
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
         ctx.shadowBlur = 1;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 1.5;
-        ctx.fillText(String(value), width / 2, height / 2 - 4);
+        ctx.fillText(valStr, width / 2, height / 2 - 4);
         ctx.shadowOffsetY = 0;
         ctx.shadowBlur = 0;
     }

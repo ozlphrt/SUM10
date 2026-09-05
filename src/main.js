@@ -25,6 +25,25 @@ class Sum10Game {
         this.btnCloseModal = document.getElementById('btn-close-modal');
         this.levelGrid = document.getElementById('level-grid');
 
+        // Mode Selector Elements
+        this.pillMode = document.getElementById('pill-mode');
+        this.valModeIcon = document.getElementById('val-mode-icon');
+        this.valModeName = document.getElementById('val-mode-name');
+        this.modalMode = document.getElementById('modal-mode-select');
+        this.btnCloseModeModal = document.getElementById('btn-close-mode-modal');
+        this.eqOp1 = document.getElementById('eq-op-1');
+        this.eqOp2 = document.getElementById('eq-op-2');
+        this.eqTarget = document.getElementById('eq-target');
+
+        // Current active game mode ('sum10', 'sum20', 'shapes', 'alphabet')
+        this.gameMode = (function() {
+            try {
+                return localStorage.getItem('sum10_game_mode') || 'sum10';
+            } catch (_) {
+                return 'sum10';
+            }
+        })();
+
         this.movesElem = document.getElementById('val-moves');
 
         // Level Complete Overlay elements
@@ -133,6 +152,30 @@ class Sum10Game {
             });
         }
 
+        // Open/close mode select modal
+        if (this.pillMode) {
+            this.pillMode.addEventListener('click', () => this._openModeModal());
+        }
+        if (this.btnCloseModeModal) {
+            this.btnCloseModeModal.addEventListener('click', () => this._closeModeModal());
+        }
+        if (this.modalMode) {
+            this.modalMode.addEventListener('click', (e) => {
+                if (e.target === this.modalMode) this._closeModeModal();
+            });
+            // Wire mode card selection clicks
+            const cards = this.modalMode.querySelectorAll('.mode-card');
+            cards.forEach((card) => {
+                card.addEventListener('click', () => {
+                    const targetMode = card.getAttribute('data-mode');
+                    if (targetMode) {
+                        this.setGameMode(targetMode);
+                        this._closeModeModal();
+                    }
+                });
+            });
+        }
+
         // Progress & High Score state loaded from localStorage
         const saved = this._loadProgress();
         this.currentLevel = saved.currentLevel || 1;
@@ -235,6 +278,47 @@ class Sum10Game {
         if (this.modalLevel) this.modalLevel.style.display = 'none';
     }
 
+    _openModeModal() {
+        if (!this.modalMode) return;
+        const cards = this.modalMode.querySelectorAll('.mode-card');
+        cards.forEach((card) => {
+            const m = card.getAttribute('data-mode');
+            card.classList.toggle('active', m === this.gameMode);
+        });
+        this.modalMode.style.display = 'flex';
+    }
+
+    _closeModeModal() {
+        if (this.modalMode) this.modalMode.style.display = 'none';
+    }
+
+    setGameMode(mode) {
+        if (this.gameMode === mode) return;
+        this.gameMode = mode;
+        try {
+            localStorage.setItem('sum10_game_mode', mode);
+        } catch (_) {}
+
+        this._updateModePill();
+        sound.playSelect(1);
+        this.startLevel(1); // Start clean level 1 for new mode
+    }
+
+    _updateModePill() {
+        const MODE_INFO = {
+            sum10: { icon: '🔣', name: 'SUM 10', target: '10', op1: '+', op2: '=' },
+            sum20: { icon: '🔢', name: 'SUM 20', target: '20', op1: '+', op2: '=' },
+            shapes: { icon: '🔷', name: 'SHAPES', target: 'MATCH', op1: '=', op2: '➔' },
+            alphabet: { icon: '🔤', name: 'MIRROR', target: 'AZ', op1: '↔', op2: '➔' }
+        };
+        const info = MODE_INFO[this.gameMode] || MODE_INFO.sum10;
+        if (this.valModeIcon) this.valModeIcon.textContent = info.icon;
+        if (this.valModeName) this.valModeName.textContent = info.name;
+        if (this.eqOp1) this.eqOp1.textContent = info.op1;
+        if (this.eqOp2) this.eqOp2.textContent = info.op2;
+        if (this.eqTarget) this.eqTarget.textContent = info.target;
+    }
+
     showToast(message, duration = 1800) {
         if (!this.toastElem) return;
         this.toastElem.textContent = message;
@@ -251,6 +335,7 @@ class Sum10Game {
         this.isProcessingMatch = false;
         this.levelMatchesCount = 0;
         this.levelMaxCombo = 1;
+        this._updateModePill();
         this._updateSelectionUI(null, null);
         if (this.btnShuffle) this.btnShuffle.style.display = 'none';
         if (this.modalComplete) this.modalComplete.style.display = 'none';
@@ -258,7 +343,7 @@ class Sum10Game {
         const config = TopologyGenerator.getLevelConfig(level);
         const generator = new TopologyGenerator(config);
 
-        this.topology = generator.generate();
+        this.topology = generator.generate({ mode: this.gameMode, level });
         this.currentShapeName = config.shapeName;
         this.movesCount = 0;
         this.parMoves = Math.ceil(this.topology.blocks.size / 2);
@@ -269,7 +354,13 @@ class Sum10Game {
         this.renderer.applyLevelTheme(level);
 
         this.updateStats();
-        this.showToast(`Level ${level} • ${config.shapeName}`, 2000);
+        const modeLabel = {
+            sum10: 'SUM 10',
+            sum20: 'SUM 20 (Double Digits)',
+            shapes: 'Runic Shapes',
+            alphabet: 'Alpha Mirror (A–Z)'
+        }[this.gameMode] || 'SUM 10';
+        this.showToast(`Level ${level} • ${config.shapeName} [${modeLabel}]`, 2400);
         this._checkDeadlock();
     }
 
@@ -336,12 +427,33 @@ class Sum10Game {
             if (this.slot2Elem) this.slot2Elem.textContent = '?';
         } else {
             if (eqPill) eqPill.classList.add('active');
-            if (this.slot1Elem) this.slot1Elem.textContent = val1;
+            const formatVal = (v) => {
+                if (typeof v === 'string') {
+                    const SHAPE_ICONS = { circle: '●', triangle: '▲', square: '■', diamond: '◆', star: '★', hexagon: '⬣' };
+                    return SHAPE_ICONS[v] || v;
+                }
+                return String(v);
+            };
+
+            if (this.slot1Elem) this.slot1Elem.textContent = formatVal(val1);
             if (this.slot2Elem) {
                 if (val2 !== null) {
-                    this.slot2Elem.textContent = val2;
+                    this.slot2Elem.textContent = formatVal(val2);
+                } else if (val1 === '★') {
+                    this.slot2Elem.textContent = '★';
+                } else if (this.gameMode === 'sum20' && typeof val1 === 'number') {
+                    this.slot2Elem.textContent = 20 - val1;
+                } else if (this.gameMode === 'shapes' && typeof val1 === 'string') {
+                    this.slot2Elem.textContent = formatVal(val1);
+                } else if (this.gameMode === 'alphabet' && typeof val1 === 'string') {
+                    const code = val1.toUpperCase().charCodeAt(0);
+                    if (code >= 65 && code <= 90) {
+                        this.slot2Elem.textContent = String.fromCharCode(155 - code);
+                    } else {
+                        this.slot2Elem.textContent = '?';
+                    }
                 } else if (typeof val1 === 'number') {
-                    // Show complement needed (e.g. 7 needs 3)
+                    // Default sum10: complement needed
                     this.slot2Elem.textContent = 10 - val1;
                 } else {
                     this.slot2Elem.textContent = '?';
@@ -425,11 +537,11 @@ class Sum10Game {
         const secondDisp = second.type === 'wild' ? '★' : second.value;
         this._updateSelectionUI(firstDisp, secondDisp);
 
-        // Check if either is a Wildcard block (Wildcard pairs with anything)
+        // Check if either is a Wildcard block or matches current mode rules
         const isWildMatch = first.type === 'wild' || second.type === 'wild';
-        const sum = isWildMatch ? 10 : first.value + second.value;
+        const isModeMatch = this.topology.isMatch(first, second);
 
-        if (sum === 10) {
+        if (isModeMatch) {
             // Check if BOTH blocks have a clear exit path out of the tower
             const exitFirst = this.topology.canBlockSlideOut(first, second);
             const exitSecond = this.topology.canBlockSlideOut(second, first);
@@ -479,10 +591,18 @@ class Sum10Game {
                 sound.playMatch(this.comboCount, first.length, second.length);
             }
 
+            const matchToastMsg = (function(mode) {
+                if (isWildMatch) return `★ Wildcard Match! +${pointsEarned} PTS`;
+                if (mode === 'sum20') return `✨ ${firstDisp} + ${secondDisp} = 20! +${pointsEarned} PTS`;
+                if (mode === 'shapes') return `✨ ${firstDisp} = ${secondDisp}! +${pointsEarned} PTS`;
+                if (mode === 'alphabet') return `✨ ${firstDisp} ↔ ${secondDisp}! +${pointsEarned} PTS`;
+                return `✨ ${firstDisp} + ${secondDisp} = 10! +${pointsEarned} PTS`;
+            })(this.gameMode);
+
             if (this.comboCount > 1) {
                 this.showToast(`🔥 COMBO x${this.comboCount}! +${pointsEarned} PTS!`, 2000);
             } else {
-                this.showToast(`✨ ${firstDisp} + ${secondDisp} = 10! +${pointsEarned} PTS`, 1600);
+                this.showToast(matchToastMsg, 1600);
             }
 
             setTimeout(() => {
@@ -531,7 +651,13 @@ class Sum10Game {
         } else {
             // MISMATCH: Shake both, unselect the first block, and select the second block as the new active selection
             sound.playMismatch();
-            this.showToast(`❌ ${first.value} + ${second.value} = ${sum} (Need 10)`, 1600);
+            const mismatchMsg = (function(mode) {
+                if (mode === 'sum20') return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 20)`;
+                if (mode === 'shapes') return `❌ Shapes do not match`;
+                if (mode === 'alphabet') return `❌ ${first.value} and ${second.value} are not mirror letters`;
+                return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 10)`;
+            })(this.gameMode);
+            this.showToast(mismatchMsg, 1700);
 
             // Fully unselect and unhighlight the first block
             this.renderer.setBlockSelected(first.id, false);

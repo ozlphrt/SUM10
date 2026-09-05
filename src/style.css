@@ -116,6 +116,13 @@ body, html {
     z-index: 30;
 }
 
+.zen-pills-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+
 .zen-btn-pill {
     pointer-events: auto;
     background: rgba(11, 41, 32, 0.78);
@@ -123,13 +130,18 @@ body, html {
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(110, 231, 183, 0.28);
     border-radius: 20px;
-    padding: 7px 16px;
+    padding: 7px 14px;
     display: flex;
     align-items: center;
     gap: 6px;
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-mode-icon {
+    font-size: 13px;
+    line-height: 1;
 }
 
 .zen-btn-pill:hover {
@@ -586,6 +598,86 @@ body, html {
 
 .level-btn-stars .star-active {
     color: #f59e0b;
+}
+
+/* Mode Selection Modal & Cards */
+.mode-modal-card {
+    max-width: 520px;
+    width: 92%;
+}
+
+.mode-selection-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.mode-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 14px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-card:hover {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(110, 231, 183, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mode-card.active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+.mode-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mode-card-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.mode-card-badge {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #6ee7b7;
+}
+
+.mode-card.active .mode-card-badge {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.mode-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-top: 2px;
+}
+
+.mode-card-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
 }
 
 /* Level Complete Card Overlay */

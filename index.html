@@ -15,20 +15,27 @@
     <div class="hud-overlay">
         <!-- Ultra-Minimal Zen Top Bar -->
         <header class="zen-topbar">
-            <!-- Left: Level Pill -->
-            <button id="pill-level" class="zen-btn-pill" type="button" title="Select Level">
-                <span class="zen-pill-label">LVL</span>
-                <span id="val-level" class="zen-pill-val">1</span>
-                <span class="zen-pill-arrow">▾</span>
-            </button>
+            <!-- Left: Level & Mode Pills -->
+            <div class="zen-pills-group">
+                <button id="pill-level" class="zen-btn-pill" type="button" title="Select Level">
+                    <span class="zen-pill-label">LVL</span>
+                    <span id="val-level" class="zen-pill-val">1</span>
+                    <span class="zen-pill-arrow">▾</span>
+                </button>
+                <button id="pill-mode" class="zen-btn-pill" type="button" title="Select Game Mode">
+                    <span id="val-mode-icon" class="zen-mode-icon">🔣</span>
+                    <span id="val-mode-name" class="zen-pill-val">SUM 10</span>
+                    <span class="zen-pill-arrow">▾</span>
+                </button>
+            </div>
 
             <!-- Center: Dynamic Floating Equation (Visible only when block is selected) -->
             <div id="zen-equation" class="zen-equation-pill">
                 <span id="slot-1" class="eq-val active-val">?</span>
-                <span class="eq-op">+</span>
+                <span id="eq-op-1" class="eq-op">+</span>
                 <span id="slot-2" class="eq-val target-val">?</span>
-                <span class="eq-op">=</span>
-                <span class="eq-target">10</span>
+                <span id="eq-op-2" class="eq-op">=</span>
+                <span id="eq-target" class="eq-target">10</span>
             </div>
 
             <!-- Right: Discreet Action Controls -->
@@ -72,6 +79,51 @@
                 <span>Shake Tower</span>
                 <span class="shake-penalty-badge">+1 Move • -150 PTS</span>
             </button>
+        </div>
+    </div>
+
+    <!-- Game Mode Select Modal -->
+    <div id="modal-mode-select" class="modal-backdrop" style="display: none;">
+        <div class="modal-card mode-modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Game Modes</h2>
+                <button id="btn-close-mode-modal" class="btn-close" type="button">✕</button>
+            </div>
+            <p class="modal-subtitle">Select your puzzle rules & mental challenge:</p>
+            <div class="mode-selection-grid">
+                <button class="mode-card" data-mode="sum10" type="button">
+                    <div class="mode-card-header">
+                        <span class="mode-card-icon">🔣</span>
+                        <div class="mode-card-badge">CLASSIC</div>
+                    </div>
+                    <div class="mode-card-title">SUM 10 (Classic Zen)</div>
+                    <div class="mode-card-desc">Single digits (1–9). Pair any blocks that sum exactly to 10 (e.g. 7 + 3, 4 + 6).</div>
+                </button>
+                <button class="mode-card" data-mode="sum20" type="button">
+                    <div class="mode-card-header">
+                        <span class="mode-card-icon">🔢</span>
+                        <div class="mode-card-badge">DOUBLE DIGITS</div>
+                    </div>
+                    <div class="mode-card-title">SUM 20 (Deep Math)</div>
+                    <div class="mode-card-desc">Numbers from 1–19. Pair blocks that sum to 20 (e.g. 13 + 7, 16 + 4, 11 + 9).</div>
+                </button>
+                <button class="mode-card" data-mode="shapes" type="button">
+                    <div class="mode-card-header">
+                        <span class="mode-card-icon">🔷</span>
+                        <div class="mode-card-badge">GEOMETRY</div>
+                    </div>
+                    <div class="mode-card-title">Runic Shapes</div>
+                    <div class="mode-card-desc">Circle, Triangle, Square, Diamond, Star, Hexagon. Pair identical geometric symbols.</div>
+                </button>
+                <button class="mode-card" data-mode="alphabet" type="button">
+                    <div class="mode-card-header">
+                        <span class="mode-card-icon">🔤</span>
+                        <div class="mode-card-badge">CIPHER</div>
+                    </div>
+                    <div class="mode-card-title">Alpha Mirror (A–Z)</div>
+                    <div class="mode-card-desc">Alphabet mirror cipher: Pair opposite alphabet pairs (A ↔ Z, B ↔ Y, C ↔ X, M ↔ N).</div>
+                </button>
+            </div>
         </div>
     </div>
 
