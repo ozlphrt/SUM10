@@ -350,12 +350,6 @@ class Sum10Game {
             const displayVal = block.type === 'wild' ? '★' : block.value;
             this._updateSelectionUI(displayVal, null);
             sound.playSelect(block.length);
-            if (block.type === 'wild') {
-                this.showToast('🌟 Wildcard selected! Tap an adjacent block to match!');
-            } else {
-                const needed = 10 - block.value;
-                this.showToast(`Selected [${block.value}]. Tap an adjacent [${needed}] or [★]!`);
-            }
             return;
         }
 

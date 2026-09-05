@@ -281,12 +281,16 @@ body, html {
     margin-top: 1px;
 }
 
-/* Dynamic Notification Toast */
+/* Dynamic Notification Toast (Pinned unobtrusively below header, never over the tower) */
 .toast-wrapper {
+    position: absolute;
+    top: 68px;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: center;
-    width: 100%;
-    margin-top: 8px;
+    pointer-events: none;
+    z-index: 50;
 }
 
 .toast-msg {
