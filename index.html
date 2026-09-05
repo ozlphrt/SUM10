@@ -44,8 +44,8 @@
                     <span id="val-score" class="stat-value">0</span>
                 </div>
                 <div class="stat-pill">
-                    <span class="stat-label">BEST</span>
-                    <span id="val-best" class="stat-value">0</span>
+                    <span class="stat-label">MOVES</span>
+                    <span id="val-moves" class="stat-value">0</span>
                 </div>
                 <div class="stat-pill">
                     <span class="stat-label">LEFT</span>
@@ -105,21 +105,27 @@
     <div id="modal-level-complete" class="modal-backdrop" style="display: none;">
         <div class="modal-card level-complete-card">
             <div class="celebration-badge">🎉</div>
+            <div id="complete-stars" class="complete-stars-banner">
+                <span class="star-icon">★</span>
+                <span class="star-icon">★</span>
+                <span class="star-icon">★</span>
+            </div>
+            <div id="complete-rating-label" class="complete-rating-label">3 STARS • MASTER STRATEGIST!</div>
             <h2 id="complete-title" class="modal-title" style="text-align: center; margin-top: 6px;">Level 1 Cleared!</h2>
             <p id="complete-subtitle" class="modal-subtitle" style="text-align: center; margin-bottom: 20px;">Magnificent! The entire tower is dismantled.</p>
 
             <div class="complete-stats-grid">
                 <div class="complete-stat-item">
-                    <span class="complete-stat-label">MATCHES MADE</span>
-                    <span id="complete-val-matches" class="complete-stat-num">0</span>
+                    <span class="complete-stat-label">MOVES (PAR)</span>
+                    <span id="complete-val-moves" class="complete-stat-num">0 / 10</span>
                 </div>
                 <div class="complete-stat-item">
                     <span class="complete-stat-label">MAX COMBO</span>
                     <span id="complete-val-combo" class="complete-stat-num">1x</span>
                 </div>
                 <div class="complete-stat-item">
-                    <span class="complete-stat-label">LEVEL BONUS</span>
-                    <span class="complete-stat-num" style="color: #059669;">+500</span>
+                    <span class="complete-stat-label">STAR BONUS</span>
+                    <span id="complete-val-bonus" class="complete-stat-num" style="color: #059669;">+600</span>
                 </div>
                 <div class="complete-stat-item">
                     <span class="complete-stat-label">TOTAL SCORE</span>

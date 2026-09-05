@@ -22,12 +22,17 @@ class Sum10Game {
         this.btnCloseModal = document.getElementById('btn-close-modal');
         this.levelGrid = document.getElementById('level-grid');
 
+        this.movesElem = document.getElementById('val-moves');
+
         // Level Complete Overlay elements
         this.modalComplete = document.getElementById('modal-level-complete');
         this.completeTitle = document.getElementById('complete-title');
         this.completeSubtitle = document.getElementById('complete-subtitle');
-        this.completeValMatches = document.getElementById('complete-val-matches');
+        this.completeStarsElem = document.getElementById('complete-stars');
+        this.completeRatingLabel = document.getElementById('complete-rating-label');
+        this.completeValMoves = document.getElementById('complete-val-moves');
         this.completeValCombo = document.getElementById('complete-val-combo');
+        this.completeValBonus = document.getElementById('complete-val-bonus');
         this.completeValScore = document.getElementById('complete-val-score');
         this.btnCompleteNext = document.getElementById('btn-complete-next');
         this.btnCompleteReplay = document.getElementById('btn-complete-replay');
@@ -108,12 +113,15 @@ class Sum10Game {
         this.score = saved.score || 0;
         this.highScore = saved.highScore || 0;
         this.highestLevel = saved.highestLevel || 1;
+        this.starsByLevel = saved.starsByLevel || {};
 
         this.topology = null;
         this.selectedBlock = null;
         this.isProcessingMatch = false;
 
-        // Level stats for complete card
+        // Level moves & par tracking for star rating
+        this.movesCount = 0;
+        this.parMoves = 10;
         this.levelMatchesCount = 0;
         this.levelMaxCombo = 1;
 
@@ -151,7 +159,8 @@ class Sum10Game {
                 currentLevel: this.currentLevel,
                 score: this.score,
                 highScore: this.highScore,
-                highestLevel: this.highestLevel
+                highestLevel: this.highestLevel,
+                starsByLevel: this.starsByLevel
             }));
         } catch (_) {}
     }
@@ -164,7 +173,13 @@ class Sum10Game {
             const btn = document.createElement('button');
             btn.className = `level-btn ${lvl === this.currentLevel ? 'current' : ''}`;
             btn.type = 'button';
-            btn.innerHTML = `<span>Lvl ${lvl}</span>`;
+            const earned = this.starsByLevel[lvl] || 0;
+            const starsHtml = `<span class="level-btn-stars">
+                <span class="${earned >= 1 ? 'star-active' : ''}">★</span>
+                <span class="${earned >= 2 ? 'star-active' : ''}">★</span>
+                <span class="${earned >= 3 ? 'star-active' : ''}">★</span>
+            </span>`;
+            btn.innerHTML = `<span class="level-btn-num">Lvl ${lvl}</span>${starsHtml}`;
             btn.addEventListener('click', () => {
                 this.startLevel(lvl);
                 this._closeLevelModal();
@@ -204,11 +219,16 @@ class Sum10Game {
 
         this.topology = generator.generate();
         this.currentShapeName = config.shapeName;
+        this.movesCount = 0;
+        this.parMoves = Math.ceil(this.topology.blocks.size / 2);
+        this.levelMatchesCount = 0;
+        this.levelMaxCombo = 1;
+
         this.renderer.setTopology(this.topology);
         this.renderer.applyLevelTheme(level);
 
         this.updateStats();
-        this.showToast(`🏰 Level ${level}: ${config.shapeName} — Find pairs summing to 10!`, 2500);
+        this.showToast(`🏰 Level ${level}: ${config.shapeName} (Par ${this.parMoves}) — Sum to 10!`, 2500);
         this._checkDeadlock();
     }
 
@@ -237,6 +257,7 @@ class Sum10Game {
         if (this.levelElem) this.levelElem.textContent = String(this.currentLevel);
         if (this.scoreElem) this.scoreElem.textContent = String(this.score);
         if (this.bestElem) this.bestElem.textContent = String(Math.max(this.highScore, this.score));
+        if (this.movesElem) this.movesElem.textContent = `${this.movesCount}/${this.parMoves}`;
         if (this.remainingElem) this.remainingElem.textContent = String(this.topology.blocks.size);
         this._saveProgress();
     }
@@ -301,6 +322,8 @@ class Sum10Game {
         const first = this.selectedBlock;
         const second = block;
         this.renderer.setBlockSelected(second.id, true);
+        this.movesCount++;
+        this.updateStats();
 
         const firstDisp = first.type === 'wild' ? '★' : first.value;
         const secondDisp = second.type === 'wild' ? '★' : second.value;
@@ -416,22 +439,52 @@ class Sum10Game {
 
     _showLevelCompleteModal() {
         sound.playLevelComplete();
-        this.score += 500; // Level completion bonus
+
+        // Calculate efficiency stars based on par moves
+        let stars = 1;
+        let starBonus = 150;
+        let ratingText = '⭐ 1 STAR • PERSISTENT SOLVER!';
+
+        if (this.movesCount <= this.parMoves) {
+            stars = 3;
+            starBonus = 600;
+            ratingText = '⭐⭐⭐ 3 STARS • MASTER STRATEGIST!';
+        } else if (this.movesCount <= this.parMoves + 3) {
+            stars = 2;
+            starBonus = 350;
+            ratingText = '⭐⭐ 2 STARS • SHARP TACTICIAN!';
+        }
+
+        this.starsByLevel[this.currentLevel] = Math.max(this.starsByLevel[this.currentLevel] || 0, stars);
+        this.score += starBonus;
         this.highestLevel = Math.max(this.highestLevel, this.currentLevel + 1);
         this._saveProgress();
         this.updateStats();
 
+        if (this.completeStarsElem) {
+            this.completeStarsElem.innerHTML = `
+                <span class="star-icon ${stars >= 1 ? 'active' : ''}">★</span>
+                <span class="star-icon ${stars >= 2 ? 'active' : ''}">★</span>
+                <span class="star-icon ${stars >= 3 ? 'active' : ''}">★</span>
+            `;
+        }
+        if (this.completeRatingLabel) {
+            this.completeRatingLabel.textContent = ratingText;
+        }
         if (this.completeTitle) {
             this.completeTitle.textContent = `Level ${this.currentLevel} Cleared!`;
         }
         if (this.completeSubtitle) {
             this.completeSubtitle.textContent = `Magnificent! You dismantled the ${this.currentShapeName}!`;
         }
-        if (this.completeValMatches) {
-            this.completeValMatches.textContent = String(this.levelMatchesCount);
+        if (this.completeValMoves) {
+            this.completeValMoves.textContent = `${this.movesCount} / Par ${this.parMoves}`;
         }
         if (this.completeValCombo) {
             this.completeValCombo.textContent = `${this.levelMaxCombo}x`;
+        }
+        if (this.completeValBonus) {
+            this.completeValBonus.textContent = `+${starBonus}`;
         }
         if (this.completeValScore) {
             this.completeValScore.textContent = String(this.score);
