@@ -272,7 +272,7 @@ export class TowerRenderer {
     }
 
     /**
-     * Highlights or unhighlights a block.
+     * Highlights or unhighlights a block with 3D physical elevation & glow.
      * @param {string|number} blockId 
      * @param {boolean} isSelected 
      */
@@ -280,10 +280,41 @@ export class TowerRenderer {
         const item = this.blockMeshes.get(blockId);
         if (!item) return;
 
+        // Ensure resting position is recorded
+        if (!item.restingPosition) {
+            item.restingPosition = item.group.position.clone();
+        }
+
+        const dir = item.model.direction || { x: 0, y: 0, z: 0 };
+        const liftDist = 0.16;
+
+        const targetPos = isSelected
+            ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * liftDist, 0.12, dir.z * liftDist))
+            : item.restingPosition.clone();
+
+        // Smooth elevation transition
+        const startPos = item.group.position.clone();
+        const startTime = performance.now();
+        const duration = 160;
+
+        const animateElevation = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            const easeOut = 1 - Math.pow(1 - progress, 2);
+
+            item.group.position.lerpVectors(startPos, targetPos, easeOut);
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animateElevation);
+            }
+        };
+        requestAnimationFrame(animateElevation);
+
+        // Visual emissive glow
         item.materials.forEach((mat) => {
             if (isSelected) {
-                mat.emissive.set(0xfacc15); // Vibrant gold
-                mat.emissiveIntensity = 0.55;
+                mat.emissive.set(0xfacc15); // Golden aura
+                mat.emissiveIntensity = 0.6;
             } else {
                 const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
                 mat.emissive.set(palette.bg);
@@ -398,6 +429,10 @@ export class TowerRenderer {
                     anim.group.position.y = anim.startY + (anim.targetY - anim.startY) * easeIn;
                 } else {
                     anim.group.position.y = anim.targetY;
+                    const item = this.blockMeshes.get(anim.group.children[0]?.userData?.blockId);
+                    if (item) {
+                        item.restingPosition = anim.group.position.clone();
+                    }
                 }
             });
 
