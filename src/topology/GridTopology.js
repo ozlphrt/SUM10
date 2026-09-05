@@ -593,16 +593,83 @@ export class GridTopology {
         }
 
         // 5. Shuffle values of remaining active blocks in pairs matching current mode rules
-        // For shapes/alphabet mode, sort remaining blocks by distance to disperse identical shapes across the tower
+        // For shapes/alphabet mode, use balanced pool & spatial penalty to keep them well spread out
         const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
         if (this.mode === 'shapes' || this.mode === 'alphabet') {
-            // Sort to interleave layers and avoid adjacent blocks getting identical symbols
-            remainingNormal.sort((a, b) => (a.gridY - b.gridY) || (a.gridX - b.gridX));
+            const SHAPES = [
+                'circle', 'triangle', 'square', 'diamond', 'star',
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+            ];
             const half = Math.floor(remainingNormal.length / 2);
-            for (let i = 0; i < half; i++) {
-                const [v1, v2] = this._generatePair();
-                remainingNormal[i].value = v1;
-                remainingNormal[i + half].value = v2;
+            const pool = [];
+            if (this.mode === 'shapes') {
+                for (let i = 0; i < half; i++) {
+                    const s = SHAPES[i % SHAPES.length];
+                    pool.push([s, s]);
+                }
+            } else {
+                for (let i = 0; i < half; i++) {
+                    const idx = i % 13;
+                    const c1 = String.fromCharCode(65 + idx);
+                    const c2 = String.fromCharCode(90 - idx);
+                    pool.push(Math.random() < 0.5 ? [c1, c2] : [c2, c1]);
+                }
+            }
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            // Pair remaining blocks with farthest non-touching partners
+            const subPaired = [];
+            const subUsed = new Set();
+            for (const b1 of remainingNormal) {
+                if (subUsed.has(b1.id)) continue;
+                const neighbors = this.getNeighborBlocks(b1.id);
+                const candidates = remainingNormal.filter(b2 => b2.id !== b1.id && !subUsed.has(b2.id) && !neighbors.has(b2));
+                let partner = null;
+                if (candidates.length > 0) {
+                    candidates.sort((a, b) => {
+                        const distA = Math.hypot(a.gridX - b1.gridX, (a.gridY - b1.gridY) * 1.5, a.gridZ - b1.gridZ);
+                        const distB = Math.hypot(b.gridX - b1.gridX, (b.gridY - b1.gridY) * 1.5, b.gridZ - b1.gridZ);
+                        return distB - distA;
+                    });
+                    partner = candidates[0];
+                } else {
+                    partner = remainingNormal.find(b2 => b2.id !== b1.id && !subUsed.has(b2.id));
+                }
+                if (partner) {
+                    subUsed.add(b1.id);
+                    subUsed.add(partner.id);
+                    subPaired.push([b1, partner]);
+                }
+            }
+
+            // Assign values to pairs minimizing proximity penalty
+            for (const [b1, b2] of subPaired) {
+                let bestIdx = 0;
+                let minPenalty = Infinity;
+                for (let i = 0; i < pool.length; i++) {
+                    const [cand1, cand2] = pool[i];
+                    let penalty = 0;
+                    for (const other of active) {
+                        if (!other.value || (other.value !== cand1 && other.value !== cand2)) continue;
+                        const d1 = Math.hypot(other.gridX - b1.gridX, other.gridY - b1.gridY, other.gridZ - b1.gridZ);
+                        const d2 = Math.hypot(other.gridX - b2.gridX, other.gridY - b2.gridY, other.gridZ - b2.gridZ);
+                        if (d1 < 1.8) penalty += 5000;
+                        else if (d1 < 2.9) penalty += 400;
+                        if (d2 < 1.8) penalty += 5000;
+                        else if (d2 < 2.9) penalty += 400;
+                    }
+                    if (penalty < minPenalty) {
+                        minPenalty = penalty;
+                        bestIdx = i;
+                        if (penalty === 0) break;
+                    }
+                }
+                const [v1, v2] = pool.splice(bestIdx, 1)[0];
+                b1.value = v1;
+                b2.value = v2;
             }
         } else {
             for (let i = 0; i < remainingNormal.length - 1; i += 2) {

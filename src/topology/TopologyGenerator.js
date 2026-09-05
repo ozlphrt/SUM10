@@ -417,87 +417,173 @@ export class TopologyGenerator {
             topology.removeBlock(oddBlock.id);
         }
 
-        // Shuffle candidate list for variety across runs
-        for (let i = normalBlocks.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [normalBlocks[i], normalBlocks[j]] = [normalBlocks[j], normalBlocks[i]];
-        }
-
-        const pairedIds = new Set();
         const mode = topology.mode || 'sum10';
 
-        // In 'shapes' (and 'alphabet') mode, players want to explore the tower and find matching symbols
-        // across different layers or sides, rather than having identical shapes clustered directly touching.
-        const preferSpacedPairs = (mode === 'shapes' || mode === 'alphabet');
+        // Clear existing values on normal blocks so they can be assigned freshly
+        for (const b of normalBlocks) {
+            b.value = null;
+        }
 
-        if (preferSpacedPairs) {
-            // SPATIALLY DISPERSED PAIRING:
-            // Find pairs that are separated in space (distance >= 2 cells) or on opposite faces/layers
-            for (let i = 0; i < normalBlocks.length; i++) {
-                const b1 = normalBlocks[i];
-                if (pairedIds.has(b1.id)) continue;
+        // 1. Partition all normal blocks into mutually disjoint pairs (b1, b2).
+        // In 'shapes' (and 'alphabet') mode, blocks MUST be spatially separated across the tower.
+        const paired = [];
+        const used = new Set();
 
-                // Look for candidates that are NOT directly touching
+        if (mode === 'shapes' || mode === 'alphabet') {
+            // Sort blocks with highest neighbor connectivity first so constrained blocks pair easily
+            const sortedBlocks = [...normalBlocks].sort((a, b) => {
+                return topology.getNeighborBlocks(b.id).size - topology.getNeighborBlocks(a.id).size;
+            });
+
+            for (const b1 of sortedBlocks) {
+                if (used.has(b1.id)) continue;
                 const neighbors = topology.getNeighborBlocks(b1.id);
-                const candidates = normalBlocks.filter(b2 => 
-                    b2.id !== b1.id && 
-                    !pairedIds.has(b2.id) && 
+                // Exclude touching neighbors and already paired blocks
+                const nonNeighbors = normalBlocks.filter(b2 =>
+                    b2.id !== b1.id &&
+                    !used.has(b2.id) &&
                     !neighbors.has(b2)
                 );
 
                 let partner = null;
-                if (candidates.length > 0) {
-                    // Sort candidates by Euclidean distance descending to pick far-apart blocks
-                    candidates.sort((a, b) => {
-                        const distA = Math.hypot(a.gridX - b1.gridX, a.gridY - b1.gridY, a.gridZ - b1.gridZ);
-                        const distB = Math.hypot(b.gridX - b1.gridX, b.gridY - b1.gridY, b.gridZ - b1.gridZ);
+                if (nonNeighbors.length > 0) {
+                    // Sort candidates by Euclidean distance with layer weighting descending to pick far-apart partners
+                    nonNeighbors.sort((a, b) => {
+                        const distA = Math.hypot(a.gridX - b1.gridX, (a.gridY - b1.gridY) * 1.5, a.gridZ - b1.gridZ);
+                        const distB = Math.hypot(b.gridX - b1.gridX, (b.gridY - b1.gridY) * 1.5, b.gridZ - b1.gridZ);
                         return distB - distA;
                     });
-                    // Pick from the upper half of farthest blocks with some randomness
-                    const pickPool = candidates.slice(0, Math.max(1, Math.floor(candidates.length * 0.6)));
-                    partner = pickPool[Math.floor(Math.random() * pickPool.length)];
+                    // Pick from upper 25% of farthest blocks with slight randomness
+                    const poolSize = Math.max(1, Math.floor(nonNeighbors.length * 0.25));
+                    partner = nonNeighbors[Math.floor(Math.random() * poolSize)];
                 } else {
-                    // Fallback to any remaining block if only touching blocks are left
-                    partner = normalBlocks.find(b2 => b2.id !== b1.id && !pairedIds.has(b2.id));
+                    // Fallback to any available unpaired block
+                    partner = normalBlocks.find(b2 => b2.id !== b1.id && !used.has(b2.id));
                 }
 
                 if (partner) {
-                    const [v1, v2] = this._generatePairForMode(mode);
-                    b1.value = v1;
-                    partner.value = v2;
-                    pairedIds.add(b1.id);
-                    pairedIds.add(partner.id);
+                    used.add(b1.id);
+                    used.add(partner.id);
+                    paired.push([b1, partner]);
                 }
             }
         } else {
-            // Classic SUM10 / SUM20: Mix of adjacent and distant pairs
-            // 1. First Pass: Pair touching adjacent neighbors (greedy maximal matching)
-            for (const block of normalBlocks) {
-                if (pairedIds.has(block.id)) continue;
+            // Classic SUM10 / SUM20: Mix of adjacent and separated pairs
+            for (let i = normalBlocks.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [normalBlocks[i], normalBlocks[j]] = [normalBlocks[j], normalBlocks[i]];
+            }
 
-                const neighbors = Array.from(topology.getNeighborBlocks(block.id))
-                    .filter((n) => n.type === 'normal' && !pairedIds.has(n.id));
-
+            for (const b of normalBlocks) {
+                if (used.has(b.id)) continue;
+                const neighbors = Array.from(topology.getNeighborBlocks(b.id)).filter(n => n.type === 'normal' && !used.has(n.id));
                 if (neighbors.length > 0) {
                     const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    const [v1, v2] = this._generatePairForMode(mode);
-                    block.value = v1;
-                    partner.value = v2;
-                    pairedIds.add(block.id);
-                    pairedIds.add(partner.id);
+                    used.add(b.id);
+                    used.add(partner.id);
+                    paired.push([b, partner]);
                 }
             }
 
-            // 2. Second Pass: Strictly pair up any remaining unpaired blocks mutually in disjoint pairs of 2!
-            const unpaired = normalBlocks.filter((b) => !pairedIds.has(b.id));
+            const unpaired = normalBlocks.filter(b => !used.has(b.id));
             for (let i = 0; i < unpaired.length - 1; i += 2) {
-                const b1 = unpaired[i];
-                const b2 = unpaired[i + 1];
-                const [v1, v2] = this._generatePairForMode(mode);
-                b1.value = v1;
-                b2.value = v2;
-                pairedIds.add(b1.id);
-                pairedIds.add(b2.id);
+                used.add(unpaired[i].id);
+                used.add(unpaired[i + 1].id);
+                paired.push([unpaired[i], unpaired[i + 1]]);
+            }
+        }
+
+        // 2. Build a strictly balanced pool of symbols / numbers across all pairs
+        const totalPairs = paired.length;
+        const pairValuePool = [];
+
+        if (mode === 'shapes') {
+            const SHAPES = [
+                'circle', 'triangle', 'square', 'diamond', 'star',
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+            ];
+            for (let i = 0; i < totalPairs; i++) {
+                const s = SHAPES[i % SHAPES.length];
+                pairValuePool.push([s, s]);
+            }
+        } else if (mode === 'alphabet') {
+            for (let i = 0; i < totalPairs; i++) {
+                const idx = i % 13;
+                const c1 = String.fromCharCode(65 + idx);
+                const c2 = String.fromCharCode(90 - idx);
+                pairValuePool.push(Math.random() < 0.5 ? [c1, c2] : [c2, c1]);
+            }
+        } else if (mode === 'sum20') {
+            for (let i = 0; i < totalPairs; i++) {
+                const v1 = (i % 19) + 1;
+                pairValuePool.push([v1, 20 - v1]);
+            }
+        } else {
+            // sum10
+            for (let i = 0; i < totalPairs; i++) {
+                const v1 = (i % 9) + 1;
+                pairValuePool.push([v1, 10 - v1]);
+            }
+        }
+
+        // Shuffle the pool initially
+        for (let i = pairValuePool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pairValuePool[i], pairValuePool[j]] = [pairValuePool[j], pairValuePool[i]];
+        }
+
+        // 3. Assign pool values to pairs using distance-penalized spatial coloring.
+        // Prevents identical shapes from clustering on the same wall, layer, or neighborhood.
+        if (mode === 'shapes' || mode === 'alphabet') {
+            // Order pairs by total connectivity descending
+            paired.sort((pA, pB) => {
+                const cA = topology.getNeighborBlocks(pA[0].id).size + topology.getNeighborBlocks(pA[1].id).size;
+                const cB = topology.getNeighborBlocks(pB[0].id).size + topology.getNeighborBlocks(pB[1].id).size;
+                return cB - cA;
+            });
+
+            for (const [b1, b2] of paired) {
+                let bestIdx = 0;
+                let minPenalty = Infinity;
+
+                for (let i = 0; i < pairValuePool.length; i++) {
+                    const [candVal1, candVal2] = pairValuePool[i];
+                    let penalty = 0;
+
+                    for (const assigned of normalBlocks) {
+                        if (!assigned.value) continue;
+                        if (assigned.value !== candVal1 && assigned.value !== candVal2) continue;
+
+                        const d1 = Math.hypot(assigned.gridX - b1.gridX, assigned.gridY - b1.gridY, assigned.gridZ - b1.gridZ);
+                        const d2 = Math.hypot(assigned.gridX - b2.gridX, assigned.gridY - b2.gridY, assigned.gridZ - b2.gridZ);
+
+                        // Severe penalty if touching or in immediate 1-cell radius
+                        if (d1 < 1.8) penalty += 5000;
+                        else if (d1 < 2.9) penalty += 400;
+                        else if (d1 < 4.0) penalty += 40;
+
+                        if (d2 < 1.8) penalty += 5000;
+                        else if (d2 < 2.9) penalty += 400;
+                        else if (d2 < 4.0) penalty += 40;
+                    }
+
+                    if (penalty < minPenalty) {
+                        minPenalty = penalty;
+                        bestIdx = i;
+                        if (penalty === 0) break; // Zero-conflict match found
+                    }
+                }
+
+                const [val1, val2] = pairValuePool.splice(bestIdx, 1)[0];
+                b1.value = val1;
+                b2.value = val2;
+            }
+        } else {
+            // Standard assignment for numbers
+            for (const [b1, b2] of paired) {
+                const [val1, val2] = pairValuePool.pop();
+                b1.value = val1;
+                b2.value = val2;
             }
         }
 
@@ -507,3 +593,4 @@ export class TopologyGenerator {
         }
     }
 }
+
