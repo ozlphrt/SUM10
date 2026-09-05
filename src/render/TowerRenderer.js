@@ -578,9 +578,9 @@ export class TowerRenderer {
         }
 
         const dir = item.model.direction || { x: 0, y: 0, z: 0 };
-        const nudgeDist = 0.22;
+        const nudgeDist = 0.14;
 
-        // Strictly horizontal nudge along the block's long axis (drawer slide effect)
+        // Strictly horizontal nudge along the block's long axis (gentle drawer slide effect)
         const targetPos = isSelected
             ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * nudgeDist, 0, dir.z * nudgeDist))
             : item.restingPosition.clone();
@@ -603,11 +603,11 @@ export class TowerRenderer {
         };
         requestAnimationFrame(animateElevation);
 
-        // Visual emissive glow on selection
+        // Subtle, elegant emissive tint on selection
         item.materials.forEach((mat) => {
             if (isSelected) {
-                mat.emissive.set(0x0284c7); // Sleek electric cyan / sapphire selection highlight
-                mat.emissiveIntensity = 0.40;
+                mat.emissive.set(0x38bdf8); // Soft sky pearl tint
+                mat.emissiveIntensity = 0.10; // Unobtrusive gentle highlight
             } else {
                 mat.emissive.set(0x000000);
                 mat.emissiveIntensity = 0.0;
