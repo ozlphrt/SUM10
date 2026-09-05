@@ -372,46 +372,42 @@ export class TowerRenderer {
 
         const geometry = new RoundedBoxGeometry(w, h, d, 4, 0.08);
 
-        // Get procedural number texture (supports normal, bomb, wild)
-        const texture = getBlockTexture(block.value, block.length, block.orientation, block.direction, block.type || 'normal');
         const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
 
-        // 6-face material array: faces show the number texture
-        // Materials for faces: [right (+X), left (-X), top (+Y), bottom (-Y), front (+Z), back (-Z)]
-        const materials = [];
+        // Materials for 6 faces: [right (+X), left (-X), top (+Y), bottom (-Y), front (+Z), back (-Z)]
+        // Calculate cell width and height for each face orientation to render single centered number:
+        // +X / -X: width along Z (length if Z, else 1), height along Y (always 1)
+        const xCellsW = block.orientation === 'Z' ? block.length : 1;
+        const xCellsH = 1;
+        const texX = getBlockTexture(block.value, xCellsW, xCellsH, block.orientation, block.direction, block.type || 'normal');
 
-        // Determine repeats along respective axes so textures stay cubic and unstretched
-        const repeatX = block.orientation === 'X' ? block.length : 1;
-        const repeatY = block.orientation === 'Y' ? block.length : 1;
-        const repeatZ = block.orientation === 'Z' ? block.length : 1;
+        // +Y / -Y (top/bottom): width along X (length if X, else 1), height along Z (length if Z, else 1)
+        const yCellsW = block.orientation === 'X' ? block.length : 1;
+        const yCellsH = block.orientation === 'Z' ? block.length : 1;
+        const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal');
 
-        // Clone textures with appropriate repeats for different face orientations
-        const makeFaceMat = (repU, repV) => {
-            const faceTex = texture.clone();
-            faceTex.wrapS = THREE.RepeatWrapping;
-            faceTex.wrapT = THREE.RepeatWrapping;
-            faceTex.repeat.set(repU, repV);
-            faceTex.needsUpdate = true;
+        // +Z / -Z (front/back): width along X (length if X, else 1), height along Y (always 1)
+        const zCellsW = block.orientation === 'X' ? block.length : 1;
+        const zCellsH = 1;
+        const texZ = getBlockTexture(block.value, zCellsW, zCellsH, block.orientation, block.direction, block.type || 'normal');
 
-            return new THREE.MeshStandardMaterial({
-                map: faceTex,
-                color: 0xffffff,
-                roughness: 0.82, // Tactile matte ceramic / clay texture
-                metalness: 0.04,
-                emissive: new THREE.Color(palette.bg),
-                emissiveIntensity: 0.02
-            });
-        };
+        const createMat = (map) => new THREE.MeshStandardMaterial({
+            map,
+            color: 0xffffff,
+            roughness: 0.82, // Tactile matte ceramic / clay texture
+            metalness: 0.04,
+            emissive: new THREE.Color(palette.bg),
+            emissiveIntensity: 0.02
+        });
 
-        // +X, -X faces (Z vs Y)
-        materials.push(makeFaceMat(repeatZ, repeatY));
-        materials.push(makeFaceMat(repeatZ, repeatY));
-        // +Y, -Y faces (X vs Z)
-        materials.push(makeFaceMat(repeatX, repeatZ));
-        materials.push(makeFaceMat(repeatX, repeatZ));
-        // +Z, -Z faces (X vs Y)
-        materials.push(makeFaceMat(repeatX, repeatY));
-        materials.push(makeFaceMat(repeatX, repeatY));
+        const materials = [
+            createMat(texX), // +X
+            createMat(texX), // -X
+            createMat(texY), // +Y (top)
+            createMat(texY), // -Y (bottom)
+            createMat(texZ), // +Z (front)
+            createMat(texZ)  // -Z (back)
+        ];
 
         const mesh = new THREE.Mesh(geometry, materials);
         mesh.castShadow = true;

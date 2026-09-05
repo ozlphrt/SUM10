@@ -17,23 +17,25 @@ export const NUMBER_COLORS = {
 };
 
 /**
- * Creates or retrieves a procedural tactile pastel canvas texture with the block's number and exit direction.
+ * Creates or retrieves a procedural tactile pastel canvas texture with a single centered number
+ * across the entire block face, plus subtle dashed cell segmentation dividers.
  * Supports special types: 'bomb' and 'wild'.
  * @param {number} value - Number from 1 to 9
- * @param {number} length - Block length (1, 2, or 3 cells)
- * @param {'X'|'Z'|'Y'} orientation
+ * @param {number} [cellsW=1] - Face width in cells (1, 2, or 3)
+ * @param {number} [cellsH=1] - Face height in cells (1, 2, or 3)
+ * @param {'X'|'Z'} [orientation='X']
  * @param {{x: number, y: number, z: number}} [direction]
  * @param {'normal'|'bomb'|'wild'} [type='normal']
  * @returns {THREE.CanvasTexture}
  */
-export function getBlockTexture(value, length = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal') {
+export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal') {
     const dirKey = `${direction.x}_${direction.y}_${direction.z}`;
-    const key = `${type}_${value}_${length}_${orientation}_${dirKey}`;
+    const key = `${type}_${value}_${cellsW}x${cellsH}_${orientation}_${dirKey}`;
     if (textureCache.has(key)) return textureCache.get(key);
 
     const canvas = document.createElement('canvas');
-    const width = 256;
-    const height = 256;
+    const width = 256 * cellsW;
+    const height = 256 * cellsH;
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
@@ -88,45 +90,85 @@ export function getBlockTexture(value, length = 1, orientation = 'X', direction 
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
     } else {
-        // TACTILE PASTEL MINIMAL 1-9 BLOCK
+        // TACTILE PASTEL MINIMAL 1-9 BLOCK (Single Centered Number)
         const palette = NUMBER_COLORS[value] || NUMBER_COLORS[1];
 
-        // Base pastel matte fill
+        // Base pastel matte fill across entire block
         ctx.fillStyle = palette.bg;
         ctx.fillRect(0, 0, width, height);
 
-        // Soft outer bevel border
+        // Soft outer perimeter bevel border
         ctx.lineWidth = 14;
         ctx.strokeStyle = palette.border;
         ctx.strokeRect(7, 7, width - 14, height - 14);
 
-        // Debossed central circular inset with subtle tactile drop shadow
+        // Subtle dashed unit cell divider lines
+        if (cellsW > 1) {
+            ctx.strokeStyle = palette.border;
+            ctx.lineWidth = 3;
+            for (let i = 1; i < cellsW; i++) {
+                const x = i * 256;
+                ctx.setLineDash([8, 8]);
+                ctx.beginPath();
+                ctx.moveTo(x, 14);
+                ctx.lineTo(x, height - 14);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+        if (cellsH > 1) {
+            ctx.strokeStyle = palette.border;
+            ctx.lineWidth = 3;
+            for (let i = 1; i < cellsH; i++) {
+                const y = i * 256;
+                ctx.setLineDash([8, 8]);
+                ctx.beginPath();
+                ctx.moveTo(14, y);
+                ctx.lineTo(width - 14, y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // Single centered debossed circular badge
         ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.arc(width / 2, height / 2, 72, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.fill();
         ctx.lineWidth = 3;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.stroke();
 
-        // High-contrast, elegant typography
+        // Single centered large number
         ctx.fillStyle = palette.text;
-        ctx.font = '800 100px "Outfit", "Inter", -apple-system, sans-serif';
+        ctx.font = '800 106px "Outfit", "Inter", -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1; // Subtle letterpress emboss effect
+        ctx.shadowOffsetY = 1;
         ctx.fillText(String(value), width / 2, height / 2 - 4);
         ctx.shadowOffsetY = 0;
     }
 
-    // Bidirectional double-headed arrow icon indicating sliding along long axis
+    // Single centered bidirectional double-headed arrow icon
     ctx.save();
-    ctx.translate(width / 2, height - 34);
+    let arrowX = width / 2;
+    let arrowY = height - 34;
+    let angle = 0;
 
-    const angle = (orientation === 'Z') ? Math.PI / 2 : 0;
+    if (cellsH > cellsW) {
+        // Vertical face along Z
+        angle = Math.PI / 2;
+        arrowX = width / 2;
+        arrowY = height / 2 + 104;
+    } else {
+        // Horizontal face along X or square
+        angle = (orientation === 'Z' && cellsW === 1 && cellsH === 1) ? Math.PI / 2 : 0;
+    }
+
+    ctx.translate(arrowX, arrowY);
     ctx.rotate(angle);
 
     const arrowColor = (type === 'normal' && NUMBER_COLORS[value]) ? NUMBER_COLORS[value].text : '#475569';
