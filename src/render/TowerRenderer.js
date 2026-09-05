@@ -842,9 +842,12 @@ export class TowerRenderer {
      * Triggers rapid jam/error shake along the block's long slide axis.
      * @param {string|number} blockId 
      */
-    shakeBlock(blockId) {
+    shakeBlock(blockId, onComplete = null) {
         const item = this.blockMeshes.get(blockId);
-        if (!item) return;
+        if (!item) {
+            if (onComplete) onComplete();
+            return;
+        }
 
         const resting = item.restingPosition ? item.restingPosition.clone() : item.group.position.clone();
         const dir = item.model.direction || { x: 1, y: 0, z: 0 };
@@ -864,6 +867,7 @@ export class TowerRenderer {
                 requestAnimationFrame(animateShake);
             } else {
                 item.group.position.copy(resting);
+                if (onComplete) onComplete();
             }
         };
         requestAnimationFrame(animateShake);
