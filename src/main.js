@@ -393,8 +393,8 @@ class Sum10Game {
 
         if (sum === 10) {
             // Check if BOTH blocks have a clear exit path out of the tower
-            const exitFirst = this.topology.canBlockSlideOut(first);
-            const exitSecond = this.topology.canBlockSlideOut(second);
+            const exitFirst = this.topology.canBlockSlideOut(first, second);
+            const exitSecond = this.topology.canBlockSlideOut(second, first);
 
             if (!exitFirst.canExit || !exitSecond.canExit) {
                 sound.playMismatch();

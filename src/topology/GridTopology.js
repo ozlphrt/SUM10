@@ -297,7 +297,7 @@ export class GridTopology {
      * @param {BlockModel} block 
      * @returns {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}}
      */
-    canBlockSlideOut(block) {
+    canBlockSlideOut(block, partnerBlock = null) {
         // Single cell blocks can move all four horizontal directions (+X, -X, +Z, -Z), upon availability.
         // Multi-cell blocks move strictly along their long axis.
         const axisDirs = (block.length === 1)
@@ -319,8 +319,22 @@ export class GridTopology {
         const clearResults = candidateResults.filter((r) => r.canExit);
 
         if (clearResults.length > 0) {
-            // If multiple directions are clear, choose the path with fewer steps to exit (closer to edge)
-            clearResults.sort((a, b) => a.stepsToExit - b.stepsToExit);
+            // Sort primarily by fewest steps to exit (shortest distance to tower perimeter)
+            clearResults.sort((a, b) => {
+                if (a.stepsToExit !== b.stepsToExit) {
+                    return a.stepsToExit - b.stepsToExit;
+                }
+                // Tie-breaker: if a partner block is provided, prefer moving away from partner
+                if (partnerBlock) {
+                    const awayX = block.gridX - partnerBlock.gridX;
+                    const awayZ = block.gridZ - partnerBlock.gridZ;
+                    const dotA = a.dir.x * awayX + a.dir.z * awayZ;
+                    const dotB = b.dir.x * awayX + b.dir.z * awayZ;
+                    return dotB - dotA;
+                }
+                return 0;
+            });
+
             block.direction = { ...clearResults[0].dir };
             return {
                 canExit: true,
