@@ -5,36 +5,36 @@ import { getBlockTexture, NUMBER_COLORS } from './TextureGenerator.js';
 
 const LEVEL_THEMES = [
     {
-        // Level 1: Sleek Slate Blue Tabletop
-        bg: 0xe2e8f0,
-        ambient: 0xffffff,
-        ambientInt: 0.85,
-        rim: 0x93c5fd,
-        plate: 0x334155
-    },
-    {
-        // Level 2: Deep Indigo
-        bg: 0xf1f5f9,
-        ambient: 0xffffff,
-        ambientInt: 0.85,
-        rim: 0x818cf8,
-        plate: 0x1e293b
-    },
-    {
-        // Level 3: Warm Walnut Table
-        bg: 0xfaf5ef,
+        // Level 1: Classic Deep Emerald Felt Table
+        bg: 0x0a2f24,
         ambient: 0xfffbeb,
-        ambientInt: 0.85,
-        rim: 0xfbbf24,
-        plate: 0x3b2219
+        ambientInt: 0.78,
+        rim: 0xfde047,
+        plate: 0x1c130d
     },
     {
-        // Level 4: Emerald Green Felt Table
-        bg: 0xf0fdf4,
-        ambient: 0xffffff,
-        ambientInt: 0.85,
-        rim: 0x34d399,
-        plate: 0x064e3b
+        // Level 2: Royal Sapphire Casino Felt
+        bg: 0x0c213b,
+        ambient: 0xf8fafc,
+        ambientInt: 0.78,
+        rim: 0x60a5fa,
+        plate: 0x111827
+    },
+    {
+        // Level 3: Vintage Bordeaux Felt
+        bg: 0x2b0d18,
+        ambient: 0xfff1f2,
+        ambientInt: 0.78,
+        rim: 0xfb7185,
+        plate: 0x18080f
+    },
+    {
+        // Level 4: Charcoal Obsidian Felt
+        bg: 0x111827,
+        ambient: 0xf8fafc,
+        ambientInt: 0.78,
+        rim: 0x38bdf8,
+        plate: 0x030712
     }
 ];
 
@@ -155,29 +155,29 @@ export class TowerRenderer {
         this.currentLevel = level;
 
         if (this.isDarkTheme) {
-            // Slate Obsidian Dark Mode atmosphere
+            // Midnight Obsidian Emerald Felt
             if (this.scene && this.scene.background) {
-                this.scene.background.set(0x090d16);
+                this.scene.background.set(0x04140f);
             }
             if (this.hemiLight) {
-                this.hemiLight.color.set(0x334155);
-                this.hemiLight.groundColor.set(0x0f172a);
+                this.hemiLight.color.set(0x064e3b);
+                this.hemiLight.groundColor.set(0x022c22);
                 this.hemiLight.intensity = 0.55;
             }
             if (this.ambientLight) {
-                this.ambientLight.color.set(0x1e293b);
+                this.ambientLight.color.set(0x064e3b);
                 this.ambientLight.intensity = 0.35;
             }
             if (this.dirLight) {
-                this.dirLight.color.set(0xf8fafc);
-                this.dirLight.intensity = 1.15;
+                this.dirLight.color.set(0xfffbeb);
+                this.dirLight.intensity = 1.25;
             }
             if (this.rimLight) {
-                this.rimLight.color.set(0x38bdf8);
+                this.rimLight.color.set(0xfacc15);
                 this.rimLight.intensity = 0.65;
             }
             if (this.basePlate && this.basePlate.material) {
-                this.basePlate.material.color.set(0x1e293b);
+                this.basePlate.material.color.set(0x140d08);
             }
             return;
         }
