@@ -262,11 +262,12 @@ export class TowerRenderer {
     }
 
     /**
-     * Calculates the bounding box of all active blocks and computes the optimal
-     * camera distance and center to zoom in as much as possible while keeping all
-     * blocks inside the viewport with comfortable padding margins.
+     * Calculates the bounding box of all active blocks and computes the tightest
+     * camera distance and center to zoom in as much as possible, eliminating side padding
+     * while keeping all blocks inside the viewport.
+     * @param {THREE.Vector3} [viewDirection]
      */
-    _calculateOptimalCameraFit() {
+    _calculateOptimalCameraFit(viewDirection = null) {
         const box = new THREE.Box3();
         if (this.blockMeshes && this.blockMeshes.size > 0) {
             for (const item of this.blockMeshes.values()) {
@@ -284,8 +285,62 @@ export class TowerRenderer {
 
         const center = new THREE.Vector3();
         box.getCenter(center);
-        const size = new THREE.Vector3();
-        box.getSize(size);
+
+        // 8 corner vertices of the active blocks' 3D bounding box
+        const corners = [
+            new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+            new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+            new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+            new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+            new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+            new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+            new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+            new THREE.Vector3(box.max.x, box.max.y, box.max.z)
+        ];
+
+        // Determine view direction vector
+        let u;
+        if (viewDirection) {
+            u = viewDirection.clone().normalize();
+        } else if (this.camera && this.controls) {
+            const rel = this.camera.position.clone().sub(this.controls.target);
+            if (rel.lengthSq() > 0.5) {
+                u = rel.normalize();
+                // Ensure gentle downward pitch angle between 16° and 60°
+                const pitch = Math.asin(Math.max(0.26, Math.min(0.75, u.y)));
+                const yaw = Math.atan2(u.x, u.z);
+                u.set(
+                    Math.sin(yaw) * Math.cos(pitch),
+                    Math.sin(pitch),
+                    Math.cos(yaw) * Math.cos(pitch)
+                ).normalize();
+            } else {
+                const pitch = 24 * (Math.PI / 180);
+                u = new THREE.Vector3(
+                    Math.SQRT1_2 * Math.cos(pitch),
+                    Math.sin(pitch),
+                    Math.SQRT1_2 * Math.cos(pitch)
+                ).normalize();
+            }
+        } else {
+            const pitch = 24 * (Math.PI / 180);
+            u = new THREE.Vector3(
+                Math.SQRT1_2 * Math.cos(pitch),
+                Math.sin(pitch),
+                Math.SQRT1_2 * Math.cos(pitch)
+            ).normalize();
+        }
+
+        // Camera coordinate frame
+        const forward = u.clone().negate();
+        const worldUp = new THREE.Vector3(0, 1, 0);
+        let right = new THREE.Vector3().crossVectors(forward, worldUp);
+        if (right.lengthSq() < 0.0001) {
+            right = new THREE.Vector3(1, 0, 0);
+        } else {
+            right.normalize();
+        }
+        const camUp = new THREE.Vector3().crossVectors(right, forward).normalize();
 
         const aspect = (this.camera && this.camera.aspect) ? this.camera.aspect : 1.0;
         const vFovRad = ((this.camera ? this.camera.fov : 45) * Math.PI) / 180;
@@ -293,45 +348,32 @@ export class TowerRenderer {
         const tanHalfV = Math.tan(halfVFov);
         const tanHalfH = tanHalfV * aspect;
 
-        const halfX = Math.max(size.x / 2, 0.5);
-        const halfZ = Math.max(size.z / 2, 0.5);
-        const halfY = Math.max(size.y / 2, 0.5);
-        // Radius of bounding cylinder around Y axis (guarantees clearance at any horizontal rotation)
-        const radiusXZ = Math.hypot(halfX, halfZ);
+        // Snug margins: 0.95 horizontal (eliminates excessive side padding, ~2.5% edge clearance), 0.90 vertical
+        const marginX = 0.95;
+        const marginY = 0.90;
 
-        // Standard comfortable downward isometric viewing pitch (~34 degrees)
-        const pitch = 34 * (Math.PI / 180);
-        const sinPitch = Math.sin(pitch);
-        const cosPitch = Math.cos(pitch);
+        let maxDist = 0;
+        for (const corner of corners) {
+            const d = corner.clone().sub(center);
+            const xc = d.dot(right);
+            const yc = d.dot(camUp);
+            const zProj = d.dot(u);
 
-        // View direction unit vector: pristine 45° isometric corner view
-        const viewDir = new THREE.Vector3(
-            Math.SQRT1_2 * cosPitch,
-            sinPitch,
-            Math.SQRT1_2 * cosPitch
-        ).normalize();
+            const reqDx = zProj + Math.abs(xc) / (tanHalfH * marginX);
+            const reqDy = zProj + Math.abs(yc) / (tanHalfV * marginY);
 
-        // Screen padding factors: 0.82 vertical, 0.86 horizontal to give comfortable breathing room around HUD
-        const marginV = 0.82;
-        const marginH = 0.86;
+            maxDist = Math.max(maxDist, reqDx, reqDy);
+        }
 
-        // Projected extents on camera plane
-        const yCamMax = halfY * cosPitch + radiusXZ * sinPitch;
-        const xCamMax = radiusXZ;
-        const zOffsetMax = halfY * sinPitch + radiusXZ * cosPitch;
-
-        const distV = yCamMax / (tanHalfV * marginV);
-        const distH = xCamMax / (tanHalfH * marginH);
-
-        const optimalDist = zOffsetMax + Math.max(distV, distH);
-        const position = center.clone().add(viewDir.clone().multiplyScalar(optimalDist));
+        const optimalDist = Math.max(4.5, maxDist);
+        const position = center.clone().add(u.clone().multiplyScalar(optimalDist));
 
         return {
             center,
             distance: optimalDist,
             optimalDist,
             position,
-            viewDir
+            viewDir: u
         };
     }
 
@@ -436,7 +478,8 @@ export class TowerRenderer {
     }
 
     /**
-     * Smoothly animates the camera to align with the nearest cardinal or 45° corner angle.
+     * Smoothly animates the camera to align with the nearest cardinal or 45° corner angle,
+     * maintaining the tightest optimal zoom factor.
      * @param {Function} [onComplete]
      */
     snapCameraToNearestAngle(onComplete) {
@@ -445,19 +488,23 @@ export class TowerRenderer {
 
         const target = this.controls.target.clone();
         const rel = this.camera.position.clone().sub(target);
-        const radiusXZ = Math.hypot(rel.x, rel.z);
         const currentAngle = Math.atan2(rel.x, rel.z);
 
         // Snap to nearest 45-degree angle (isometric corners & faces)
         const step = Math.PI / 4;
         const targetAngle = Math.round(currentAngle / step) * step;
+        const currentDist = Math.max(1, rel.length());
+        const pitch = Math.asin(Math.max(0.24, Math.min(0.70, rel.y / currentDist)));
 
-        const targetX = target.x + radiusXZ * Math.sin(targetAngle);
-        const targetZ = target.z + radiusXZ * Math.cos(targetAngle);
-        const targetY = target.y + Math.max(radiusXZ * 0.55, rel.y);
+        const targetDir = new THREE.Vector3(
+            Math.sin(targetAngle) * Math.cos(pitch),
+            Math.sin(pitch),
+            Math.cos(targetAngle) * Math.cos(pitch)
+        ).normalize();
 
+        const fit = this._calculateOptimalCameraFit(targetDir);
+        const destPos = fit.position;
         const startPos = this.camera.position.clone();
-        const destPos = new THREE.Vector3(targetX, targetY, targetZ);
         const startTime = performance.now();
         const duration = 320;
 
@@ -481,7 +528,8 @@ export class TowerRenderer {
     }
 
     /**
-     * Smoothly rotates the camera 90 degrees left (-1) or right (+1).
+     * Smoothly rotates the camera 90 degrees left (-1) or right (+1),
+     * maintaining the tightest optimal zoom factor.
      * @param {number} direction - 1 for right, -1 for left
      * @param {Function} [onComplete]
      */
@@ -491,20 +539,24 @@ export class TowerRenderer {
 
         const target = this.controls.target.clone();
         const rel = this.camera.position.clone().sub(target);
-        const radiusXZ = Math.hypot(rel.x, rel.z);
         const currentAngle = Math.atan2(rel.x, rel.z);
 
         // Advance by 90 degrees (Math.PI / 2) from the nearest 45° step
         const step = Math.PI / 4;
         const snappedCurrent = Math.round(currentAngle / step) * step;
         const targetAngle = snappedCurrent + direction * (Math.PI / 2);
+        const currentDist = Math.max(1, rel.length());
+        const pitch = Math.asin(Math.max(0.24, Math.min(0.70, rel.y / currentDist)));
 
-        const targetX = target.x + radiusXZ * Math.sin(targetAngle);
-        const targetZ = target.z + radiusXZ * Math.cos(targetAngle);
-        const targetY = this.camera.position.y;
+        const targetDir = new THREE.Vector3(
+            Math.sin(targetAngle) * Math.cos(pitch),
+            Math.sin(pitch),
+            Math.cos(targetAngle) * Math.cos(pitch)
+        ).normalize();
 
+        const fit = this._calculateOptimalCameraFit(targetDir);
+        const destPos = fit.position;
         const startPos = this.camera.position.clone();
-        const destPos = new THREE.Vector3(targetX, targetY, targetZ);
         const startTime = performance.now();
         const duration = 320;
 
