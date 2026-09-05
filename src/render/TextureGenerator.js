@@ -1358,8 +1358,8 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
     }
 
     // Directional molded indicator arrows
-    if (cellsW === 1 && cellsH === 1) {
-        // 4-way omnidirectional molded arrow indicator for single-cell blocks
+    if ((cellsW === 1 && cellsH === 1) || orientation === 'Y') {
+        // 4-way omnidirectional molded arrow indicator for single-cell and vertical blocks (free horizontal sliding)
         ctx.save();
         ctx.translate(width / 2, height - 32);
         ctx.fillStyle = '#64748b';

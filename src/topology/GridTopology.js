@@ -81,9 +81,13 @@ export class GridTopology {
     hasSupport(block) {
         if (block.gridY === 0) return true;
 
-        // Footprint voxels are all occupied voxels since blocks are horizontal (height 1)
-        const footprint = block.getOccupiedVoxels();
+        // For vertical blocks (Y), support is required right beneath the bottom layer (gridY - 1)
+        // For horizontal blocks (X/Z), support is required beneath any of its occupied voxels
+        if (block.orientation === 'Y') {
+            return this.isOccupied(block.gridX, block.gridY - 1, block.gridZ);
+        }
 
+        const footprint = block.getOccupiedVoxels();
         for (const v of footprint) {
             if (v.y > 0 && this.isOccupied(v.x, v.y - 1, v.z)) {
                 return true;
@@ -326,9 +330,9 @@ export class GridTopology {
      * @returns {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}}
      */
     canBlockSlideOut(block, partnerBlock = null) {
-        // Single cell blocks can move all four horizontal directions (+X, -X, +Z, -Z), upon availability.
-        // Multi-cell blocks move strictly along their long axis.
-        const axisDirs = (block.length === 1)
+        // Single cell blocks and vertical (Y) blocks can slide horizontally in all four directions (+X, -X, +Z, -Z).
+        // Horizontal multi-cell blocks move strictly along their long axis (X or Z).
+        const axisDirs = (block.length === 1 || block.orientation === 'Y')
             ? [
                 { x: 1, y: 0, z: 0 },
                 { x: -1, y: 0, z: 0 },

@@ -206,6 +206,18 @@ export class TopologyGenerator {
             const distWest = gridX;
             const distEast = gridSize - (gridX + length);
             return distWest <= distEast ? { x: -1, y: 0, z: 0 } : { x: 1, y: 0, z: 0 };
+        } else if (orientation === 'Y') {
+            // Vertical along Y: can slide horizontally in any of the 4 directions.
+            // Direct towards the nearest perimeter wall for shortest escape path.
+            const distWest = gridX;
+            const distEast = gridSize - (gridX + 1);
+            const distNorth = gridZ;
+            const distSouth = gridSize - (gridZ + 1);
+            const minDist = Math.min(distWest, distEast, distNorth, distSouth);
+            if (minDist === distWest) return { x: -1, y: 0, z: 0 };
+            if (minDist === distEast) return { x: 1, y: 0, z: 0 };
+            if (minDist === distNorth) return { x: 0, y: 0, z: -1 };
+            return { x: 0, y: 0, z: 1 };
         } else {
             // Long axis is Z: can ONLY slide North (-Z) or South (+Z)
             const distNorth = gridZ;
@@ -264,29 +276,30 @@ export class TopologyGenerator {
         }
 
         // 2. Procedurally place blocks layer by layer according to architectural shape
-        const orientations = ['X', 'Z'];
+        // Mix horizontal (X, Z) and vertical (Y) orientations evenly
+        const orientations = ['X', 'Z', 'Y'];
 
         for (const spec of blockSpecs) {
             let placed = false;
             let attempts = 0;
-            const maxAttempts = 220;
+            const maxAttempts = 250;
 
             while (!placed && attempts < maxAttempts) {
                 attempts++;
 
-                // Choose layer with weighted preference for lower layers to build from base up
-                const layer = Math.min(
-                    maxLayers - 1,
-                    Math.floor(Math.pow(Math.random(), 1.5) * (maxLayers / 2))
-                );
-
                 const orient = orientations[this._randInt(0, orientations.length - 1)];
 
-                // Choose random grid position within valid boundaries
+                const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
                 const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
                 const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
 
-                if (maxX < 0 || maxZ < 0 || layer >= maxLayers) continue;
+                if (maxX < 0 || maxZ < 0 || maxY < 0) continue;
+
+                // Choose layer with weighted preference for lower layers to build from base up
+                const layer = Math.min(
+                    maxY,
+                    Math.floor(Math.pow(Math.random(), 1.5) * (maxLayers / 2))
+                );
 
                 const gx = this._randInt(0, maxX);
                 const gz = this._randInt(0, maxZ);
@@ -319,9 +332,10 @@ export class TopologyGenerator {
                 outerLoop1:
                 for (let y = 0; y < maxLayers; y++) {
                     for (const orient of orientations) {
+                        const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
                         const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
                         const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                        if (maxX < 0 || maxZ < 0) continue;
+                        if (maxX < 0 || maxZ < 0 || y > maxY) continue;
 
                         for (let gx = 0; gx <= maxX; gx++) {
                             for (let gz = 0; gz <= maxZ; gz++) {
@@ -356,9 +370,10 @@ export class TopologyGenerator {
                 outerLoop2:
                 for (let y = 0; y < maxLayers; y++) {
                     for (const orient of orientations) {
+                        const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
                         const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
                         const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                        if (maxX < 0 || maxZ < 0) continue;
+                        if (maxX < 0 || maxZ < 0 || y > maxY) continue;
 
                         for (let gx = 0; gx <= maxX; gx++) {
                             for (let gz = 0; gz <= maxZ; gz++) {

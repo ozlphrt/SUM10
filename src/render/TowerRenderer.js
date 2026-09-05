@@ -965,20 +965,19 @@ export class TowerRenderer {
         const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
 
         // Materials for 6 faces: [right (+X), left (-X), top (+Y), bottom (-Y), front (+Z), back (-Z)]
-        // Calculate cell width and height for each face orientation to render single centered number:
-        // +X / -X: width along Z (length if Z, else 1), height along Y (always 1)
+        // +X / -X face: width along Z, height along Y
         const xCellsW = block.orientation === 'Z' ? block.length : 1;
-        const xCellsH = 1;
+        const xCellsH = block.orientation === 'Y' ? block.length : 1;
         const texX = getBlockTexture(block.value, xCellsW, xCellsH, block.orientation, block.direction, block.type || 'normal');
 
-        // +Y / -Y (top/bottom): width along X (length if X, else 1), height along Z (length if Z, else 1)
+        // +Y / -Y face (top/bottom): width along X, height along Z
         const yCellsW = block.orientation === 'X' ? block.length : 1;
         const yCellsH = block.orientation === 'Z' ? block.length : 1;
         const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal', true);
 
-        // +Z / -Z (front/back): width along X (length if X, else 1), height along Y (always 1)
+        // +Z / -Z face (front/back): width along X, height along Y
         const zCellsW = block.orientation === 'X' ? block.length : 1;
-        const zCellsH = 1;
+        const zCellsH = block.orientation === 'Y' ? block.length : 1;
         const texZ = getBlockTexture(block.value, zCellsW, zCellsH, block.orientation, block.direction, block.type || 'normal');
 
         const createMat = (map) => new THREE.MeshPhysicalMaterial({
@@ -1154,7 +1153,7 @@ export class TowerRenderer {
             item.model = block;
 
             const xCellsW = block.orientation === 'Z' ? block.length : 1;
-            const xCellsH = 1;
+            const xCellsH = block.orientation === 'Y' ? block.length : 1;
             const texX = getBlockTexture(block.value, xCellsW, xCellsH, block.orientation, block.direction, block.type || 'normal');
 
             const yCellsW = block.orientation === 'X' ? block.length : 1;
@@ -1162,7 +1161,7 @@ export class TowerRenderer {
             const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal', true);
 
             const zCellsW = block.orientation === 'X' ? block.length : 1;
-            const zCellsH = 1;
+            const zCellsH = block.orientation === 'Y' ? block.length : 1;
             const texZ = getBlockTexture(block.value, zCellsW, zCellsH, block.orientation, block.direction, block.type || 'normal');
 
             item.materials[0].map = texX; item.materials[0].needsUpdate = true;
@@ -1357,7 +1356,7 @@ export class TowerRenderer {
      * Spawns subtle micro dust puff particles around a block's landing perimeter.
      * @param {THREE.Vector3} landingPos 
      * @param {number} blockLength 
-     * @param {'X'|'Z'} orientation 
+     * @param {'X'|'Z'|'Y'} orientation 
      */
     spawnLandingDustPuff(landingPos, blockLength = 1, orientation = 'X') {
         const puffCount = 6;
