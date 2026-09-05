@@ -94,17 +94,41 @@ export class TopologyGenerator {
     }
 
     /**
+     * Curated bank of quotes/paragraphs for Letters mode.
+     */
+    static get QUOTES() {
+        return [
+            { quote: "BE WATER MY FRIEND", author: "Bruce Lee" },
+            { quote: "STAY HUNGRY STAY FOOLISH", author: "Steve Jobs" },
+            { quote: "SIMPLICITY IS PREREQUISITE FOR RELIABILITY", author: "Edsger Dijkstra" },
+            { quote: "KNOWLEDGE IS POWER AND WISDOM IS FREEDOM", author: "Francis Bacon" },
+            { quote: "EVERY MOMENT IS A FRESH BEGINNING", author: "T.S. Eliot" },
+            { quote: "HUSTLE IN SILENCE LET SUCCESS MAKE THE NOISE", author: "Frank Ocean" },
+            { quote: "CREATIVITY IS INTELLIGENCE HAVING FUN", author: "Albert Einstein" },
+            { quote: "WHATEVER YOU ARE BE A GOOD ONE", author: "Abraham Lincoln" },
+            { quote: "THE JOURNEY OF A THOUSAND MILES BEGINS WITH ONE STEP", author: "Lao Tzu" },
+            { quote: "DO ONE THING EVERY DAY THAT SCARES YOU", author: "Eleanor Roosevelt" },
+            { quote: "DREAM BIG AND DARE TO FAIL", author: "Norman Vaughan" },
+            { quote: "ACTION IS THE FOUNDATIONAL KEY TO ALL SUCCESS", author: "Pablo Picasso" },
+            { quote: "TURN YOUR WOUNDS INTO WISDOM", author: "Oprah Winfrey" },
+            { quote: "NEVER REGRET ANYTHING THAT MADE YOU SMILE", author: "Mark Twain" },
+            { quote: "EVERYTHING YOU CAN IMAGINE IS REAL", author: "Pablo Picasso" },
+            { quote: "HAPPINESS DEPENDS UPON OURSELVES", author: "Aristotle" },
+            { quote: "PEACE COMES FROM WITHIN DO NOT SEEK IT WITHOUT", author: "Buddha" },
+            { quote: "LIGHT TOMORROW WITH TODAY", author: "Elizabeth Barrett Browning" },
+            { quote: "MAKE EACH DAY YOUR MASTERPIECE", author: "John Wooden" },
+            { quote: "THE ONLY WAY OUT IS THROUGH", author: "Robert Frost" }
+        ];
+    }
+
+    /**
      * Generates a pair for the specified game mode.
-     * @param {string} mode - 'sum10', 'sum20', 'shapes', or 'alphabet'
+     * @param {string} mode - 'numbers', 'sum10', 'sum20', 'shapes', or 'letters'
+     * @param {number} targetSum - Target sum for numbers mode
      * @returns {[number|string, number|string]}
      */
-    _generatePairForMode(mode = 'sum10') {
-        if (mode === 'sum20') {
-            // Numbers 1 to 19 summing to 20
-            const v1 = this._randInt(1, 19);
-            const v2 = 20 - v1;
-            return [v1, v2];
-        } else if (mode === 'shapes') {
+    _generatePairForMode(mode = 'numbers', targetSum = 10) {
+        if (mode === 'shapes') {
             // 24 luxury geometric rune emblems (no red/crimson, pure Nordic obsidian & jewel tones)
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
@@ -115,15 +139,16 @@ export class TopologyGenerator {
             ];
             const shape = SHAPES[this._randInt(0, SHAPES.length - 1)];
             return [shape, shape]; // Identical matching pairs
-        } else if (mode === 'alphabet') {
-            // Full alphabet A-Z: Identical matching letter pairs (A=A, B=B, ...)
-            const idx = this._randInt(0, 25); // A through Z (26 letters)
+        } else if (mode === 'letters') {
+            const idx = this._randInt(0, 25);
             const char = String.fromCharCode(65 + idx);
             return [char, char];
         } else {
-            // Default sum10: 1 to 9 summing to 10
-            const v1 = this._randInt(1, 9);
-            const v2 = 10 - v1;
+            // Numbers mode: values v1 + v2 = targetSum (where v1, v2 >= 1)
+            const sum = Math.max(2, targetSum || 10);
+            const maxVal = sum - 1;
+            const v1 = this._randInt(1, maxVal);
+            const v2 = sum - v1;
             return [v1, v2];
         }
     }
@@ -250,22 +275,84 @@ export class TopologyGenerator {
 
         const maxLayers = Math.max(10, Math.ceil(gridSize * 1.8));
 
-        const topology = new GridTopology({ gridSize, maxLayers });
-        const mode = overrideConfig.mode || this.mode || 'sum10';
-        topology.mode = mode;
+        let mode = overrideConfig.mode || this.mode || 'numbers';
+        // Normalize mode names
+        if (mode === 'sum10' || mode === 'sum20') mode = 'numbers';
+        if (mode === 'alphabet') mode = 'letters';
 
-        // 1. Generate value pairs (e.g. 10 pairs = 20 blocks, all summing/matching in pairs)
+        const currentLevel = overrideConfig.level || 1;
+        // Numbers mode: SUM 10 at lvl 1, SUM 11 at lvl 2, SUM 12 at lvl 3, etc.
+        const targetSum = overrideConfig.targetSum || (9 + currentLevel);
+
+        const topology = new GridTopology({ gridSize, maxLayers, targetSum, mode });
+
+        // Sentence data for Letters mode
+        let sentenceData = null;
+        if (mode === 'letters') {
+            const quoteObj = TopologyGenerator.QUOTES[(currentLevel - 1) % TopologyGenerator.QUOTES.length];
+            const rawQuote = quoteObj.quote;
+            // Extract letter characters only (A-Z)
+            const lettersOnly = [];
+            for (let i = 0; i < rawQuote.length; i++) {
+                const ch = rawQuote[i].toUpperCase();
+                if (ch >= 'A' && ch <= 'Z') {
+                    lettersOnly.push({ char: ch, rawIndex: i });
+                }
+            }
+
+            // Create consecutive pairs from the quote letters
+            const quotePairs = [];
+            for (let i = 0; i < lettersOnly.length - 1; i += 2) {
+                quotePairs.push({
+                    pairId: quotePairs.length + 1,
+                    char1: lettersOnly[i].char,
+                    char2: lettersOnly[i + 1].char,
+                    index1: lettersOnly[i].rawIndex,
+                    index2: lettersOnly[i + 1].rawIndex
+                });
+            }
+
+            // If odd count of letters in the quote, pad with a closing letter pair or duplicate
+            if (lettersOnly.length % 2 === 1) {
+                const last = lettersOnly[lettersOnly.length - 1];
+                quotePairs.push({
+                    pairId: quotePairs.length + 1,
+                    char1: last.char,
+                    char2: last.char,
+                    index1: last.rawIndex,
+                    index2: last.rawIndex
+                });
+            }
+
+            sentenceData = {
+                quote: rawQuote,
+                author: quoteObj.author,
+                pairs: quotePairs,
+                matchedPairIds: new Set()
+            };
+            topology.sentenceData = sentenceData;
+        }
+
+        // 1. Generate value pairs
         const blockSpecs = [];
         let idCounter = 1;
 
-        const currentLevel = overrideConfig.level || 1;
-        const pairsToGenerate = pairCount;
+        // In letters mode, adjust pairsToGenerate to match the quote pair count
+        const pairsToGenerate = (mode === 'letters' && sentenceData)
+            ? sentenceData.pairs.length
+            : pairCount;
 
         for (let p = 0; p < pairsToGenerate; p++) {
-            const [v1, v2] = this._generatePairForMode(mode);
+            let v1, v2;
+            if (mode === 'letters' && sentenceData && sentenceData.pairs[p]) {
+                v1 = sentenceData.pairs[p].char1;
+                v2 = sentenceData.pairs[p].char2;
+            } else {
+                [v1, v2] = this._generatePairForMode(mode, targetSum);
+            }
             blockSpecs.push(
-                { id: `b_${idCounter++}`, value: v1, length: this._sampleLength(), type: 'normal' },
-                { id: `b_${idCounter++}`, value: v2, length: this._sampleLength(), type: 'normal' }
+                { id: `b_${idCounter++}`, value: v1, length: this._sampleLength(), type: 'normal', pairId: p + 1 },
+                { id: `b_${idCounter++}`, value: v2, length: this._sampleLength(), type: 'normal', pairId: p + 1 }
             );
         }
 
@@ -306,58 +393,98 @@ export class TopologyGenerator {
 
                 const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
 
-                const candidate = new BlockModel({
-                    id: spec.id,
-                    value: spec.value,
-                    length: spec.length,
-                    orientation: orient,
-                    gridX: gx,
-                    gridY: layer,
-                    gridZ: gz,
-                    direction: dir,
-                    type: spec.type || 'normal'
-                });
+                    const candidate = new BlockModel({
+                        id: spec.id,
+                        value: spec.value,
+                        length: spec.length,
+                        orientation: orient,
+                        gridX: gx,
+                        gridY: layer,
+                        gridZ: gz,
+                        direction: dir,
+                        type: spec.type || 'normal',
+                        pairId: spec.pairId || null
+                    });
 
-                // Check architectural shape constraint, collision, and support
-                if (this._isBlockAllowedByShape(candidate, gridSize, shape) &&
-                    topology.canPlace(candidate) &&
-                    topology.hasSupport(candidate)) {
-                    topology.addBlock(candidate);
-                    placed = true;
+                    // Check architectural shape constraint, collision, and support
+                    if (this._isBlockAllowedByShape(candidate, gridSize, shape) &&
+                        topology.canPlace(candidate) &&
+                        topology.hasSupport(candidate)) {
+                        topology.addBlock(candidate);
+                        placed = true;
+                    }
                 }
-            }
 
-            // Fallback 1: Scan deterministically respecting shape
-            if (!placed) {
-                outerLoop1:
-                for (let y = 0; y < maxLayers; y++) {
-                    for (const orient of orientations) {
-                        const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
-                        const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
-                        const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                        if (maxX < 0 || maxZ < 0 || y > maxY) continue;
+                // Fallback 1: Scan deterministically respecting shape
+                if (!placed) {
+                    outerLoop1:
+                    for (let y = 0; y < maxLayers; y++) {
+                        for (const orient of orientations) {
+                            const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
+                            const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
+                            const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
+                            if (maxX < 0 || maxZ < 0 || y > maxY) continue;
 
-                        for (let gx = 0; gx <= maxX; gx++) {
-                            for (let gz = 0; gz <= maxZ; gz++) {
-                                const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
-                                const fallbackBlock = new BlockModel({
-                                    id: spec.id,
-                                    value: spec.value,
-                                    length: spec.length,
-                                    orientation: orient,
-                                    gridX: gx,
-                                    gridY: y,
-                                    gridZ: gz,
-                                    direction: dir,
-                                    type: spec.type || 'normal'
-                                });
+                            for (let gx = 0; gx <= maxX; gx++) {
+                                for (let gz = 0; gz <= maxZ; gz++) {
+                                    const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
+                                    const fallbackBlock = new BlockModel({
+                                        id: spec.id,
+                                        value: spec.value,
+                                        length: spec.length,
+                                        orientation: orient,
+                                        gridX: gx,
+                                        gridY: y,
+                                        gridZ: gz,
+                                        direction: dir,
+                                        type: spec.type || 'normal',
+                                        pairId: spec.pairId || null
+                                    });
 
-                                if (this._isBlockAllowedByShape(fallbackBlock, gridSize, shape) &&
-                                    topology.canPlace(fallbackBlock) &&
-                                    topology.hasSupport(fallbackBlock)) {
-                                    topology.addBlock(fallbackBlock);
-                                    placed = true;
-                                    break outerLoop1;
+                                    if (this._isBlockAllowedByShape(fallbackBlock, gridSize, shape) &&
+                                        topology.canPlace(fallbackBlock) &&
+                                        topology.hasSupport(fallbackBlock)) {
+                                        topology.addBlock(fallbackBlock);
+                                        placed = true;
+                                        break outerLoop1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Fallback 2: If strictly required, relax shape constraint to guarantee 100% placement
+                if (!placed) {
+                    outerLoop2:
+                    for (let y = 0; y < maxLayers; y++) {
+                        for (const orient of orientations) {
+                            const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
+                            const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
+                            const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
+                            if (maxX < 0 || maxZ < 0 || y > maxY) continue;
+
+                            for (let gx = 0; gx <= maxX; gx++) {
+                                for (let gz = 0; gz <= maxZ; gz++) {
+                                    const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
+                                    const fallbackBlock = new BlockModel({
+                                        id: spec.id,
+                                        value: spec.value,
+                                        length: spec.length,
+                                        orientation: orient,
+                                        gridX: gx,
+                                        gridY: y,
+                                        gridZ: gz,
+                                        direction: dir,
+                                        type: spec.type || 'normal',
+                                        pairId: spec.pairId || null
+                                    });
+
+                                    if (topology.canPlace(fallbackBlock) && topology.hasSupport(fallbackBlock)) {
+                                        topology.addBlock(fallbackBlock);
+                                        placed = true;
+                                        break outerLoop2;
+                                    }
                                 }
                             }
                         }
@@ -365,90 +492,42 @@ export class TopologyGenerator {
                 }
             }
 
-            // Fallback 2: If strictly required, relax shape constraint to guarantee 100% placement
-            if (!placed) {
-                outerLoop2:
-                for (let y = 0; y < maxLayers; y++) {
-                    for (const orient of orientations) {
-                        const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
-                        const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
-                        const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                        if (maxX < 0 || maxZ < 0 || y > maxY) continue;
+            // 3. Post-placement adjacent pairing pass:
+            this._assignAdjacentPairValues(topology);
 
-                        for (let gx = 0; gx <= maxX; gx++) {
-                            for (let gz = 0; gz <= maxZ; gz++) {
-                                const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
-                                const fallbackBlock = new BlockModel({
-                                    id: spec.id,
-                                    value: spec.value,
-                                    length: spec.length,
-                                    orientation: orient,
-                                    gridX: gx,
-                                    gridY: y,
-                                    gridZ: gz,
-                                    direction: dir,
-                                    type: spec.type || 'normal'
-                                });
-
-                                if (topology.canPlace(fallbackBlock) && topology.hasSupport(fallbackBlock)) {
-                                    topology.addBlock(fallbackBlock);
-                                    placed = true;
-                                    break outerLoop2;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            return topology;
         }
 
-        // 3. Post-placement adjacent pairing pass:
-        // Guarantees all normal blocks are paired with touching adjacent neighbors summing to 10
-        this._assignAdjacentPairValues(topology);
-
-        return topology;
-    }
-
     /**
-     * Traverses placed blocks in 3D and assigns values 1-9 such that ALL normal blocks
-     * are partitioned into strictly disjoint 1-to-1 pairs that sum to 10.
-     * Touching neighbors are prioritized first; any remaining unpaired blocks are paired
-     * with each other so no block is ever orphaned without a valid match.
+     * Traverses placed blocks in 3D and assigns values such that ALL normal blocks
+     * are partitioned into strictly disjoint 1-to-1 pairs matching the current mode rules.
      * @param {GridTopology} topology 
      */
     _assignAdjacentPairValues(topology) {
         const normalBlocks = Array.from(topology.blocks.values()).filter((b) => b.type === 'normal');
         if (normalBlocks.length === 0) return;
 
-        // If there's an odd number of normal blocks (e.g. if an uneven number of blocks was placed),
-        // remove the odd block completely from the topology so the total block count is strictly even and 100% paired
+        // If there's an odd number of normal blocks, remove the odd block completely
         if (normalBlocks.length % 2 === 1) {
             const oddBlock = normalBlocks.pop();
             topology.removeBlock(oddBlock.id);
         }
 
-        const mode = topology.mode || 'sum10';
+        const mode = topology.mode || 'numbers';
 
-        // Clear existing values on normal blocks so they can be assigned freshly
-        for (const b of normalBlocks) {
-            b.value = null;
-        }
-
-        // 1. Partition all normal blocks into mutually disjoint pairs (b1, b2).
-        // In 'shapes' (and 'alphabet') mode, blocks MUST be spatially separated across the tower.
-        const paired = [];
-        const used = new Set();
-
-        if (mode === 'shapes' || mode === 'alphabet') {
-            // Sort blocks with highest neighbor connectivity first so constrained blocks pair easily
+        // In letters mode with sentenceData, pair blocks and assign quote pairs
+        if (mode === 'letters' && topology.sentenceData && Array.isArray(topology.sentenceData.pairs)) {
+            // Sort blocks with highest neighbor connectivity first
             const sortedBlocks = [...normalBlocks].sort((a, b) => {
                 return topology.getNeighborBlocks(b.id).size - topology.getNeighborBlocks(a.id).size;
             });
 
+            const paired = [];
+            const used = new Set();
+
             for (const b1 of sortedBlocks) {
                 if (used.has(b1.id)) continue;
                 const neighbors = topology.getNeighborBlocks(b1.id);
-                // Exclude touching neighbors and already paired blocks
                 const nonNeighbors = normalBlocks.filter(b2 =>
                     b2.id !== b1.id &&
                     !used.has(b2.id) &&
@@ -457,17 +536,75 @@ export class TopologyGenerator {
 
                 let partner = null;
                 if (nonNeighbors.length > 0) {
-                    // Sort candidates by Euclidean distance with layer weighting descending to pick far-apart partners
                     nonNeighbors.sort((a, b) => {
                         const distA = Math.hypot(a.gridX - b1.gridX, (a.gridY - b1.gridY) * 1.5, a.gridZ - b1.gridZ);
                         const distB = Math.hypot(b.gridX - b1.gridX, (b.gridY - b1.gridY) * 1.5, b.gridZ - b1.gridZ);
                         return distB - distA;
                     });
-                    // Pick from upper 25% of farthest blocks with slight randomness
+                    const poolSize = Math.max(1, Math.floor(nonNeighbors.length * 0.3));
+                    partner = nonNeighbors[Math.floor(Math.random() * poolSize)];
+                } else {
+                    partner = normalBlocks.find(b2 => b2.id !== b1.id && !used.has(b2.id));
+                }
+
+                if (partner) {
+                    used.add(b1.id);
+                    used.add(partner.id);
+                    paired.push([b1, partner]);
+                }
+            }
+
+            const quotePairs = topology.sentenceData.pairs;
+            // Assign quote pairs to block pairs
+            for (let i = 0; i < paired.length; i++) {
+                const qPair = quotePairs[i % quotePairs.length];
+                const [b1, b2] = paired[i];
+                b1.value = qPair.char1;
+                b1.pairId = qPair.pairId;
+                b2.value = qPair.char2;
+                b2.pairId = qPair.pairId;
+            }
+
+            // Guarantee at least one move
+            if (!topology.hasAnyValidMove()) {
+                topology.shuffleDeadlock();
+            }
+            return;
+        }
+
+        // Clear existing values on normal blocks so they can be assigned freshly
+        for (const b of normalBlocks) {
+            b.value = null;
+        }
+
+        // 1. Partition all normal blocks into mutually disjoint pairs (b1, b2).
+        const paired = [];
+        const used = new Set();
+
+        if (mode === 'shapes') {
+            const sortedBlocks = [...normalBlocks].sort((a, b) => {
+                return topology.getNeighborBlocks(b.id).size - topology.getNeighborBlocks(a.id).size;
+            });
+
+            for (const b1 of sortedBlocks) {
+                if (used.has(b1.id)) continue;
+                const neighbors = topology.getNeighborBlocks(b1.id);
+                const nonNeighbors = normalBlocks.filter(b2 =>
+                    b2.id !== b1.id &&
+                    !used.has(b2.id) &&
+                    !neighbors.has(b2)
+                );
+
+                let partner = null;
+                if (nonNeighbors.length > 0) {
+                    nonNeighbors.sort((a, b) => {
+                        const distA = Math.hypot(a.gridX - b1.gridX, (a.gridY - b1.gridY) * 1.5, a.gridZ - b1.gridZ);
+                        const distB = Math.hypot(b.gridX - b1.gridX, (b.gridY - b1.gridY) * 1.5, b.gridZ - b1.gridZ);
+                        return distB - distA;
+                    });
                     const poolSize = Math.max(1, Math.floor(nonNeighbors.length * 0.25));
                     partner = nonNeighbors[Math.floor(Math.random() * poolSize)];
                 } else {
-                    // Fallback to any available unpaired block
                     partner = normalBlocks.find(b2 => b2.id !== b1.id && !used.has(b2.id));
                 }
 
@@ -478,7 +615,7 @@ export class TopologyGenerator {
                 }
             }
         } else {
-            // Classic SUM10 / SUM20: Mix of adjacent and separated pairs
+            // Numbers mode (Dynamic SUM): mix adjacent touching blocks and nearby blocks
             for (let i = normalBlocks.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [normalBlocks[i], normalBlocks[j]] = [normalBlocks[j], normalBlocks[i]];
@@ -503,7 +640,7 @@ export class TopologyGenerator {
             }
         }
 
-        // 2. Build a strictly balanced pool of symbols / numbers across all pairs
+        // 2. Build balanced pool of symbols or numbers
         const totalPairs = paired.length;
         const pairValuePool = [];
 
@@ -519,24 +656,13 @@ export class TopologyGenerator {
                 const s = SHAPES[i % SHAPES.length];
                 pairValuePool.push([s, s]);
             }
-        } else if (mode === 'alphabet') {
-            // Full alphabet A-Z: Balanced distribution of identical matching letter pairs
-            const LETTERS = [];
-            for (let c = 65; c <= 90; c++) LETTERS.push(String.fromCharCode(c));
-            for (let i = 0; i < totalPairs; i++) {
-                const char = LETTERS[i % LETTERS.length];
-                pairValuePool.push([char, char]);
-            }
-        } else if (mode === 'sum20') {
-            for (let i = 0; i < totalPairs; i++) {
-                const v1 = (i % 19) + 1;
-                pairValuePool.push([v1, 20 - v1]);
-            }
         } else {
-            // sum10
+            // Numbers mode: values sum to topology.targetSum
+            const targetSum = topology.targetSum || 10;
+            const maxVal = targetSum - 1;
             for (let i = 0; i < totalPairs; i++) {
-                const v1 = (i % 9) + 1;
-                pairValuePool.push([v1, 10 - v1]);
+                const v1 = (i % maxVal) + 1;
+                pairValuePool.push([v1, targetSum - v1]);
             }
         }
 
@@ -546,10 +672,8 @@ export class TopologyGenerator {
             [pairValuePool[i], pairValuePool[j]] = [pairValuePool[j], pairValuePool[i]];
         }
 
-        // 3. Assign pool values to pairs using distance-penalized spatial coloring.
-        // Prevents identical shapes from clustering on the same wall, layer, or neighborhood.
-        if (mode === 'shapes' || mode === 'alphabet') {
-            // Order pairs by total connectivity descending
+        // 3. Assign values to pairs
+        if (mode === 'shapes') {
             paired.sort((pA, pB) => {
                 const cA = topology.getNeighborBlocks(pA[0].id).size + topology.getNeighborBlocks(pA[1].id).size;
                 const cB = topology.getNeighborBlocks(pB[0].id).size + topology.getNeighborBlocks(pB[1].id).size;
@@ -571,7 +695,6 @@ export class TopologyGenerator {
                         const d1 = Math.hypot(assigned.gridX - b1.gridX, assigned.gridY - b1.gridY, assigned.gridZ - b1.gridZ);
                         const d2 = Math.hypot(assigned.gridX - b2.gridX, assigned.gridY - b2.gridY, assigned.gridZ - b2.gridZ);
 
-                        // Severe penalty if touching or in immediate 1-cell radius
                         if (d1 < 1.8) penalty += 5000;
                         else if (d1 < 2.9) penalty += 400;
                         else if (d1 < 4.0) penalty += 40;
@@ -584,7 +707,7 @@ export class TopologyGenerator {
                     if (penalty < minPenalty) {
                         minPenalty = penalty;
                         bestIdx = i;
-                        if (penalty === 0) break; // Zero-conflict match found
+                        if (penalty === 0) break;
                     }
                 }
 
@@ -594,10 +717,13 @@ export class TopologyGenerator {
             }
         } else {
             // Standard assignment for numbers
+            let pairCounter = 1;
             for (const [b1, b2] of paired) {
                 const [val1, val2] = pairValuePool.pop();
                 b1.value = val1;
+                b1.pairId = pairCounter;
                 b2.value = val2;
+                b2.pairId = pairCounter++;
             }
         }
 
@@ -607,4 +733,5 @@ export class TopologyGenerator {
         }
     }
 }
+
 

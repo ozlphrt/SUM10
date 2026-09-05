@@ -35,12 +35,21 @@ class Sum10Game {
         this.eqOp2 = document.getElementById('eq-op-2');
         this.eqTarget = document.getElementById('eq-target');
 
-        // Current active game mode ('sum10', 'sum20', 'shapes', 'alphabet')
+        // Quote Banner Elements for Letters Mode
+        this.quoteBanner = document.getElementById('letters-quote-banner');
+        this.quoteProgress = document.getElementById('quote-progress');
+        this.quoteTextContainer = document.getElementById('quote-text-container');
+        this.quoteAuthor = document.getElementById('quote-author');
+
+        // Current active game mode ('numbers', 'letters', 'shapes')
         this.gameMode = (function() {
             try {
-                return localStorage.getItem('sum10_game_mode') || 'sum10';
+                let saved = localStorage.getItem('sum10_game_mode') || 'numbers';
+                if (saved === 'sum10' || saved === 'sum20') saved = 'numbers';
+                if (saved === 'alphabet') saved = 'letters';
+                return saved;
             } catch (_) {
-                return 'sum10';
+                return 'numbers';
             }
         })();
 
@@ -306,18 +315,91 @@ class Sum10Game {
     }
 
     _updateModePill() {
+        const targetSum = 9 + (this.currentLevel || 1);
         const MODE_INFO = {
-            sum10: { icon: '🔣', name: 'SUM 10', target: '10', op1: '+', op2: '=' },
-            sum20: { icon: '🔢', name: 'SUM 20', target: '20', op1: '+', op2: '=' },
-            shapes: { icon: '🔷', name: 'SHAPES', target: 'MATCH', op1: '=', op2: '➔' },
-            alphabet: { icon: '🔤', name: 'LETTERS', target: 'MATCH', op1: '=', op2: '➔' }
+            numbers: { icon: '🔢', name: `SUM ${targetSum}`, target: String(targetSum), op1: '+', op2: '=' },
+            letters: { icon: '🔤', name: 'LETTERS', target: 'QUOTE', op1: '+', op2: '➔' },
+            shapes: { icon: '🔷', name: 'SHAPES', target: 'MATCH', op1: '=', op2: '➔' }
         };
-        const info = MODE_INFO[this.gameMode] || MODE_INFO.sum10;
+        const info = MODE_INFO[this.gameMode] || MODE_INFO.numbers;
         if (this.valModeIcon) this.valModeIcon.textContent = info.icon;
         if (this.valModeName) this.valModeName.textContent = info.name;
         if (this.eqOp1) this.eqOp1.textContent = info.op1;
         if (this.eqOp2) this.eqOp2.textContent = info.op2;
         if (this.eqTarget) this.eqTarget.textContent = info.target;
+    }
+
+    renderQuoteBanner() {
+        if (!this.quoteBanner) return;
+
+        if (this.gameMode !== 'letters' || !this.topology || !this.topology.sentenceData) {
+            this.quoteBanner.style.display = 'none';
+            return;
+        }
+
+        const data = this.topology.sentenceData;
+        this.quoteBanner.style.display = 'flex';
+
+        if (this.quoteAuthor) {
+            this.quoteAuthor.textContent = data.author ? `— ${data.author}` : '';
+        }
+
+        const totalPairs = data.pairs ? data.pairs.length : 0;
+        const matchedCount = data.matchedPairIds ? data.matchedPairIds.size : 0;
+        if (this.quoteProgress) {
+            this.quoteProgress.textContent = `${matchedCount} / ${totalPairs} PAIRS`;
+        }
+
+        if (this.quoteTextContainer) {
+            this.quoteTextContainer.innerHTML = '';
+            // Map each character of the raw quote to a span or space
+            const quote = data.quote;
+            const matchedPairSet = data.matchedPairIds || new Set();
+
+            for (let i = 0; i < quote.length; i++) {
+                const char = quote[i];
+                if (char === ' ') {
+                    const space = document.createElement('span');
+                    space.className = 'quote-space';
+                    this.quoteTextContainer.appendChild(space);
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'quote-char';
+                    span.textContent = char;
+                    span.setAttribute('data-char-index', i);
+
+                    // Find if this character belongs to any pair
+                    const pair = data.pairs.find(p => p.index1 === i || p.index2 === i);
+                    if (pair) {
+                        span.setAttribute('data-pair-id', pair.pairId);
+                        if (matchedPairSet.has(pair.pairId)) {
+                            span.classList.add('revealed');
+                        }
+                    }
+
+                    this.quoteTextContainer.appendChild(span);
+                }
+            }
+        }
+    }
+
+    revealQuotePair(pairId) {
+        if (!this.quoteBanner || !this.topology || !this.topology.sentenceData) return;
+        const data = this.topology.sentenceData;
+        if (!data.matchedPairIds) data.matchedPairIds = new Set();
+        data.matchedPairIds.add(pairId);
+
+        const totalPairs = data.pairs ? data.pairs.length : 0;
+        const matchedCount = data.matchedPairIds.size;
+        if (this.quoteProgress) {
+            this.quoteProgress.textContent = `${matchedCount} / ${totalPairs} PAIRS`;
+        }
+
+        const charSpans = this.quoteBanner.querySelectorAll(`.quote-char[data-pair-id="${pairId}"]`);
+        charSpans.forEach(span => {
+            span.classList.add('revealed', 'just-revealed');
+            setTimeout(() => span.classList.remove('just-revealed'), 700);
+        });
     }
 
     showToast(message, duration = 1800) {
@@ -355,12 +437,14 @@ class Sum10Game {
         this.renderer.applyLevelTheme(level);
 
         this.updateStats();
+        this.renderQuoteBanner();
+
+        const targetSum = 9 + level;
         const modeLabel = {
-            sum10: 'SUM 10',
-            sum20: 'SUM 20 (Double Digits)',
-            shapes: 'Runic Shapes',
-            alphabet: 'Alpha Mirror (A–Z)'
-        }[this.gameMode] || 'SUM 10';
+            numbers: `SUM ${targetSum}`,
+            letters: 'Paragraph Decryption',
+            shapes: 'Runic Shapes'
+        }[this.gameMode] || `SUM ${targetSum}`;
         this.showToast(`Level ${level} • ${config.shapeName} [${modeLabel}]`, 2400);
         this._checkDeadlock();
     }
@@ -470,13 +554,22 @@ class Sum10Game {
                     this.slot2Elem.textContent = formatVal(val2);
                 } else if (val1 === '★') {
                     this.slot2Elem.textContent = '★';
-                } else if (this.gameMode === 'sum20' && typeof val1 === 'number') {
-                    this.slot2Elem.textContent = 20 - val1;
-                } else if ((this.gameMode === 'shapes' || this.gameMode === 'alphabet') && typeof val1 === 'string') {
+                } else if (this.gameMode === 'shapes' && typeof val1 === 'string') {
                     this.slot2Elem.textContent = formatVal(val1);
+                } else if (this.gameMode === 'letters' && firstBlock && this.topology?.sentenceData) {
+                    // Show target consecutive partner letter from quote if available
+                    const sData = this.topology.sentenceData;
+                    const pair = sData.pairs.find(p => p.pairId === firstBlock.pairId);
+                    if (pair) {
+                        const targetChar = (firstBlock.value === pair.char1) ? pair.char2 : pair.char1;
+                        this.slot2Elem.textContent = targetChar;
+                    } else {
+                        this.slot2Elem.textContent = '?';
+                    }
                 } else if (typeof val1 === 'number') {
-                    // Default sum10: complement needed
-                    this.slot2Elem.textContent = 10 - val1;
+                    // Numbers mode: targetSum complement
+                    const targetSum = this.topology?.targetSum || (9 + this.currentLevel);
+                    this.slot2Elem.textContent = Math.max(1, targetSum - val1);
                 } else {
                     this.slot2Elem.textContent = '?';
                 }
@@ -637,18 +730,26 @@ class Sum10Game {
                 sound.playMatch(this.comboCount, first.length, second.length);
             }
 
+            const currentTargetSum = this.topology?.targetSum || (9 + this.currentLevel);
             const matchToastMsg = (function(mode) {
                 if (isWildMatch) return `★ Wildcard Match! +${pointsEarned} PTS`;
-                if (mode === 'sum20') return `✨ ${firstDisp} + ${secondDisp} = 20! +${pointsEarned} PTS`;
                 if (mode === 'shapes') return `✨ ${firstDisp} = ${secondDisp}! +${pointsEarned} PTS`;
-                if (mode === 'alphabet') return `✨ ${firstDisp} = ${secondDisp}! +${pointsEarned} PTS`;
-                return `✨ ${firstDisp} + ${secondDisp} = 10! +${pointsEarned} PTS`;
+                if (mode === 'letters') return `✨ Pair [${firstDisp} & ${secondDisp}] Unlocked! +${pointsEarned} PTS`;
+                return `✨ ${firstDisp} + ${secondDisp} = ${currentTargetSum}! +${pointsEarned} PTS`;
             })(this.gameMode);
 
             if (this.comboCount > 1) {
                 this.showToast(`🔥 COMBO x${this.comboCount}! +${pointsEarned} PTS!`, 2000);
             } else {
                 this.showToast(matchToastMsg, 1600);
+            }
+
+            // In letters mode, reveal the matched letters in the paragraph ribbon
+            if (this.gameMode === 'letters') {
+                const pId = first.pairId !== undefined ? first.pairId : second.pairId;
+                if (pId !== undefined && pId !== null) {
+                    this.revealQuotePair(pId);
+                }
             }
 
             setTimeout(() => {
@@ -697,11 +798,11 @@ class Sum10Game {
         } else {
             // MISMATCH: Shake both, unselect the first block, and select the second block as the new active selection
             sound.playMismatch();
+            const currentTargetSum = this.topology?.targetSum || (9 + this.currentLevel);
             const mismatchMsg = (function(mode) {
-                if (mode === 'sum20') return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 20)`;
                 if (mode === 'shapes') return `❌ Shapes do not match`;
-                if (mode === 'alphabet') return `❌ ${first.value} ≠ ${second.value} (Need matching ${first.value})`;
-                return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 10)`;
+                if (mode === 'letters') return `❌ Not consecutive in paragraph (Need partner for ${first.value})`;
+                return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need ${currentTargetSum})`;
             })(this.gameMode);
             this.showToast(mismatchMsg, 1700);
 

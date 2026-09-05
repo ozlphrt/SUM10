@@ -65,6 +65,16 @@
             <div id="toast-msg" class="toast-msg">Select a block</div>
         </div>
 
+        <!-- Letters Mode: Paragraph Decryption Ribbon -->
+        <div id="letters-quote-banner" class="letters-quote-banner" style="display: none;">
+            <div class="quote-header">
+                <span class="quote-badge">DECRYPT PARAGRAPH</span>
+                <span id="quote-progress" class="quote-progress">0 / 0 PAIRS</span>
+            </div>
+            <div id="quote-text-container" class="quote-text-container"></div>
+            <div id="quote-author" class="quote-author"></div>
+        </div>
+
         <!-- Deadlock Shake Button (Bottom center, appears only when needed) -->
         <div class="shuffle-wrapper">
             <button id="btn-shuffle" class="btn-secondary btn-shake-cta" type="button" style="display: none;">
@@ -91,37 +101,29 @@
             </div>
             <p class="modal-subtitle">Select your puzzle rules & mental challenge:</p>
             <div class="mode-selection-grid">
-                <button class="mode-card" data-mode="sum10" type="button">
-                    <div class="mode-card-header">
-                        <span class="mode-card-icon">🔣</span>
-                        <div class="mode-card-badge">CLASSIC</div>
-                    </div>
-                    <div class="mode-card-title">SUM 10 (Classic Zen)</div>
-                    <div class="mode-card-desc">Single digits (1–9). Pair any blocks that sum exactly to 10 (e.g. 7 + 3, 4 + 6).</div>
-                </button>
-                <button class="mode-card" data-mode="sum20" type="button">
+                <button class="mode-card" data-mode="numbers" type="button">
                     <div class="mode-card-header">
                         <span class="mode-card-icon">🔢</span>
-                        <div class="mode-card-badge">DOUBLE DIGITS</div>
+                        <div class="mode-card-badge">DYNAMIC SUM</div>
                     </div>
-                    <div class="mode-card-title">SUM 20 (Deep Math)</div>
-                    <div class="mode-card-desc">Numbers from 1–19. Pair blocks that sum to 20 (e.g. 13 + 7, 16 + 4, 11 + 9).</div>
+                    <div class="mode-card-title">Numbers (SUM 10, 11, 12...)</div>
+                    <div class="mode-card-desc">Starts at SUM 10 at Level 1, scaling up to SUM 11 at Level 2, SUM 12 at Level 3, and onwards. Pair two blocks that sum to the target!</div>
+                </button>
+                <button class="mode-card" data-mode="letters" type="button">
+                    <div class="mode-card-header">
+                        <span class="mode-card-icon">🔤</span>
+                        <div class="mode-card-badge">CONSECUTIVE PAIRS</div>
+                    </div>
+                    <div class="mode-card-title">Letters (Paragraph Decryption)</div>
+                    <div class="mode-card-desc">Decipher a paragraph or famous quote. Pair up consecutive letters from the text to launch dominoes and highlight the letters until solved!</div>
                 </button>
                 <button class="mode-card" data-mode="shapes" type="button">
                     <div class="mode-card-header">
                         <span class="mode-card-icon">🔷</span>
-                        <div class="mode-card-badge">GEOMETRY</div>
+                        <div class="mode-card-badge">RUNIC EMBLEMS</div>
                     </div>
-                    <div class="mode-card-title">Runic Shapes (24 Luxury Emblems)</div>
-                    <div class="mode-card-desc">24 faceted Scandinavian emblems: Orb, Prism, Vault, Diamond, Star, Crest, Crescent, Shield, Cross, Eternity Ring, Octagon, Infinity, Spiral, and more.</div>
-                </button>
-                <button class="mode-card" data-mode="alphabet" type="button">
-                    <div class="mode-card-header">
-                        <span class="mode-card-icon">🔤</span>
-                        <div class="mode-card-badge">LETTERS</div>
-                    </div>
-                    <div class="mode-card-title">Alphabet (A–Z Matching)</div>
-                    <div class="mode-card-desc">Full 26-letter alphabet: Find and pair identical letter dominoes across the tower (A = A, B = B, ...).</div>
+                    <div class="mode-card-title">Shapes (24 Luxury Emblems)</div>
+                    <div class="mode-card-desc">24 faceted Scandinavian emblems: Orb, Prism, Vault, Diamond, Star, Crest, Crescent, Shield, Cross, Eternity Ring, Octagon, and more.</div>
                 </button>
             </div>
         </div>

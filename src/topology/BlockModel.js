@@ -24,7 +24,8 @@ export class BlockModel {
         gridY = 0,
         gridZ = 0,
         direction = { x: 1, y: 0, z: 0 },
-        type = 'normal'
+        type = 'normal',
+        pairId = null
     }) {
         this.id = id;
         this.value = value;
@@ -35,6 +36,7 @@ export class BlockModel {
         this.gridZ = gridZ;
         this.direction = { ...direction };
         this.type = type; // 'normal', 'bomb', or 'wild'
+        this.pairId = pairId;
 
         // State flags
         this.isRemoved = false;

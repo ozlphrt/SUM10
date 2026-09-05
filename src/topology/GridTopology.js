@@ -11,16 +11,24 @@ export class GridTopology {
      * @param {number} options.maxLayers - Maximum layer height of the tower
      * @param {number} options.cellSize - Edge length of a 1x1x1 cube (default 1.0)
      */
-    constructor({ gridSize = 5, maxLayers = 12, cellSize = 1.0 } = {}) {
+    constructor({ gridSize = 5, maxLayers = 12, cellSize = 1.0, targetSum = 10, mode = 'numbers' } = {}) {
         this.gridSize = gridSize;
         this.maxLayers = maxLayers;
         this.cellSize = cellSize;
+        this.targetSum = targetSum;
+        this.mode = mode;
 
         /** @type {Map<string|number, BlockModel>} */
         this.blocks = new Map();
 
         /** @type {Map<string, string|number>} voxelKey "x,y,z" -> blockId */
         this.voxelMap = new Map();
+
+        /**
+         * For 'letters' mode: sentence information and consecutive letter pairs
+         * @type {{ quote: string, author?: string, pairs: Array<{ pairId: number, char1: string, char2: string, index1: number, index2: number }>, matchedPairIds: Set<number> } | null}
+         */
+        this.sentenceData = null;
     }
 
     /**
@@ -421,15 +429,35 @@ export class GridTopology {
         // Wildcard blocks pair with anything
         if (b1.type === 'wild' || b2.type === 'wild') return true;
 
-        const mode = this.mode || 'sum10';
-        if (mode === 'sum20') {
-            return Number(b1.value) + Number(b2.value) === 20;
-        } else if (mode === 'shapes' || mode === 'alphabet') {
+        const mode = this.mode || 'numbers';
+
+        if (mode === 'shapes') {
             return String(b1.value).toUpperCase() === String(b2.value).toUpperCase();
-        } else {
-            // Default sum10
-            return Number(b1.value) + Number(b2.value) === 10;
         }
+
+        if (mode === 'letters' || mode === 'alphabet') {
+            // Check if blocks have assigned pairId from sentence
+            if (b1.pairId !== undefined && b2.pairId !== undefined) {
+                return b1.pairId === b2.pairId;
+            }
+            // Fallback: check against available unmatched consecutive pairs in sentenceData
+            if (this.sentenceData && Array.isArray(this.sentenceData.pairs)) {
+                const c1 = String(b1.value).toUpperCase();
+                const c2 = String(b2.value).toUpperCase();
+                const matchedSet = this.sentenceData.matchedPairIds || new Set();
+                const matchFound = this.sentenceData.pairs.some((p) => {
+                    if (matchedSet.has(p.pairId)) return false;
+                    return (p.char1 === c1 && p.char2 === c2) || (p.char1 === c2 && p.char2 === c1);
+                });
+                if (matchFound) return true;
+            }
+            // Fallback if no sentenceData
+            return String(b1.value).toUpperCase() === String(b2.value).toUpperCase();
+        }
+
+        // Numbers mode (SUM 10, SUM 11, SUM 12, ... dynamic targetSum)
+        const target = this.targetSum || 10;
+        return Number(b1.value) + Number(b2.value) === target;
     }
 
     /**
@@ -437,11 +465,8 @@ export class GridTopology {
      * @returns {[number|string, number|string]}
      */
     _generatePair() {
-        const mode = this.mode || 'sum10';
-        if (mode === 'sum20') {
-            const v1 = Math.floor(Math.random() * 19) + 1;
-            return [v1, 20 - v1];
-        } else if (mode === 'shapes') {
+        const mode = this.mode || 'numbers';
+        if (mode === 'shapes') {
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
                 'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
@@ -451,13 +476,15 @@ export class GridTopology {
             ];
             const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             return [s, s];
-        } else if (mode === 'alphabet') {
+        } else if (mode === 'letters' || mode === 'alphabet') {
             const idx = Math.floor(Math.random() * 26);
             const char = String.fromCharCode(65 + idx);
             return [char, char];
         } else {
-            const v1 = Math.floor(Math.random() * 9) + 1;
-            return [v1, 10 - v1];
+            // Numbers mode (SUM 10, SUM 11, SUM 12... targetSum)
+            const target = this.targetSum || 10;
+            const v1 = Math.floor(Math.random() * (target - 1)) + 1;
+            return [v1, target - v1];
         }
     }
 
