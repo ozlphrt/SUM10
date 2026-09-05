@@ -7,6 +7,33 @@ import { GridTopology } from './GridTopology.js';
  */
 export class TopologyGenerator {
     /**
+     * Calculates difficulty and sizing parameters dynamically for a given level.
+     * Matches Jarrows' portrait tower volume ratio.
+     * @param {number} level 
+     */
+    static getLevelConfig(level = 1) {
+        const pairCount = Math.min(45, 10 + (level - 1) * 3); // 20, 26, 32, 38...
+        const totalBlocks = pairCount * 2;
+        const avgVol = 1.8;
+        const estimatedVolume = totalBlocks * avgVol;
+        const gridSize = Math.max(5, Math.min(8, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3))));
+
+        // Scale block length distribution: more doubles & triples on higher levels
+        const length1Ratio = Math.max(0.20, 0.50 - (level - 1) * 0.05);
+        const length3Ratio = Math.min(0.35, 0.10 + (level - 1) * 0.04);
+        const length2Ratio = 1.0 - length1Ratio - length3Ratio;
+
+        return {
+            level,
+            targetPairCount: pairCount,
+            gridSize,
+            length1Ratio,
+            length2Ratio,
+            length3Ratio
+        };
+    }
+
+    /**
      * @param {Object} [config]
      * @param {number} [config.targetPairCount=10] - Number of pairs (total blocks = pairs * 2)
      * @param {number} [config.gridSize=5] - 3D base grid width/depth

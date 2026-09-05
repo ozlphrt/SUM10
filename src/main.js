@@ -6,6 +6,7 @@ import { sound } from './audio/SoundEffects.js';
 class Sum10Game {
     constructor() {
         this.container = document.getElementById('canvas-container');
+        this.levelElem = document.getElementById('val-level');
         this.scoreElem = document.getElementById('val-score');
         this.remainingElem = document.getElementById('val-remaining');
         this.slot1Elem = document.getElementById('slot-1');
@@ -13,23 +14,23 @@ class Sum10Game {
         this.toastElem = document.getElementById('toast-msg');
         this.btnNewGame = document.getElementById('btn-new-game');
 
-        this.generator = new TopologyGenerator({
-            targetPairCount: 12, // 24 blocks
-            gridSize: 5
-        });
-
+        this.currentLevel = 1;
+        this.score = 0;
         this.topology = null;
         this.selectedBlock = null;
-        this.score = 0;
         this.isProcessingMatch = false;
 
         this.renderer = new TowerRenderer(this.container, {
             onBlockClick: (block) => this.handleBlockClick(block)
         });
 
-        this.btnNewGame.addEventListener('click', () => this.startNewGame());
+        this.btnNewGame.addEventListener('click', () => {
+            this.currentLevel = 1;
+            this.score = 0;
+            this.startLevel(this.currentLevel);
+        });
 
-        this.startNewGame();
+        this.startLevel(this.currentLevel);
     }
 
     showToast(message, duration = 1800) {
@@ -42,19 +43,24 @@ class Sum10Game {
         }, duration);
     }
 
-    startNewGame() {
+    startLevel(level = 1) {
+        this.currentLevel = level;
         this.selectedBlock = null;
         this.isProcessingMatch = false;
         this._updateSelectionUI(null, null);
 
-        this.topology = this.generator.generate();
+        const config = TopologyGenerator.getLevelConfig(level);
+        const generator = new TopologyGenerator(config);
+
+        this.topology = generator.generate();
         this.renderer.setTopology(this.topology);
 
         this.updateStats();
-        this.showToast('🎯 Find two blocks summing to 10!');
+        this.showToast(`🏰 Level ${level} — Find pairs summing to 10!`, 2200);
     }
 
     updateStats() {
+        if (this.levelElem) this.levelElem.textContent = String(this.currentLevel);
         if (this.scoreElem) this.scoreElem.textContent = String(this.score);
         if (this.remainingElem) this.remainingElem.textContent = String(this.topology.blocks.size);
     }
@@ -160,7 +166,11 @@ class Sum10Game {
                 }, 150);
 
                 if (this.topology.blocks.size === 0) {
-                    this.showToast('🎉 TOWER CLEARED! Spectacular job!', 4000);
+                    this.score += 500; // Level clear bonus
+                    this.showToast(`🎉 LEVEL ${this.currentLevel} CLEARED! +500 Bonus!`, 3500);
+                    setTimeout(() => {
+                        this.startLevel(this.currentLevel + 1);
+                    }, 2500);
                 }
             }, 300);
         } else {
