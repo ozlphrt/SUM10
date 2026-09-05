@@ -197,19 +197,41 @@ export class TowerRenderer {
         const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
 
         // 6-face material array: faces show the number texture
+        // Materials for faces: [right (+X), left (-X), top (+Y), bottom (-Y), front (+Z), back (-Z)]
         const materials = [];
-        for (let i = 0; i < 6; i++) {
-            materials.push(
-                new THREE.MeshStandardMaterial({
-                    map: texture,
-                    color: 0xffffff,
-                    roughness: 0.35,
-                    metalness: 0.15,
-                    emissive: new THREE.Color(palette.bg),
-                    emissiveIntensity: 0.05
-                })
-            );
-        }
+
+        // Determine repeats along respective axes so textures stay cubic and unstretched
+        const repeatX = block.orientation === 'X' ? block.length : 1;
+        const repeatY = block.orientation === 'Y' ? block.length : 1;
+        const repeatZ = block.orientation === 'Z' ? block.length : 1;
+
+        // Clone textures with appropriate repeats for different face orientations
+        const makeFaceMat = (repU, repV) => {
+            const faceTex = texture.clone();
+            faceTex.wrapS = THREE.RepeatWrapping;
+            faceTex.wrapT = THREE.RepeatWrapping;
+            faceTex.repeat.set(repU, repV);
+            faceTex.needsUpdate = true;
+
+            return new THREE.MeshStandardMaterial({
+                map: faceTex,
+                color: 0xffffff,
+                roughness: 0.35,
+                metalness: 0.15,
+                emissive: new THREE.Color(palette.bg),
+                emissiveIntensity: 0.05
+            });
+        };
+
+        // +X, -X faces (Z vs Y)
+        materials.push(makeFaceMat(repeatZ, repeatY));
+        materials.push(makeFaceMat(repeatZ, repeatY));
+        // +Y, -Y faces (X vs Z)
+        materials.push(makeFaceMat(repeatX, repeatZ));
+        materials.push(makeFaceMat(repeatX, repeatZ));
+        // +Z, -Z faces (X vs Y)
+        materials.push(makeFaceMat(repeatX, repeatY));
+        materials.push(makeFaceMat(repeatX, repeatY));
 
         const mesh = new THREE.Mesh(geometry, materials);
         mesh.castShadow = true;
