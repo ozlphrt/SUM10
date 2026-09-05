@@ -280,10 +280,10 @@ class Sum10Game {
 
     handleShuffle() {
         if (!this.topology || this.isProcessingMatch) return;
-        sound.playExplosion();
-        this.renderer.shakeCamera(0.5, 600);
+        sound.playShuffle();
+        this.renderer.shakeTower(420);
         this.topology.shuffleDeadlock();
-        this.renderer.setTopology(this.topology);
+        this.renderer.updateBlockValues(this.topology);
         if (this.btnShuffle) this.btnShuffle.style.display = 'none';
         this.showToast('🌋 Tower Quake! Blocks reshuffled with new clear pairs!', 2500);
     }

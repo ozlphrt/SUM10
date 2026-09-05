@@ -630,6 +630,84 @@ export class TowerRenderer {
     }
 
     /**
+     * Updates textures and models for active blocks in place without resetting scene or camera.
+     * @param {import('../topology/GridTopology.js').GridTopology} topology
+     */
+    updateBlockValues(topology) {
+        for (const [id, item] of this.blockMeshes.entries()) {
+            const block = topology.blocks.get(id);
+            if (!block) continue;
+            item.model = block;
+
+            const xCellsW = block.orientation === 'Z' ? block.length : 1;
+            const xCellsH = 1;
+            const texX = getBlockTexture(block.value, xCellsW, xCellsH, block.orientation, block.direction, block.type || 'normal');
+
+            const yCellsW = block.orientation === 'X' ? block.length : 1;
+            const yCellsH = block.orientation === 'Z' ? block.length : 1;
+            const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal');
+
+            const zCellsW = block.orientation === 'X' ? block.length : 1;
+            const zCellsH = 1;
+            const texZ = getBlockTexture(block.value, zCellsW, zCellsH, block.orientation, block.direction, block.type || 'normal');
+
+            item.materials[0].map = texX; item.materials[0].needsUpdate = true;
+            item.materials[1].map = texX; item.materials[1].needsUpdate = true;
+            item.materials[2].map = texY; item.materials[2].needsUpdate = true;
+            item.materials[3].map = texY; item.materials[3].needsUpdate = true;
+            item.materials[4].map = texZ; item.materials[4].needsUpdate = true;
+            item.materials[5].map = texZ; item.materials[5].needsUpdate = true;
+
+            const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
+            item.materials.forEach((m) => {
+                m.emissive.set(palette.bg);
+                m.emissiveIntensity = 0.02;
+            });
+        }
+    }
+
+    /**
+     * Physical tower quake: shakes all active blocks with random phases without disrupting the camera.
+     * @param {number} [durationMs=420]
+     */
+    shakeTower(durationMs = 420) {
+        const startTime = performance.now();
+        const initialOffsets = new Map();
+        for (const [id, item] of this.blockMeshes.entries()) {
+            initialOffsets.set(id, {
+                x: item.group.position.x,
+                z: item.group.position.z,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        const animateTowerQuake = () => {
+            const elapsed = performance.now() - startTime;
+            if (elapsed < durationMs) {
+                const decay = 1 - elapsed / durationMs;
+                for (const [id, item] of this.blockMeshes.entries()) {
+                    const init = initialOffsets.get(id);
+                    if (!init) continue;
+                    const wobble = Math.sin(elapsed * 0.07 + init.phase) * 0.09 * decay;
+                    item.group.position.x = init.x + (item.model.orientation === 'X' ? wobble : 0);
+                    item.group.position.z = init.z + (item.model.orientation === 'Z' ? wobble : 0);
+                }
+                requestAnimationFrame(animateTowerQuake);
+            } else {
+                for (const [id, item] of this.blockMeshes.entries()) {
+                    const init = initialOffsets.get(id);
+                    if (init) {
+                        item.group.position.x = init.x;
+                        item.group.position.z = init.z;
+                    }
+                }
+            }
+        };
+
+        requestAnimationFrame(animateTowerQuake);
+    }
+
+    /**
      * Shows a subtle glowing translucent corridor runway along the block's open exit path.
      * @param {any} block 
      * @param {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}} [exitInfo]

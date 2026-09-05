@@ -221,6 +221,21 @@ class SoundEffects {
     }
 
     /**
+     * Deadlock shuffle: crisp rapid cascade of physical tile shuffle clicks.
+     */
+    playShuffle() {
+        if (!this.enabled) return;
+        this._ensureAudio();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        for (let i = 0; i < 6; i++) {
+            const t = now + i * 0.045;
+            const freq = 1800 + Math.random() * 800;
+            this._createClick(t, freq, 0.015, 0.32);
+        }
+    }
+
+    /**
      * Level Complete: satisfying cascading domino clicks ending in a solid lock snap.
      */
     playLevelComplete() {
