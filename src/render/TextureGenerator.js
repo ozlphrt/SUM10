@@ -24,6 +24,154 @@ export const NUMBER_COLORS = {
     9: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' }
 };
 
+// 2. Shape Theme Palettes (Deep Obsidian/Sapphire/Emerald/Amber/Amethyst/Platinum/Cyan Luxury Gradients)
+export const SHAPE_PALETTES = {
+    circle: {
+        main: ['#3b82f6', '#1d4ed8', '#0f172a'],
+        glow: 'rgba(59, 130, 246, 0.45)',
+        accent: '#93c5fd',
+        name: 'Celestial Orb'
+    },
+    triangle: {
+        main: ['#10b981', '#047857', '#064e3b'],
+        glow: 'rgba(16, 185, 129, 0.45)',
+        accent: '#6ee7b7',
+        name: 'Emerald Prism'
+    },
+    square: {
+        main: ['#8b5cf6', '#6d28d9', '#4c1d95'],
+        glow: 'rgba(139, 92, 246, 0.45)',
+        accent: '#c4b5fd',
+        name: 'Amethyst Vault'
+    },
+    diamond: {
+        main: ['#06b6d4', '#0891b2', '#164e63'],
+        glow: 'rgba(6, 182, 212, 0.45)',
+        accent: '#a5f3fc',
+        name: 'Cyan Diamond'
+    },
+    star: {
+        main: ['#f59e0b', '#d97706', '#78350f'],
+        glow: 'rgba(245, 158, 11, 0.50)',
+        accent: '#fde68a',
+        name: 'Solar Star'
+    },
+    hexagon: {
+        main: ['#64748b', '#475569', '#1e293b'],
+        glow: 'rgba(100, 116, 139, 0.45)',
+        accent: '#cbd5e1',
+        name: 'Platinum Crest'
+    },
+    crescent: {
+        main: ['#38bdf8', '#0284c7', '#082f49'],
+        glow: 'rgba(56, 189, 248, 0.50)',
+        accent: '#e0f2fe',
+        name: 'Lunar Crescent'
+    },
+    pentagon: {
+        main: ['#14b8a6', '#0f766e', '#134e4a'],
+        glow: 'rgba(20, 184, 166, 0.45)',
+        accent: '#99f6e4',
+        name: 'Aegis Shield'
+    },
+    cross: {
+        main: ['#475569', '#334155', '#0f172a'],
+        glow: 'rgba(71, 85, 105, 0.50)',
+        accent: '#94a3b8',
+        name: 'Nordic Cross'
+    },
+    ring: {
+        main: ['#eab308', '#ca8a04', '#713f12'],
+        glow: 'rgba(234, 179, 8, 0.50)',
+        accent: '#fef08a',
+        name: 'Eternity Ring'
+    },
+    octagon: {
+        main: ['#0284c7', '#0369a1', '#0c4a6e'],
+        glow: 'rgba(2, 132, 199, 0.45)',
+        accent: '#bae6fd',
+        name: 'Cobalt Octagon'
+    },
+    heart: {
+        main: ['#6366f1', '#4f46e5', '#312e81'],
+        glow: 'rgba(99, 102, 241, 0.45)',
+        accent: '#c7d2fe',
+        name: 'Indigo Heart'
+    },
+    clover: {
+        main: ['#059669', '#047857', '#064e3b'],
+        glow: 'rgba(5, 150, 105, 0.45)',
+        accent: '#a7f3d0',
+        name: 'Verdant Clover'
+    },
+    infinity: {
+        main: ['#7c3aed', '#6d28d9', '#2e1065'],
+        glow: 'rgba(124, 58, 237, 0.45)',
+        accent: '#ddd6fe',
+        name: 'Infinity Loop'
+    },
+    spiral: {
+        main: ['#0ea5e9', '#0284c7', '#075985'],
+        glow: 'rgba(14, 165, 233, 0.45)',
+        accent: '#bae6fd',
+        name: 'Mystic Spiral'
+    },
+    hourglass: {
+        main: ['#d97706', '#b45309', '#451a03'],
+        glow: 'rgba(217, 119, 6, 0.45)',
+        accent: '#fde68a',
+        name: 'Chrono Hourglass'
+    },
+    teardrop: {
+        main: ['#2563eb', '#1d4ed8', '#1e3a8a'],
+        glow: 'rgba(37, 99, 235, 0.45)',
+        accent: '#bfdbfe',
+        name: 'Azure Teardrop'
+    },
+    shield: {
+        main: ['#334155', '#1e293b', '#0f172a'],
+        glow: 'rgba(51, 65, 85, 0.50)',
+        accent: '#cbd5e1',
+        name: 'Obsidian Shield'
+    },
+    compass: {
+        main: ['#d97706', '#92400e', '#451a03'],
+        glow: 'rgba(217, 119, 6, 0.45)',
+        accent: '#fde68a',
+        name: 'Runic Compass'
+    },
+    rhombus: {
+        main: ['#0d9488', '#0f766e', '#115e59'],
+        glow: 'rgba(13, 148, 136, 0.45)',
+        accent: '#99f6e4',
+        name: 'Teal Rhombus'
+    },
+    triskelion: {
+        main: ['#4f46e5', '#4338ca', '#1e1b4b'],
+        glow: 'rgba(79, 70, 229, 0.45)',
+        accent: '#c7d2fe',
+        name: 'Celtic Triskelion'
+    },
+    prism: {
+        main: ['#0284c7', '#0369a1', '#075985'],
+        glow: 'rgba(2, 132, 199, 0.45)',
+        accent: '#e0f2fe',
+        name: 'Ice Prism'
+    },
+    pillar: {
+        main: ['#475569', '#334155', '#1e293b'],
+        glow: 'rgba(71, 85, 105, 0.45)',
+        accent: '#e2e8f0',
+        name: 'Nordic Pillar'
+    },
+    vortex: {
+        main: ['#10b981', '#059669', '#022c22'],
+        glow: 'rgba(16, 185, 129, 0.45)',
+        accent: '#a7f3d0',
+        name: 'Emerald Vortex'
+    }
+};
+
 /**
  * Creates or retrieves a procedural shiny domino plastic canvas texture
  * with molded divider grooves, debossed charcoal numerals, and specular highlight.
@@ -165,154 +313,6 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.lineWidth = 1.2;
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
         ctx.stroke();
-
-        // 2. Shape Theme Palettes (Deep Obsidian/Sapphire/Emerald/Amber/Amethyst/Platinum/Cyan Luxury Gradients)
-        const SHAPE_PALETTES = {
-            circle: {
-                main: ['#3b82f6', '#1d4ed8', '#0f172a'],
-                glow: 'rgba(59, 130, 246, 0.45)',
-                accent: '#93c5fd',
-                name: 'Celestial Orb'
-            },
-            triangle: {
-                main: ['#10b981', '#047857', '#064e3b'],
-                glow: 'rgba(16, 185, 129, 0.45)',
-                accent: '#6ee7b7',
-                name: 'Emerald Prism'
-            },
-            square: {
-                main: ['#8b5cf6', '#6d28d9', '#4c1d95'],
-                glow: 'rgba(139, 92, 246, 0.45)',
-                accent: '#c4b5fd',
-                name: 'Amethyst Vault'
-            },
-            diamond: {
-                main: ['#06b6d4', '#0891b2', '#164e63'],
-                glow: 'rgba(6, 182, 212, 0.45)',
-                accent: '#a5f3fc',
-                name: 'Cyan Diamond'
-            },
-            star: {
-                main: ['#f59e0b', '#d97706', '#78350f'],
-                glow: 'rgba(245, 158, 11, 0.50)',
-                accent: '#fde68a',
-                name: 'Solar Star'
-            },
-            hexagon: {
-                main: ['#64748b', '#475569', '#1e293b'],
-                glow: 'rgba(100, 116, 139, 0.45)',
-                accent: '#cbd5e1',
-                name: 'Platinum Crest'
-            },
-            crescent: {
-                main: ['#38bdf8', '#0284c7', '#082f49'],
-                glow: 'rgba(56, 189, 248, 0.50)',
-                accent: '#e0f2fe',
-                name: 'Lunar Crescent'
-            },
-            pentagon: {
-                main: ['#14b8a6', '#0f766e', '#134e4a'],
-                glow: 'rgba(20, 184, 166, 0.45)',
-                accent: '#99f6e4',
-                name: 'Aegis Shield'
-            },
-            cross: {
-                main: ['#475569', '#334155', '#0f172a'],
-                glow: 'rgba(71, 85, 105, 0.50)',
-                accent: '#94a3b8',
-                name: 'Nordic Cross'
-            },
-            ring: {
-                main: ['#eab308', '#ca8a04', '#713f12'],
-                glow: 'rgba(234, 179, 8, 0.50)',
-                accent: '#fef08a',
-                name: 'Eternity Ring'
-            },
-            octagon: {
-                main: ['#0284c7', '#0369a1', '#0c4a6e'],
-                glow: 'rgba(2, 132, 199, 0.45)',
-                accent: '#bae6fd',
-                name: 'Cobalt Octagon'
-            },
-            heart: {
-                main: ['#6366f1', '#4f46e5', '#312e81'],
-                glow: 'rgba(99, 102, 241, 0.45)',
-                accent: '#c7d2fe',
-                name: 'Indigo Heart'
-            },
-            clover: {
-                main: ['#059669', '#047857', '#064e3b'],
-                glow: 'rgba(5, 150, 105, 0.45)',
-                accent: '#a7f3d0',
-                name: 'Verdant Clover'
-            },
-            infinity: {
-                main: ['#7c3aed', '#6d28d9', '#2e1065'],
-                glow: 'rgba(124, 58, 237, 0.45)',
-                accent: '#ddd6fe',
-                name: 'Infinity Loop'
-            },
-            spiral: {
-                main: ['#0ea5e9', '#0284c7', '#075985'],
-                glow: 'rgba(14, 165, 233, 0.45)',
-                accent: '#bae6fd',
-                name: 'Mystic Spiral'
-            },
-            hourglass: {
-                main: ['#d97706', '#b45309', '#451a03'],
-                glow: 'rgba(217, 119, 6, 0.45)',
-                accent: '#fde68a',
-                name: 'Chrono Hourglass'
-            },
-            teardrop: {
-                main: ['#2563eb', '#1d4ed8', '#1e3a8a'],
-                glow: 'rgba(37, 99, 235, 0.45)',
-                accent: '#bfdbfe',
-                name: 'Azure Teardrop'
-            },
-            shield: {
-                main: ['#334155', '#1e293b', '#0f172a'],
-                glow: 'rgba(51, 65, 85, 0.50)',
-                accent: '#cbd5e1',
-                name: 'Obsidian Shield'
-            },
-            compass: {
-                main: ['#d97706', '#92400e', '#451a03'],
-                glow: 'rgba(217, 119, 6, 0.45)',
-                accent: '#fef08a',
-                name: 'Runic Compass'
-            },
-            rhombus: {
-                main: ['#0d9488', '#0f766e', '#115e59'],
-                glow: 'rgba(13, 148, 136, 0.45)',
-                accent: '#99f6e4',
-                name: 'Teal Rhombus'
-            },
-            triskelion: {
-                main: ['#4f46e5', '#4338ca', '#1e1b4b'],
-                glow: 'rgba(79, 70, 229, 0.45)',
-                accent: '#c7d2fe',
-                name: 'Celtic Triskelion'
-            },
-            prism: {
-                main: ['#0284c7', '#0369a1', '#075985'],
-                glow: 'rgba(2, 132, 199, 0.45)',
-                accent: '#e0f2fe',
-                name: 'Ice Prism'
-            },
-            pillar: {
-                main: ['#475569', '#334155', '#1e293b'],
-                glow: 'rgba(71, 85, 105, 0.45)',
-                accent: '#e2e8f0',
-                name: 'Nordic Pillar'
-            },
-            vortex: {
-                main: ['#10b981', '#059669', '#022c22'],
-                glow: 'rgba(16, 185, 129, 0.45)',
-                accent: '#a7f3d0',
-                name: 'Emerald Vortex'
-            }
-        };
 
         const theme = SHAPE_PALETTES[value] || SHAPE_PALETTES.circle;
 

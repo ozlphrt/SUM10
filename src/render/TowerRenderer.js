@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { getBlockTexture, NUMBER_COLORS } from './TextureGenerator.js';
+import { getBlockTexture, NUMBER_COLORS, SHAPE_PALETTES } from './TextureGenerator.js';
 
 const LEVEL_THEMES = [
     {
@@ -1333,8 +1333,17 @@ export class TowerRenderer {
             const flySpeed = 46.0;
 
             // Spawn soft pastel shimmer particles shooting along exit vector
-            const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
-            const particleColor = item.model.type === 'wild' ? '#facc15' : (item.model.type === 'bomb' ? '#f87171' : palette.border);
+            let particleColor;
+            if (item.model.type === 'wild') {
+                particleColor = '#facc15';
+            } else if (item.model.type === 'bomb') {
+                particleColor = '#f87171';
+            } else if (typeof item.model.value === 'string' && SHAPE_PALETTES && SHAPE_PALETTES[item.model.value]) {
+                particleColor = SHAPE_PALETTES[item.model.value].accent || SHAPE_PALETTES[item.model.value].main[0];
+            } else {
+                const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
+                particleColor = palette.border;
+            }
             this.spawnSlideShimmer(item.group.position, dir, particleColor);
 
             // Strictly horizontal velocity along the long axis
@@ -1613,7 +1622,36 @@ export class TowerRenderer {
 
 
 
-        // Gentle celestial globe dome rotation
+        // Dynamic jewel luminescence & organic breathing pulse for shapes in Shapes mode
+        const now = performance.now();
+        for (const item of this.blockMeshes.values()) {
+            if (!item || !item.model) continue;
+            const val = item.model.value;
+            if (typeof val === 'string' && SHAPE_PALETTES && SHAPE_PALETTES[val]) {
+                // If block is selected, maintain its vibrant sky blue highlight
+                if (item.isSelected) continue;
+
+                const palette = SHAPE_PALETTES[val];
+                // Smooth sinusoidal breathing wave with unique phase offset per block
+                const phase = (item.model.id ? (typeof item.model.id === 'string' ? item.model.id.charCodeAt(0) : item.model.id) : 0) * 0.85;
+                const wave = Math.sin(now * 0.0028 + phase); // ~2.2s gentle cycle
+                const pulse = 0.5 + 0.5 * wave; // 0.0 to 1.0
+
+                // Oscillate emissive jewel glow between subtle aura and luminous gleam
+                const emissiveIntensity = 0.05 + pulse * 0.18; // 0.05 -> 0.23
+                const glowHex = palette.main[0] || palette.accent;
+
+                if (item.materials) {
+                    for (let m = 0; m < item.materials.length; m++) {
+                        const mat = item.materials[m];
+                        if (mat.emissive) {
+                            mat.emissive.set(glowHex);
+                            mat.emissiveIntensity = emissiveIntensity;
+                        }
+                    }
+                }
+            }
+        }
         if (this.globeDome) {
             this.globeDome.rotation.y += dt * 0.012;
         }
