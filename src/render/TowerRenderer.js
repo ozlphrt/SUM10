@@ -145,6 +145,153 @@ export class TowerRenderer {
         this.rimLight = new THREE.DirectionalLight(0x93c5fd, 0.55);
         this.rimLight.position.set(-16, 14, -16);
         this.scene.add(this.rimLight);
+
+        // 5. Celestial Globe Dome Sphere surrounding the tower
+        this._initGlobeDome();
+    }
+
+    /**
+     * Creates a spherical celestial / atmospheric globe surrounding the tower.
+     * BackSide-rendered with procedurally textured latitude/longitude graticules,
+     * glowing polar vortex rings, subtle constellations, and theme-matching atmosphere.
+     */
+    _initGlobeDome() {
+        const radius = 60;
+        const globeGeo = new THREE.SphereGeometry(radius, 48, 36);
+        const globeTex = this._createGlobeTexture();
+
+        const globeMat = new THREE.MeshBasicMaterial({
+            map: globeTex,
+            side: THREE.BackSide,
+            depthWrite: false
+        });
+
+        this.globeDome = new THREE.Mesh(globeGeo, globeMat);
+        this.globeDome.position.set(0, 0, 0);
+        this.scene.add(this.globeDome);
+    }
+
+    _createGlobeTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Base atmospheric celestial gradient (zenith to horizon to nadir)
+        let topColor = '#06281e';
+        let midColor = '#0d3d30';
+        let horizonColor = '#0a2f24';
+        let nadirColor = '#03140e';
+        let gridColor = 'rgba(110, 231, 183, 0.16)';
+        let starColor = 'rgba(255, 255, 255, 0.55)';
+
+        if (this.isDarkTheme) {
+            topColor = '#020b08';
+            midColor = '#051812';
+            horizonColor = '#03120d';
+            nadirColor = '#010504';
+            gridColor = 'rgba(52, 211, 153, 0.14)';
+            starColor = 'rgba(255, 255, 255, 0.45)';
+        }
+
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+        bgGrad.addColorStop(0.0, topColor);
+        bgGrad.addColorStop(0.35, midColor);
+        bgGrad.addColorStop(0.5, horizonColor);
+        bgGrad.addColorStop(0.8, midColor);
+        bgGrad.addColorStop(1.0, nadirColor);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Spherical Globe Graticules: Parallels of Latitude (horizontal rings)
+        ctx.lineWidth = 1.8;
+        const latSteps = 16;
+        for (let i = 1; i < latSteps; i++) {
+            const y = (i / latSteps) * h;
+            const isEquator = i === latSteps / 2;
+            ctx.strokeStyle = isEquator ? 'rgba(254, 240, 138, 0.32)' : gridColor;
+            ctx.lineWidth = isEquator ? 3.0 : 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+        }
+
+        // Spherical Globe Graticules: Meridians of Longitude (vertical elliptical arcs)
+        const lonSteps = 24;
+        ctx.lineWidth = 1.5;
+        for (let j = 0; j < lonSteps; j++) {
+            const x = (j / lonSteps) * w;
+            const isPrime = j === 0 || j === lonSteps / 2;
+            ctx.strokeStyle = isPrime ? 'rgba(254, 240, 138, 0.28)' : gridColor;
+            ctx.lineWidth = isPrime ? 2.5 : 1.2;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+        }
+
+        // Concentric Armillary Globe Rings / Polar Vortex Highlights (top and bottom poles)
+        const drawPolarRings = (cy, baseRadius, color) => {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.0;
+            [0.2, 0.45, 0.75].forEach(scale => {
+                ctx.beginPath();
+                ctx.ellipse(w / 2, cy, w * scale * 0.42, 60 * scale, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+            ctx.restore();
+        };
+        drawPolarRings(90, 80, 'rgba(167, 243, 208, 0.22)');
+        drawPolarRings(h - 90, 80, 'rgba(110, 231, 183, 0.15)');
+
+        // Ambient stardust / celestial points scattered across the sphere
+        // Seeded pseudorandom for deterministic star placement
+        let seed = 42;
+        const random = () => {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        };
+
+        for (let s = 0; s < 280; s++) {
+            const sx = random() * w;
+            const sy = random() * h;
+            const sr = 0.8 + random() * 1.8;
+            const sAlpha = 0.2 + random() * 0.65;
+            ctx.fillStyle = starColor.replace(/[\d.]+\)$/, `${sAlpha})`);
+            ctx.beginPath();
+            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rare sparkling star with micro-cross lens flare
+            if (s % 18 === 0) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(sx - sr * 3, sy);
+                ctx.lineTo(sx + sr * 3, sy);
+                ctx.moveTo(sx, sy - sr * 3);
+                ctx.lineTo(sx, sy + sr * 3);
+                ctx.stroke();
+            }
+        }
+
+        // Soft equatorial glowing aura belt
+        const auraGrad = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.58);
+        auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+        auraGrad.addColorStop(0.5, 'rgba(110, 231, 183, 0.08)');
+        auraGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = auraGrad;
+        ctx.fillRect(0, h * 0.42, w, h * 0.16);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        return tex;
     }
 
     /**
@@ -224,6 +371,12 @@ export class TowerRenderer {
      */
     setTheme(isDark = false) {
         this.isDarkTheme = isDark;
+        if (this.globeDome && this.globeDome.material) {
+            const oldTex = this.globeDome.material.map;
+            this.globeDome.material.map = this._createGlobeTexture();
+            this.globeDome.material.needsUpdate = true;
+            if (oldTex) oldTex.dispose();
+        }
         this.applyLevelTheme(this.currentLevel || 1);
     }
 
@@ -1411,6 +1564,11 @@ export class TowerRenderer {
         }
 
 
+
+        // Gentle celestial globe dome rotation
+        if (this.globeDome) {
+            this.globeDome.rotation.y += dt * 0.012;
+        }
 
         this.renderer.render(this.scene, this.camera);
     }
