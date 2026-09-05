@@ -76,15 +76,17 @@ class Sum10Game {
         }
 
         if (this.iconSound) {
-            this.iconSound.textContent = sound.enabled ? '🔊' : '🔇';
+            this.iconSound.textContent = sound.getIcon();
         }
         if (this.btnSound) {
+            this.btnSound.title = `Audio: ${sound.getLabel()} (Click to cycle)`;
             this.btnSound.addEventListener('click', () => {
-                const isEnabled = sound.toggle();
+                sound.cycleMode();
                 if (this.iconSound) {
-                    this.iconSound.textContent = isEnabled ? '🔊' : '🔇';
+                    this.iconSound.textContent = sound.getIcon();
                 }
-                this.showToast(isEnabled ? '🔊 Sound effects ON' : '🔇 Sound effects OFF', 1200);
+                this.btnSound.title = `Audio: ${sound.getLabel()} (Click to cycle)`;
+                this.showToast(`${sound.getIcon()} Audio: ${sound.getLabel()}`, 1400);
             });
         }
 

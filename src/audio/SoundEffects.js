@@ -2,25 +2,67 @@
  * Tactile ASMR Clicky Sound Engine for SUM10.
  * Purely physical, acoustic, and mechanical clicks, snaps, and tile taps.
  * Zero video-game synth bells or arcade chimes.
+ * 
+ * Supports presets:
+ * - 'crisp': Crisp ASMR ceramic switch & tile clicks (default)
+ * - 'muted': Soft, warm tactile felt & wood micro-taps
+ * - 'off': Silent
  */
 class SoundEffects {
     constructor() {
         this.ctx = null;
-        this.enabled = (function() {
+        this.mode = (function() {
             try {
-                return localStorage.getItem('sum10_audio') !== 'false';
+                const saved = localStorage.getItem('sum10_audio_preset');
+                if (saved === 'muted' || saved === 'off' || saved === 'crisp') return saved;
+                // Backwards compatibility with old boolean
+                const oldBool = localStorage.getItem('sum10_audio');
+                if (oldBool === 'false') return 'off';
+                return 'crisp';
             } catch (_) {
-                return true;
+                return 'crisp';
             }
         })();
     }
 
-    toggle() {
-        this.enabled = !this.enabled;
+    get enabled() {
+        return this.mode !== 'off';
+    }
+
+    getIcon() {
+        if (this.mode === 'crisp') return '🔊';
+        if (this.mode === 'muted') return '🔉';
+        return '🔇';
+    }
+
+    getLabel() {
+        if (this.mode === 'crisp') return 'Crisp Ceramic ASMR';
+        if (this.mode === 'muted') return 'Soft Felt / Muted';
+        return 'Audio Off';
+    }
+
+    cycleMode() {
+        if (this.mode === 'crisp') {
+            this.mode = 'muted';
+        } else if (this.mode === 'muted') {
+            this.mode = 'off';
+        } else {
+            this.mode = 'crisp';
+        }
         try {
-            localStorage.setItem('sum10_audio', String(this.enabled));
+            localStorage.setItem('sum10_audio_preset', this.mode);
+            localStorage.setItem('sum10_audio', String(this.mode !== 'off'));
         } catch (_) {}
-        return this.enabled;
+
+        if (this.mode !== 'off') {
+            this._ensureAudio();
+            this.playSelect(1);
+        }
+        return this.mode;
+    }
+
+    toggle() {
+        return this.cycleMode();
     }
 
     _ensureAudio() {
@@ -39,40 +81,52 @@ class SoundEffects {
     /**
      * Core micro-click generator: synthesizes a crisp tactile mechanical impulse
      * + high-frequency friction snap (like a mechanical switch or ceramic tile impact).
+     * In 'muted' mode, softens into a warm, gentle felt micro-tap.
      */
     _createClick(time, freq = 2400, duration = 0.016, volume = 0.35) {
-        if (!this.ctx) return;
+        if (this.mode === 'off' || !this.ctx) return;
 
-        // 1. Sharp physical impulse transient
+        const isMuted = this.mode === 'muted';
+        const actualFreq = isMuted ? freq * 0.58 : freq;
+        const actualVol = isMuted ? volume * 0.55 : volume;
+        const actualDur = isMuted ? duration * 0.85 : duration;
+
+        // 1. Physical impulse transient
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, time);
-        osc.frequency.exponentialRampToValueAtTime(freq * 0.25, time + duration);
-        gain.gain.setValueAtTime(volume, time);
-        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+        osc.type = isMuted ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(actualFreq, time);
+        osc.frequency.exponentialRampToValueAtTime(actualFreq * 0.28, time + actualDur);
+        gain.gain.setValueAtTime(actualVol, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + actualDur);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
         osc.start(time);
-        osc.stop(time + duration);
+        osc.stop(time + actualDur);
 
-        // 2. Friction texture burst (dry micro-snap)
-        const bufLen = Math.max(16, Math.floor(this.ctx.sampleRate * duration));
+        // 2. Friction texture burst (micro-snap in crisp, soft felt contact in muted)
+        const bufLen = Math.max(16, Math.floor(this.ctx.sampleRate * actualDur));
         const buf = this.ctx.createBuffer(1, bufLen, this.ctx.sampleRate);
         const data = buf.getChannelData(0);
+        const decayRate = isMuted ? 0.002 : 0.0035;
         for (let i = 0; i < bufLen; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.0035));
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * decayRate));
         }
         const noise = this.ctx.createBufferSource();
         noise.buffer = buf;
 
         const filter = this.ctx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.setValueAtTime(1400, time);
+        if (isMuted) {
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(850, time);
+        } else {
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(1400, time);
+        }
 
         const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(volume * 0.65, time);
-        noiseGain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+        noiseGain.gain.setValueAtTime(actualVol * (isMuted ? 0.35 : 0.65), time);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, time + actualDur);
 
         noise.connect(filter);
         filter.connect(noiseGain);
@@ -135,7 +189,8 @@ class SoundEffects {
         this._createClick(now + 0.010, bodyFreq, 0.018, 0.36);
 
         // Fast dry air whoosh
-        const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
+        const isMuted = this.mode === 'muted';
+        const bufferSize = Math.floor(this.ctx.sampleRate * (isMuted ? 0.08 : 0.12));
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -145,12 +200,12 @@ class SoundEffects {
         noise.buffer = buffer;
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1100, now);
-        filter.frequency.exponentialRampToValueAtTime(320, now + 0.12);
+        filter.frequency.setValueAtTime(isMuted ? 750 : 1100, now);
+        filter.frequency.exponentialRampToValueAtTime(isMuted ? 200 : 320, now + (isMuted ? 0.08 : 0.12));
         filter.Q.setValueAtTime(1.8, now);
         const gainNoise = this.ctx.createGain();
-        gainNoise.gain.setValueAtTime(0.28, now);
-        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        gainNoise.gain.setValueAtTime(isMuted ? 0.15 : 0.28, now);
+        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + (isMuted ? 0.08 : 0.12));
         noise.connect(filter);
         filter.connect(gainNoise);
         gainNoise.connect(this.ctx.destination);
@@ -193,12 +248,13 @@ class SoundEffects {
         this._createClick(now, contactFreq, 0.016, 0.32);
 
         // Low solid shelf body tap
+        const isMuted = this.mode === 'muted';
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(bodyFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(70, now + 0.032);
-        gain.gain.setValueAtTime(0.26, now);
+        osc.type = isMuted ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(bodyFreq * (isMuted ? 0.8 : 1.0), now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.032);
+        gain.gain.setValueAtTime(isMuted ? 0.16 : 0.26, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.032);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
@@ -207,7 +263,7 @@ class SoundEffects {
     }
 
     /**
-     * Wildcard activation: 3 rapid precision ratchet micro-clicks (like a mechanical watch winding).
+     * Wildcard activation: rapid precision ratchet micro-clicks (like a mechanical watch winding).
      */
     playWildChime() {
         if (!this.enabled) return;
