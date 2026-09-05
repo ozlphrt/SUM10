@@ -8,6 +8,7 @@ class Sum10Game {
         this.container = document.getElementById('canvas-container');
         this.levelElem = document.getElementById('val-level');
         this.scoreElem = document.getElementById('val-score');
+        this.bestElem = document.getElementById('val-best');
         this.remainingElem = document.getElementById('val-remaining');
         this.slot1Elem = document.getElementById('slot-1');
         this.slot2Elem = document.getElementById('slot-2');
@@ -15,8 +16,13 @@ class Sum10Game {
         this.btnNewGame = document.getElementById('btn-new-game');
         this.btnShuffle = document.getElementById('btn-shuffle');
 
-        this.currentLevel = 1;
-        this.score = 0;
+        // Progress & High Score state loaded from localStorage
+        const saved = this._loadProgress();
+        this.currentLevel = saved.currentLevel || 1;
+        this.score = saved.score || 0;
+        this.highScore = saved.highScore || 0;
+        this.highestLevel = saved.highestLevel || 1;
+
         this.topology = null;
         this.selectedBlock = null;
         this.isProcessingMatch = false;
@@ -31,14 +37,39 @@ class Sum10Game {
         });
 
         this.btnNewGame.addEventListener('click', () => {
-            this.currentLevel = 1;
-            this.score = 0;
-            this.startLevel(this.currentLevel);
+            if (confirm('Start a new game from Level 1? Your high score will be kept.')) {
+                this.currentLevel = 1;
+                this.score = 0;
+                this._saveProgress();
+                this.startLevel(this.currentLevel);
+            }
         });
 
         this.btnShuffle.addEventListener('click', () => this.handleShuffle());
 
         this.startLevel(this.currentLevel);
+    }
+
+    _loadProgress() {
+        try {
+            const data = localStorage.getItem('sum10_progress');
+            return data ? JSON.parse(data) : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    _saveProgress() {
+        try {
+            this.highScore = Math.max(this.highScore, this.score);
+            this.highestLevel = Math.max(this.highestLevel, this.currentLevel);
+            localStorage.setItem('sum10_progress', JSON.stringify({
+                currentLevel: this.currentLevel,
+                score: this.score,
+                highScore: this.highScore,
+                highestLevel: this.highestLevel
+            }));
+        } catch (_) {}
     }
 
     showToast(message, duration = 1800) {
@@ -94,7 +125,9 @@ class Sum10Game {
     updateStats() {
         if (this.levelElem) this.levelElem.textContent = String(this.currentLevel);
         if (this.scoreElem) this.scoreElem.textContent = String(this.score);
+        if (this.bestElem) this.bestElem.textContent = String(Math.max(this.highScore, this.score));
         if (this.remainingElem) this.remainingElem.textContent = String(this.topology.blocks.size);
+        this._saveProgress();
     }
 
     _updateSelectionUI(val1 = null, val2 = null) {
