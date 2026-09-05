@@ -373,10 +373,9 @@ class Sum10Game {
         const first = this.selectedBlock;
         const second = block;
 
-        // If player taps a block that is not adjacent to the first selection,
-        // seamlessly switch selection to the newly clicked block as the new active block!
-        const isAdjacent = this.topology.areBlocksAdjacent(first, second);
-        if (!isAdjacent) {
+        // Check if the two blocks can be paired (adjacent, or isolated without neighbors, or endgame with <= 2 blocks)
+        const canPair = this.topology.canBlocksBePaired(first, second);
+        if (!canPair) {
             this.renderer.setBlockSelected(first.id, false);
             this.topology.canBlockSlideOut(second);
             this.selectedBlock = second;
@@ -387,7 +386,7 @@ class Sum10Game {
             return;
         }
 
-        // Adjacent partner tapped -> evaluate pair
+        // Partner tapped -> evaluate pair
         this.renderer.hideExitBeam();
         this.renderer.setBlockSelected(second.id, true);
         this.movesCount++;

@@ -793,8 +793,10 @@ export class TowerRenderer {
         group.add(mesh);
         this.scene.add(group);
 
-        this.blockMeshes.set(block.id, { model: block, group, mesh, materials });
+        const restingPosition = group.position.clone();
+        this.blockMeshes.set(block.id, { model: block, group, mesh, materials, restingPosition });
     }
+
 
     /**
      * Highlights or unhighlights a block with 3D physical elevation & glow.
@@ -1226,7 +1228,7 @@ export class TowerRenderer {
                     if (anim.mesh) {
                         anim.mesh.scale.set(1.0, 1.0, 1.0);
                     }
-                    const item = this.blockMeshes.get(anim.group.children[0]?.userData?.blockId);
+                    const item = this.blockMeshes.get(anim.block?.id);
                     if (item) {
                         item.restingPosition = anim.group.position.clone();
                     }

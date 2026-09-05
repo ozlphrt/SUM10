@@ -167,6 +167,26 @@ export class GridTopology {
     }
 
     /**
+     * Determines whether two blocks can be paired:
+     * 1. Physically adjacent in 3D, OR
+     * 2. Only 2 blocks remain on the entire board, OR
+     * 3. Either block has no remaining adjacent neighbors on the board (isolated blocks).
+     * @param {BlockModel} blockA 
+     * @param {BlockModel} blockB 
+     * @returns {boolean}
+     */
+    canBlocksBePaired(blockA, blockB) {
+        if (!blockA || !blockB || blockA.id === blockB.id) return false;
+        if (this.areBlocksAdjacent(blockA, blockB)) return true;
+        if (this.blocks.size <= 2) return true;
+        const neighborsA = this.getNeighborBlocks(blockA.id);
+        const neighborsB = this.getNeighborBlocks(blockB.id);
+        if (neighborsA.size === 0 || neighborsB.size === 0) return true;
+        return false;
+    }
+
+
+    /**
      * Simulates downward gravity fall for any blocks that have lost support.
      * Iterates from bottom to top so lower drops happen first.
      * @returns {Array<{ block: BlockModel, oldGridY: number, newGridY: number, dropLayers: number }>}
@@ -389,13 +409,13 @@ export class GridTopology {
         const clearBlocks = active.filter((b) => this.canBlockSlideOut(b).canExit);
         if (clearBlocks.length < 2) return false;
 
-        // Check if any two clear blocks are adjacent and form a valid match
+        // Check if any two clear blocks can be paired and form a valid match
         for (let i = 0; i < clearBlocks.length; i++) {
             for (let j = i + 1; j < clearBlocks.length; j++) {
                 const b1 = clearBlocks[i];
                 const b2 = clearBlocks[j];
-                // Both must be physically adjacent in 3D
-                if (this.areBlocksAdjacent(b1, b2)) {
+                // Both must be pairable (physically adjacent or isolated/endgame)
+                if (this.canBlocksBePaired(b1, b2)) {
                     if (b1.type === 'wild' || b2.type === 'wild') return true;
                     if (b1.value + b2.value === 10) return true;
                 }
@@ -407,7 +427,7 @@ export class GridTopology {
 
     /**
      * Shuffles values among remaining blocks to break deadlocks and guarantee
-     * that at least one clear exit pair is adjacent and sums to 10.
+     * that at least one clear exit pair can be paired and sums to 10.
      */
     shuffleDeadlock() {
         const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
@@ -419,10 +439,10 @@ export class GridTopology {
         const pairedIds = new Set();
         let paired = false;
 
-        // 1. First priority: look for two unblocked blocks that are physically adjacent
+        // 1. First priority: look for two unblocked blocks that can be paired (adjacent or isolated)
         for (let i = 0; i < clearBlocks.length; i++) {
             for (let j = i + 1; j < clearBlocks.length; j++) {
-                if (this.areBlocksAdjacent(clearBlocks[i], clearBlocks[j])) {
+                if (this.canBlocksBePaired(clearBlocks[i], clearBlocks[j])) {
                     const v1 = Math.floor(Math.random() * 9) + 1;
                     clearBlocks[i].value = v1;
                     clearBlocks[j].value = 10 - v1;
@@ -435,7 +455,7 @@ export class GridTopology {
             if (paired) break;
         }
 
-        // 2. If no two clear blocks are mutually adjacent, pair an unblocked block with its adjacent neighbor
+        // 2. If no two clear blocks are mutually pairable, pair an unblocked block with its adjacent neighbor
         if (!paired && clearBlocks.length > 0) {
             for (const b1 of clearBlocks) {
                 const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
@@ -450,6 +470,18 @@ export class GridTopology {
                     break;
                 }
             }
+        }
+
+        // 2b. If still not paired and at least 2 clear blocks exist, force-pair any two clear blocks to 10
+        if (!paired && clearBlocks.length >= 2) {
+            const b1 = clearBlocks[0];
+            const b2 = clearBlocks[1];
+            const v1 = Math.floor(Math.random() * 9) + 1;
+            b1.value = v1;
+            b2.value = 10 - v1;
+            pairedIds.add(b1.id);
+            pairedIds.add(b2.id);
+            paired = true;
         }
 
         // 3. Shuffle values of remaining active blocks in adjacent pairs, strictly excluding already paired blocks
