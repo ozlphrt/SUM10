@@ -290,17 +290,26 @@ export class GridTopology {
     }
 
     /**
-     * Checks if a block has an unobstructed path to slide out of the tower
-     * bidirectionally along its long axis (either positive or negative direction).
+     * Checks if a block has an unobstructed path to slide out of the tower:
+     * - Single cell blocks (length 1) can move in all four horizontal directions (+X, -X, +Z, -Z), upon availability.
+     * - Multi-cell blocks (length 2 or 3) move strictly along their long axis.
      * Automatically assigns the clearer/shorter escape direction to the block.
      * @param {BlockModel} block 
      * @returns {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}}
      */
     canBlockSlideOut(block) {
-        // Evaluate both directions along the block's long axis
-        const axisDirs = (block.orientation === 'X')
-            ? [{ x: -1, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }]
-            : [{ x: 0, y: 0, z: -1 }, { x: 0, y: 0, z: 1 }];
+        // Single cell blocks can move all four horizontal directions (+X, -X, +Z, -Z), upon availability.
+        // Multi-cell blocks move strictly along their long axis.
+        const axisDirs = (block.length === 1)
+            ? [
+                { x: 1, y: 0, z: 0 },
+                { x: -1, y: 0, z: 0 },
+                { x: 0, y: 0, z: 1 },
+                { x: 0, y: 0, z: -1 }
+              ]
+            : ((block.orientation === 'X')
+                ? [{ x: -1, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }]
+                : [{ x: 0, y: 0, z: -1 }, { x: 0, y: 0, z: 1 }]);
 
         const candidateResults = axisDirs.map((dir) => ({
             dir,
@@ -310,7 +319,7 @@ export class GridTopology {
         const clearResults = candidateResults.filter((r) => r.canExit);
 
         if (clearResults.length > 0) {
-            // If both directions are clear, choose the path with fewer steps to exit (closer to edge)
+            // If multiple directions are clear, choose the path with fewer steps to exit (closer to edge)
             clearResults.sort((a, b) => a.stepsToExit - b.stepsToExit);
             block.direction = { ...clearResults[0].dir };
             return {
@@ -320,7 +329,7 @@ export class GridTopology {
             };
         }
 
-        // If blocked in both directions, pick direction with the longest clearance for shake/nudge
+        // If blocked in all directions, pick direction with the longest clearance for shake/nudge
         candidateResults.sort((a, b) => b.stepsToExit - a.stepsToExit);
         block.direction = { ...candidateResults[0].dir };
         return {

@@ -158,40 +158,84 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.shadowBlur = 0;
     }
 
-    // Bidirectional molded indicator arrow
-    ctx.save();
-    let arrowX = width / 2;
-    let arrowY = height - 34;
-    let angle = 0;
+    // Directional molded indicator arrows
+    if (cellsW === 1 && cellsH === 1) {
+        // 4-way omnidirectional molded arrow indicator for single-cell blocks
+        ctx.save();
+        ctx.translate(width / 2, height - 32);
+        ctx.fillStyle = '#64748b';
+        ctx.globalAlpha = 0.55;
 
-    if (cellsH > cellsW) {
-        angle = Math.PI / 2;
-        arrowX = width / 2;
-        arrowY = height / 2 + 104;
+        // Draw neat 4-way directional cross with 4 arrowheads (+X, -X, +Z, -Z)
+        const arm = 13;
+        const head = 5;
+        const stem = 2.5;
+
+        ctx.beginPath();
+        // +X (Right tip)
+        ctx.moveTo(arm, 0);
+        ctx.lineTo(arm - head, -stem - 2.5);
+        ctx.lineTo(arm - head, -stem);
+        // Up arm (-Z)
+        ctx.lineTo(stem, -stem);
+        ctx.lineTo(stem, -(arm - head));
+        ctx.lineTo(stem + 2.5, -(arm - head));
+        ctx.lineTo(0, -arm); // Top tip
+        ctx.lineTo(-stem - 2.5, -(arm - head));
+        ctx.lineTo(-stem, -(arm - head));
+        ctx.lineTo(-stem, -stem);
+        // Left arm (-X)
+        ctx.lineTo(-(arm - head), -stem);
+        ctx.lineTo(-(arm - head), -stem - 2.5);
+        ctx.lineTo(-arm, 0); // Left tip
+        ctx.lineTo(-(arm - head), stem + 2.5);
+        ctx.lineTo(-(arm - head), stem);
+        // Down arm (+Z)
+        ctx.lineTo(-stem, stem);
+        ctx.lineTo(-stem, arm - head);
+        ctx.lineTo(-stem - 2.5, arm - head);
+        ctx.lineTo(0, arm); // Bottom tip
+        ctx.lineTo(stem + 2.5, arm - head);
+        ctx.lineTo(stem, arm - head);
+        ctx.lineTo(stem, stem);
+        // Back to Right (+X)
+        ctx.lineTo(arm - head, stem);
+        ctx.lineTo(arm - head, stem + 2.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
     } else {
-        angle = (orientation === 'Z' && cellsW === 1 && cellsH === 1) ? Math.PI / 2 : 0;
+        // Bidirectional molded indicator arrow for multi-cell blocks along long axis
+        ctx.save();
+        let arrowX = width / 2;
+        let arrowY = height - 34;
+        let angle = (cellsH > cellsW) ? Math.PI / 2 : 0;
+
+        if (cellsH > cellsW) {
+            arrowY = height / 2 + 104;
+        }
+
+        ctx.translate(arrowX, arrowY);
+        ctx.rotate(angle);
+
+        ctx.fillStyle = '#64748b';
+        ctx.globalAlpha = 0.50;
+
+        ctx.beginPath();
+        ctx.moveTo(16, 0);
+        ctx.lineTo(9, -6);
+        ctx.lineTo(9, -2.5);
+        ctx.lineTo(-9, -2.5);
+        ctx.lineTo(-9, -6);
+        ctx.lineTo(-16, 0);
+        ctx.lineTo(-9, 6);
+        ctx.lineTo(-9, 2.5);
+        ctx.lineTo(9, 2.5);
+        ctx.lineTo(9, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
     }
-
-    ctx.translate(arrowX, arrowY);
-    ctx.rotate(angle);
-
-    ctx.fillStyle = '#64748b';
-    ctx.globalAlpha = 0.50;
-
-    ctx.beginPath();
-    ctx.moveTo(16, 0);
-    ctx.lineTo(9, -6);
-    ctx.lineTo(9, -2.5);
-    ctx.lineTo(-9, -2.5);
-    ctx.lineTo(-9, -6);
-    ctx.lineTo(-16, 0);
-    ctx.lineTo(-9, 6);
-    ctx.lineTo(-9, 2.5);
-    ctx.lineTo(9, 2.5);
-    ctx.lineTo(9, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
 
     // 4. Polished Plastic Clearcoat Specular Sheen (simulated glossy light reflection across tile)
     const glossGrad = ctx.createLinearGradient(0, 0, width * 0.75, height * 0.75);
