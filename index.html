@@ -13,33 +13,14 @@
     <div id="canvas-container"></div>
 
     <div class="hud-overlay">
-        <!-- Top HUD Header -->
-        <header class="hud-header">
-            <div class="brand-card">
-                <h1 class="brand-title">
-                    <span>⚡ SUM10</span>
-                </h1>
-                <p class="brand-subtitle">Find two blocks summing to 10 to clear the tower</p>
+        <!-- Top Consolidated Bar -->
+        <header class="hud-top">
+            <div class="brand-badge">
+                <span class="brand-icon">⚡</span>
+                <span class="brand-name">SUM10</span>
             </div>
 
-            <div class="stats-bar">
-                <div class="stat-chip">
-                    <span class="stat-label">Level</span>
-                    <span id="val-level" class="stat-value">1</span>
-                </div>
-                <div class="stat-chip">
-                    <span class="stat-label">Score</span>
-                    <span id="val-score" class="stat-value">0</span>
-                </div>
-                <div class="stat-chip">
-                    <span class="stat-label">Blocks</span>
-                    <span id="val-remaining" class="stat-value">0</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Center Match Display -->
-        <div class="center-hud">
+            <!-- Match Display in Top Bar -->
             <div class="selection-card">
                 <div id="slot-1" class="selection-slot">?</div>
                 <div class="selection-plus">+</div>
@@ -47,21 +28,40 @@
                 <div class="selection-equals">=</div>
                 <div class="target-badge">10</div>
             </div>
+
+            <div class="stats-group">
+                <div class="stat-pill">
+                    <span class="stat-label">LVL</span>
+                    <span id="val-level" class="stat-value">1</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">PTS</span>
+                    <span id="val-score" class="stat-value">0</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label">LEFT</span>
+                    <span id="val-remaining" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Floating Toast / Notification -->
+        <div class="toast-wrapper">
             <div id="toast-msg" class="toast-msg">Select a block</div>
         </div>
 
         <!-- Bottom Controls -->
         <footer class="hud-footer">
             <div class="hint-chip">
-                <span>💡 Drag to rotate • Pinch/scroll to zoom • Tap to select</span>
+                <span>💡 Rotate • Zoom • Tap pairs summing to 10</span>
             </div>
 
-            <div style="display: flex; gap: 12px;">
+            <div class="actions-group">
                 <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
-                    <span>🌋 Shuffle (Deadlock)</span>
+                    <span>🌋 Shuffle</span>
                 </button>
                 <button id="btn-new-game" class="btn-primary" type="button">
-                    <span>🔄 New Tower</span>
+                    <span>🔄 New</span>
                 </button>
             </div>
         </footer>

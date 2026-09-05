@@ -131,6 +131,16 @@ export class TowerRenderer {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+        this._adjustCameraForAspect();
+    }
+
+    _adjustCameraForAspect() {
+        if (!this.camera) return;
+        const aspect = this.camera.aspect;
+        // In portrait mode (aspect < 1), zoom out proportionately so tower is never cropped
+        const distMult = aspect < 1 ? Math.max(1.3, 1.0 / aspect * 0.85) : 1.0;
+        const basePos = new THREE.Vector3(12, 14, 18).multiplyScalar(distMult);
+        this.camera.position.copy(basePos);
     }
 
     _handleClick(e) {
@@ -188,6 +198,7 @@ export class TowerRenderer {
 
         // Adjust camera target to center of tower height
         this.controls.target.set(0, (topology.maxLayers * topology.cellSize) / 4, 0);
+        this._adjustCameraForAspect();
 
         // Create 3D meshes for every block
         for (const block of topology.blocks.values()) {
