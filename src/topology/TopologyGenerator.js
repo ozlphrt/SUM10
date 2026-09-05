@@ -376,13 +376,23 @@ export class TopologyGenerator {
     }
 
     /**
-     * Traverses placed blocks in 3D and assigns values 1-9 such that physically touching
-     * adjacent blocks form pairs that sum to 10, ensuring solvable gameplay under the adjacency rule.
+     * Traverses placed blocks in 3D and assigns values 1-9 such that ALL normal blocks
+     * are partitioned into strictly disjoint 1-to-1 pairs that sum to 10.
+     * Touching neighbors are prioritized first; any remaining unpaired blocks are paired
+     * with each other so no block is ever orphaned without a valid match.
      * @param {GridTopology} topology 
      */
     _assignAdjacentPairValues(topology) {
         const normalBlocks = Array.from(topology.blocks.values()).filter((b) => b.type === 'normal');
         if (normalBlocks.length === 0) return;
+
+        // If there's an odd number of normal blocks (e.g. if a single special block was placed),
+        // remove one block or make the last normal block a wild so the normal block count is strictly even
+        if (normalBlocks.length % 2 === 1) {
+            const oddBlock = normalBlocks.pop();
+            oddBlock.type = 'wild';
+            oddBlock.value = 10;
+        }
 
         // Shuffle candidate list for variety across runs
         for (let i = normalBlocks.length - 1; i > 0; i--) {
@@ -392,10 +402,10 @@ export class TopologyGenerator {
 
         const pairedIds = new Set();
 
+        // 1. First Pass: Pair touching adjacent neighbors (greedy maximal matching)
         for (const block of normalBlocks) {
             if (pairedIds.has(block.id)) continue;
 
-            // Find available touching neighbors
             const neighbors = Array.from(topology.getNeighborBlocks(block.id))
                 .filter((n) => n.type === 'normal' && !pairedIds.has(n.id));
 
@@ -410,21 +420,21 @@ export class TopologyGenerator {
             }
         }
 
-        // Any leftover blocks without unpaired neighbors get linked to an existing neighbor
-        for (const block of normalBlocks) {
-            if (!pairedIds.has(block.id)) {
-                const neighbors = Array.from(topology.getNeighborBlocks(block.id)).filter((n) => n.type === 'normal');
-                if (neighbors.length > 0) {
-                    const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    block.value = 10 - partner.value;
-                } else {
-                    block.value = this._randInt(1, 9);
-                }
-                pairedIds.add(block.id);
-            }
+        // 2. Second Pass: Strictly pair up any remaining unpaired blocks mutually in disjoint pairs of 2!
+        // Never reuse already paired blocks and never leave any block unpaired!
+        const unpaired = normalBlocks.filter((b) => !pairedIds.has(b.id));
+        for (let i = 0; i < unpaired.length - 1; i += 2) {
+            const b1 = unpaired[i];
+            const b2 = unpaired[i + 1];
+            const v1 = this._randInt(1, 9);
+            const v2 = 10 - v1;
+            b1.value = v1;
+            b2.value = v2;
+            pairedIds.add(b1.id);
+            pairedIds.add(b2.id);
         }
 
-        // Guarantee at least one valid adjacent move is immediately open from the start
+        // Guarantee at least one valid move is immediately open from the start
         if (!topology.hasAnyValidMove()) {
             topology.shuffleDeadlock();
         }

@@ -544,8 +544,11 @@ export class GridTopology {
             remainingNormal[i].value = v1;
             remainingNormal[i + 1].value = v2;
         }
+        // If an odd block remains, make it a wildcard so every normal block is 100% paired
         if (remainingNormal.length % 2 === 1) {
-            remainingNormal[remainingNormal.length - 1].value = Math.floor(Math.random() * 9) + 1;
+            const oddBlock = remainingNormal[remainingNormal.length - 1];
+            oddBlock.type = 'wild';
+            oddBlock.value = 10;
         }
     }
 
