@@ -136,79 +136,381 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
     } else if (typeof value === 'string' && ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'].includes(value)) {
-        // GEOMETRIC SHAPES MODE
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 74, 0, Math.PI * 2);
-        ctx.fillStyle = '#f8fafc';
-        ctx.fill();
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.stroke();
-
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 8;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
+        // LUXURY JEWELED RUNIC EMBLEMS (High-detail layered geometry, metallic sheen, facet depth)
         const cx = width / 2;
         const cy = height / 2;
 
+        // 1. Outer Inset Medallion Well with Subtle Bevel
+        ctx.beginPath();
+        ctx.arc(cx, cy, 84, 0, Math.PI * 2);
+        const wellGrad = ctx.createRadialGradient(cx - 15, cy - 20, 20, cx, cy, 84);
+        wellGrad.addColorStop(0, '#f8fafc');
+        wellGrad.addColorStop(0.85, '#f1f5f9');
+        wellGrad.addColorStop(1, '#e2e8f0');
+        ctx.fillStyle = wellGrad;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.stroke();
+
+        // Delicate concentric decorative ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, 78, 0, Math.PI * 2);
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.stroke();
+
+        // 2. Shape Theme Palettes (Deep Obsidian/Sapphire/Emerald/Ruby/Amber/Amethyst Luxury Gradients)
+        const SHAPE_PALETTES = {
+            circle: {
+                main: ['#3b82f6', '#1d4ed8', '#0f172a'],
+                glow: 'rgba(59, 130, 246, 0.45)',
+                accent: '#93c5fd',
+                name: 'Celestial Orb'
+            },
+            triangle: {
+                main: ['#10b981', '#047857', '#064e3b'],
+                glow: 'rgba(16, 185, 129, 0.45)',
+                accent: '#6ee7b7',
+                name: 'Emerald Prism'
+            },
+            square: {
+                main: ['#8b5cf6', '#6d28d9', '#4c1d95'],
+                glow: 'rgba(139, 92, 246, 0.45)',
+                accent: '#c4b5fd',
+                name: 'Amethyst Vault'
+            },
+            diamond: {
+                main: ['#06b6d4', '#0891b2', '#164e63'],
+                glow: 'rgba(6, 182, 212, 0.45)',
+                accent: '#a5f3fc',
+                name: 'Cyan Diamond'
+            },
+            star: {
+                main: ['#f59e0b', '#d97706', '#78350f'],
+                glow: 'rgba(245, 158, 11, 0.50)',
+                accent: '#fde68a',
+                name: 'Solar Star'
+            },
+            hexagon: {
+                main: ['#f43f5e', '#be123c', '#881337'],
+                glow: 'rgba(244, 63, 94, 0.45)',
+                accent: '#fecdd3',
+                name: 'Ruby Crest'
+            }
+        };
+
+        const theme = SHAPE_PALETTES[value] || SHAPE_PALETTES.circle;
+
+        // Shadow & ambient glow beneath emblem
+        ctx.shadowColor = theme.glow;
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 4;
+
         if (value === 'circle') {
+            // LAYERED CELESTIAL ORB: Outer engraved ring + Inner dimensional gradient sphere + Orbital ring
+            // Primary Sphere
+            const orbGrad = ctx.createRadialGradient(cx - 18, cy - 20, 6, cx, cy, 58);
+            orbGrad.addColorStop(0, '#60a5fa');
+            orbGrad.addColorStop(0.45, theme.main[0]);
+            orbGrad.addColorStop(0.85, theme.main[1]);
+            orbGrad.addColorStop(1, theme.main[2]);
+
             ctx.beginPath();
-            ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+            ctx.arc(cx, cy, 56, 0, Math.PI * 2);
+            ctx.fillStyle = orbGrad;
             ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Specular Glint
+            const glint = ctx.createRadialGradient(cx - 18, cy - 20, 0, cx - 18, cy - 20, 26);
+            glint.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+            glint.addColorStop(0.5, 'rgba(255, 255, 255, 0.25)');
+            glint.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.beginPath();
+            ctx.arc(cx - 18, cy - 20, 26, 0, Math.PI * 2);
+            ctx.fillStyle = glint;
+            ctx.fill();
+
+            // Concentric Golden/Silver Core Ring
+            ctx.beginPath();
+            ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.stroke();
+
+            // Center Pip
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
         } else if (value === 'triangle') {
+            // EMERALD PRISM: Multi-faceted 3D triangular pyramid with facet shading
+            const top = { x: cx, y: cy - 62 };
+            const br = { x: cx + 58, y: cy + 46 };
+            const bl = { x: cx - 58, y: cy + 46 };
+            const centerPt = { x: cx, y: cy + 4 };
+
+            // Left Facet
+            const leftGrad = ctx.createLinearGradient(bl.x, bl.y, top.x, top.y);
+            leftGrad.addColorStop(0, theme.main[1]);
+            leftGrad.addColorStop(1, '#34d399');
             ctx.beginPath();
-            ctx.moveTo(cx, cy - 44);
-            ctx.lineTo(cx + 42, cy + 34);
-            ctx.lineTo(cx - 42, cy + 34);
+            ctx.moveTo(top.x, top.y);
+            ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.lineTo(bl.x, bl.y);
             ctx.closePath();
+            ctx.fillStyle = leftGrad;
             ctx.fill();
+
+            // Right Facet (Darker shading)
+            const rightGrad = ctx.createLinearGradient(centerPt.x, centerPt.y, br.x, br.y);
+            rightGrad.addColorStop(0, '#059669');
+            rightGrad.addColorStop(1, theme.main[2]);
+            ctx.beginPath();
+            ctx.moveTo(top.x, top.y);
+            ctx.lineTo(br.x, br.y);
+            ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.closePath();
+            ctx.fillStyle = rightGrad;
+            ctx.fill();
+
+            // Bottom Facet
+            const bottomGrad = ctx.createLinearGradient(bl.x, bl.y, br.x, br.y);
+            bottomGrad.addColorStop(0, '#10b981');
+            bottomGrad.addColorStop(1, '#047857');
+            ctx.beginPath();
+            ctx.moveTo(bl.x, bl.y);
+            ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.lineTo(br.x, br.y);
+            ctx.closePath();
+            ctx.fillStyle = bottomGrad;
+            ctx.fill();
+
+            // Gold/Silver Facet Ridge Lines
+            ctx.beginPath();
+            ctx.moveTo(top.x, top.y); ctx.lineTo(bl.x, bl.y); ctx.lineTo(br.x, br.y); ctx.closePath();
+            ctx.moveTo(top.x, top.y); ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.moveTo(bl.x, bl.y); ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.moveTo(br.x, br.y); ctx.lineTo(centerPt.x, centerPt.y);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.80)';
+            ctx.stroke();
+
+            // Inner Floating Triangle Glyph
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 22);
+            ctx.lineTo(cx + 20, cy + 18);
+            ctx.lineTo(cx - 20, cy + 18);
+            ctx.closePath();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
         } else if (value === 'square') {
+            // AMETHYST VAULT: Rotated square in square with rich royal purple gem bevels
+            const s = 54;
+            const sqGrad = ctx.createLinearGradient(cx - s, cy - s, cx + s, cy + s);
+            sqGrad.addColorStop(0, '#a78bfa');
+            sqGrad.addColorStop(0.4, theme.main[0]);
+            sqGrad.addColorStop(1, theme.main[2]);
+
+            // Outer Rounded Square
             ctx.beginPath();
-            ctx.roundRect(cx - 36, cy - 36, 72, 72, 8);
+            ctx.roundRect(cx - s, cy - s, s * 2, s * 2, 14);
+            ctx.fillStyle = sqGrad;
             ctx.fill();
-        } else if (value === 'diamond') {
+
+            // Bevel highlight border
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.stroke();
+
+            // Inner Inset Rotated Square (Diamond orientation)
+            const is = 32;
             ctx.beginPath();
-            ctx.moveTo(cx, cy - 46);
-            ctx.lineTo(cx + 40, cy);
-            ctx.lineTo(cx, cy + 46);
-            ctx.lineTo(cx - 40, cy);
+            ctx.moveTo(cx, cy - is);
+            ctx.lineTo(cx + is, cy);
+            ctx.lineTo(cx, cy + is);
+            ctx.lineTo(cx - is, cy);
             ctx.closePath();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
             ctx.fill();
-        } else if (value === 'star') {
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Central Core Pip
             ctx.beginPath();
-            const spikes = 5;
-            const outerRadius = 45;
-            const innerRadius = 22;
+            ctx.roundRect(cx - 9, cy - 9, 18, 18, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'diamond') {
+            // CYAN BRILLIANT DIAMOND: Gemological brilliant facet structure
+            const dw = 52;
+            const dh = 65;
+
+            // Outer Diamond Contour
+            const diaGrad = ctx.createLinearGradient(cx, cy - dh, cx, cy + dh);
+            diaGrad.addColorStop(0, '#67e8f9');
+            diaGrad.addColorStop(0.5, theme.main[0]);
+            diaGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - dh);
+            ctx.lineTo(cx + dw, cy);
+            ctx.lineTo(cx, cy + dh);
+            ctx.lineTo(cx - dw, cy);
+            ctx.closePath();
+            ctx.fillStyle = diaGrad;
+            ctx.fill();
+
+            // Facet Shading & Cross-bracing
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Inner Facet Kite
+            const idw = 26;
+            const idh = 34;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - idh);
+            ctx.lineTo(cx + idw, cy);
+            ctx.lineTo(cx, cy + idh);
+            ctx.lineTo(cx - idw, cy);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fill();
+            ctx.stroke();
+
+            // Connecting facet rays
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - dh); ctx.lineTo(cx, cy - idh);
+            ctx.moveTo(cx + dw, cy); ctx.lineTo(cx + idw, cy);
+            ctx.moveTo(cx, cy + dh); ctx.lineTo(cx, cy + idh);
+            ctx.moveTo(cx - dw, cy); ctx.lineTo(cx - idw, cy);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+        } else if (value === 'star') {
+            // SOLAR STAR OF POWER: 8-point faceted compass star with golden aura
+            const outerR = 64;
+            const innerR = 26;
+            const points = 8;
             let rot = (Math.PI / 2) * 3;
-            const step = Math.PI / spikes;
-            ctx.moveTo(cx, cy - outerRadius);
-            for (let i = 0; i < spikes; i++) {
-                let x = cx + Math.cos(rot) * outerRadius;
-                let y = cy + Math.sin(rot) * outerRadius;
+            const step = Math.PI / points;
+
+            // Background Star Fill with Gold Radiant Gradient
+            const starGrad = ctx.createRadialGradient(cx, cy, 8, cx, cy, outerR);
+            starGrad.addColorStop(0, '#fef08a');
+            starGrad.addColorStop(0.4, theme.main[0]);
+            starGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerR);
+            for (let i = 0; i < points; i++) {
+                let x = cx + Math.cos(rot) * outerR;
+                let y = cy + Math.sin(rot) * outerR;
                 ctx.lineTo(x, y);
                 rot += step;
-                x = cx + Math.cos(rot) * innerRadius;
-                y = cy + Math.sin(rot) * innerRadius;
+                x = cx + Math.cos(rot) * innerR;
+                y = cy + Math.sin(rot) * innerR;
                 ctx.lineTo(x, y);
                 rot += step;
             }
-            ctx.lineTo(cx, cy - outerRadius);
+            ctx.lineTo(cx, cy - outerR);
             ctx.closePath();
+            ctx.fillStyle = starGrad;
             ctx.fill();
+
+            // Crisp Rim & Facet Rays to every tip
+            ctx.lineWidth = 2.8;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            ctx.beginPath();
+            for (let i = 0; i < points; i++) {
+                const angle = (Math.PI / (points / 2)) * i - Math.PI / 2;
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+            }
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.70)';
+            ctx.stroke();
+
+            // Golden Center Jewel Core
+            ctx.beginPath();
+            ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#d97706';
+            ctx.stroke();
+
         } else if (value === 'hexagon') {
+            // RUBY CREST: Honeycomb faceted medallion with concentric inscribed hex and core shield
+            const hexR = 60;
+            const hexGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, hexR);
+            hexGrad.addColorStop(0, '#fb7185');
+            hexGrad.addColorStop(0.5, theme.main[0]);
+            hexGrad.addColorStop(1, theme.main[2]);
+
+            // Outer Hexagon
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI / 3) * i;
-                const hx = cx + 42 * Math.cos(angle);
-                const hy = cy + 42 * Math.sin(angle);
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const hx = cx + hexR * Math.cos(angle);
+                const hy = cy + hexR * Math.sin(angle);
                 if (i === 0) ctx.moveTo(hx, hy);
                 else ctx.lineTo(hx, hy);
             }
             ctx.closePath();
+            ctx.fillStyle = hexGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Inner Hexagon
+            const inHexR = 34;
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const hx = cx + inHexR * Math.cos(angle);
+                const hy = cy + inHexR * Math.sin(angle);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Radial Spokes from Center to Hex Vertices
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + hexR * Math.cos(angle), cy + hexR * Math.sin(angle));
+            }
+            ctx.lineWidth = 1.6;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.60)';
+            ctx.stroke();
+
+            // Center Ruby Gem
+            ctx.beginPath();
+            ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
             ctx.fill();
         }
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
     } else {
         // PURE MINIMAL WHITE DOMINO (Debossed Dark Charcoal Numeral or Letter)
         // Subtle central debossed circular dish (classic domino spinner / pip well)
