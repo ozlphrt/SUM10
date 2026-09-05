@@ -22,6 +22,28 @@ class Sum10Game {
         this.btnCloseModal = document.getElementById('btn-close-modal');
         this.levelGrid = document.getElementById('level-grid');
 
+        // Level Complete Overlay elements
+        this.modalComplete = document.getElementById('modal-level-complete');
+        this.completeTitle = document.getElementById('complete-title');
+        this.completeValMatches = document.getElementById('complete-val-matches');
+        this.completeValCombo = document.getElementById('complete-val-combo');
+        this.completeValScore = document.getElementById('complete-val-score');
+        this.btnCompleteNext = document.getElementById('btn-complete-next');
+        this.btnCompleteReplay = document.getElementById('btn-complete-replay');
+
+        if (this.btnCompleteNext) {
+            this.btnCompleteNext.addEventListener('click', () => {
+                if (this.modalComplete) this.modalComplete.style.display = 'none';
+                this.startLevel(this.currentLevel + 1);
+            });
+        }
+        if (this.btnCompleteReplay) {
+            this.btnCompleteReplay.addEventListener('click', () => {
+                if (this.modalComplete) this.modalComplete.style.display = 'none';
+                this.startLevel(this.currentLevel);
+            });
+        }
+
         // Camera View Controls
         this.btnCamAlign = document.getElementById('btn-cam-align');
         this.btnCamLeft = document.getElementById('btn-cam-left');
@@ -88,6 +110,10 @@ class Sum10Game {
         this.topology = null;
         this.selectedBlock = null;
         this.isProcessingMatch = false;
+
+        // Level stats for complete card
+        this.levelMatchesCount = 0;
+        this.levelMaxCombo = 1;
 
         // Combo multiplier state
         this.comboCount = 0;
@@ -164,8 +190,11 @@ class Sum10Game {
         this.currentLevel = level;
         this.selectedBlock = null;
         this.isProcessingMatch = false;
+        this.levelMatchesCount = 0;
+        this.levelMaxCombo = 1;
         this._updateSelectionUI(null, null);
         if (this.btnShuffle) this.btnShuffle.style.display = 'none';
+        if (this.modalComplete) this.modalComplete.style.display = 'none';
 
         const config = TopologyGenerator.getLevelConfig(level);
         const generator = new TopologyGenerator(config);
@@ -347,12 +376,11 @@ class Sum10Game {
                     }
                 }, 150);
 
+                this.levelMatchesCount++;
+                this.levelMaxCombo = Math.max(this.levelMaxCombo, this.comboCount);
+
                 if (this.topology.blocks.size === 0) {
-                    this.score += 500; // Level clear bonus
-                    this.showToast(`🎉 LEVEL ${this.currentLevel} CLEARED! +500 Bonus!`, 3500);
-                    setTimeout(() => {
-                        this.startLevel(this.currentLevel + 1);
-                    }, 2500);
+                    this._showLevelCompleteModal();
                 }
             }, 300);
         } else {
@@ -369,6 +397,33 @@ class Sum10Game {
                 this._updateSelectionUI(null, null);
             }, 400);
         }
+    }
+
+    _showLevelCompleteModal() {
+        sound.playLevelComplete();
+        this.score += 500; // Level completion bonus
+        this.highestLevel = Math.max(this.highestLevel, this.currentLevel + 1);
+        this._saveProgress();
+        this.updateStats();
+
+        if (this.completeTitle) {
+            this.completeTitle.textContent = `Level ${this.currentLevel} Cleared!`;
+        }
+        if (this.completeValMatches) {
+            this.completeValMatches.textContent = String(this.levelMatchesCount);
+        }
+        if (this.completeValCombo) {
+            this.completeValCombo.textContent = `${this.levelMaxCombo}x`;
+        }
+        if (this.completeValScore) {
+            this.completeValScore.textContent = String(this.score);
+        }
+
+        setTimeout(() => {
+            if (this.modalComplete) {
+                this.modalComplete.style.display = 'flex';
+            }
+        }, 600);
     }
 
     _detonateBomb(bombBlock) {
@@ -410,11 +465,7 @@ class Sum10Game {
         }, 200);
 
         if (this.topology.blocks.size === 0) {
-            this.score += 500;
-            this.showToast(`🎉 LEVEL ${this.currentLevel} CLEARED! +500 Bonus!`, 3500);
-            setTimeout(() => {
-                this.startLevel(this.currentLevel + 1);
-            }, 2500);
+            this._showLevelCompleteModal();
         }
     }
 }

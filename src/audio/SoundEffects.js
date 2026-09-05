@@ -202,6 +202,27 @@ class SoundEffects {
             osc.stop(t + 0.3);
         });
     }
+
+    playLevelComplete() {
+        if (!this.enabled) return;
+        this._ensureAudio();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const chord = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        chord.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = now + idx * 0.09;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.24, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.7);
+        });
+    }
 }
 
 export const sound = new SoundEffects();

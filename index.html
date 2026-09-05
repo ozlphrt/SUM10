@@ -101,6 +101,43 @@
         </div>
     </div>
 
+    <!-- Level Complete Modal Overlay -->
+    <div id="modal-level-complete" class="modal-backdrop" style="display: none;">
+        <div class="modal-card level-complete-card">
+            <div class="celebration-badge">🎉</div>
+            <h2 id="complete-title" class="modal-title" style="text-align: center; margin-top: 6px;">Level 1 Cleared!</h2>
+            <p class="modal-subtitle" style="text-align: center; margin-bottom: 20px;">Magnificent! The entire tower is dismantled.</p>
+
+            <div class="complete-stats-grid">
+                <div class="complete-stat-item">
+                    <span class="complete-stat-label">MATCHES MADE</span>
+                    <span id="complete-val-matches" class="complete-stat-num">0</span>
+                </div>
+                <div class="complete-stat-item">
+                    <span class="complete-stat-label">MAX COMBO</span>
+                    <span id="complete-val-combo" class="complete-stat-num">1x</span>
+                </div>
+                <div class="complete-stat-item">
+                    <span class="complete-stat-label">LEVEL BONUS</span>
+                    <span class="complete-stat-num" style="color: #059669;">+500</span>
+                </div>
+                <div class="complete-stat-item">
+                    <span class="complete-stat-label">TOTAL SCORE</span>
+                    <span id="complete-val-score" class="complete-stat-num" style="color: #0284c7;">0</span>
+                </div>
+            </div>
+
+            <div class="complete-actions">
+                <button id="btn-complete-replay" class="btn-outline-subtle" type="button">
+                    <span>↺ Replay</span>
+                </button>
+                <button id="btn-complete-next" class="btn-primary" type="button" style="flex: 1; justify-content: center;">
+                    <span>Next Level ➔</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="./src/main.js"></script>
 </body>
 </html>
