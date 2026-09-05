@@ -64,6 +64,9 @@ export class TowerRenderer {
         /** @type {Array<{ group: THREE.Group, velocity: THREE.Vector3, angularVelocity: THREE.Vector3, opacity: number }>} */
         this.flyingBlocks = [];
 
+        /** @type {Array<{ mesh: THREE.Mesh, mat: THREE.Material, geo: THREE.BufferGeometry, velocity: THREE.Vector3, life: number, maxLife: number }>} */
+        this.particles = [];
+
         this.basePlate = null;
         this._isDisposed = false;
 
@@ -550,6 +553,57 @@ export class TowerRenderer {
     }
 
     /**
+     * Spawns gentle pastel shimmer particles along the exit trajectory of a block.
+     * @param {THREE.Vector3} startPos 
+     * @param {{x: number, y: number, z: number}} dir 
+     * @param {string} hexColor 
+     */
+    spawnSlideShimmer(startPos, dir, hexColor = '#93c5fd') {
+        const particleCount = 12;
+        const color = new THREE.Color(hexColor);
+
+        for (let i = 0; i < particleCount; i++) {
+            const size = 0.07 + Math.random() * 0.08;
+            const geo = new THREE.SphereGeometry(size, 6, 6);
+            const mat = new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.82,
+                depthWrite: false
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const spreadX = (Math.random() - 0.5) * 0.5;
+            const spreadY = (Math.random() - 0.5) * 0.4;
+            const spreadZ = (Math.random() - 0.5) * 0.5;
+
+            mesh.position.set(
+                startPos.x + spreadX,
+                startPos.y + spreadY,
+                startPos.z + spreadZ
+            );
+
+            const driftSpeed = 1.2 + Math.random() * 2.2;
+            const velocity = new THREE.Vector3(
+                dir.x * driftSpeed + (Math.random() - 0.5) * 0.6,
+                0.3 + Math.random() * 0.6,
+                dir.z * driftSpeed + (Math.random() - 0.5) * 0.6
+            );
+
+            const maxLife = 0.45 + Math.random() * 0.35;
+            this.scene.add(mesh);
+            this.particles.push({
+                mesh,
+                mat,
+                geo,
+                velocity,
+                life: maxLife,
+                maxLife
+            });
+        }
+    }
+
+    /**
      * Animates blocks flying smoothly and horizontally out of the tower along their long axis.
      * @param {Array<string|number>} blockIds 
      */
@@ -560,6 +614,11 @@ export class TowerRenderer {
 
             const dir = item.model.direction;
             const flySpeed = 18.0;
+
+            // Spawn soft pastel shimmer particles along exit vector
+            const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
+            const particleColor = item.model.type === 'wild' ? '#facc15' : (item.model.type === 'bomb' ? '#f87171' : palette.border);
+            this.spawnSlideShimmer(item.group.position, dir, particleColor);
 
             // Strictly horizontal velocity along the long axis (no vertical Y lift or tumble)
             const velocity = new THREE.Vector3(
@@ -691,6 +750,25 @@ export class TowerRenderer {
             if (fb.opacity <= 0) {
                 this.scene.remove(fb.group);
                 this.flyingBlocks.splice(i, 1);
+            }
+        }
+
+        // Update gentle pastel shimmer particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.life -= dt;
+            if (p.life <= 0) {
+                this.scene.remove(p.mesh);
+                p.geo.dispose();
+                p.mat.dispose();
+                this.particles.splice(i, 1);
+            } else {
+                p.mesh.position.addScaledVector(p.velocity, dt);
+                p.velocity.y *= 0.97;
+                const progress = p.life / p.maxLife;
+                p.mat.opacity = progress * 0.82;
+                const scale = 0.5 + 0.5 * progress;
+                p.mesh.scale.set(scale, scale, scale);
             }
         }
 
