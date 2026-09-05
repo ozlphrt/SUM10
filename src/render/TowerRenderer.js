@@ -1027,10 +1027,19 @@ export class TowerRenderer {
             item.restingPosition = item.group.position.clone();
         }
 
+        // Track current selection state on item
+        item.isSelected = !!isSelected;
+
         // Cancel any existing elevation animation
         if (item._elevAnimFrame) {
             cancelAnimationFrame(item._elevAnimFrame);
             item._elevAnimFrame = null;
+        }
+
+        // If shaking and now deselected, stop shake so position doesn't get corrupted
+        if (!isSelected && item._shakeAnimFrame) {
+            cancelAnimationFrame(item._shakeAnimFrame);
+            item._shakeAnimFrame = null;
         }
 
         const dir = item.model.direction || { x: 0, y: 0, z: 0 };
@@ -1080,9 +1089,14 @@ export class TowerRenderer {
     clearAllHighlights() {
         this.hideExitBeam();
         for (const [id, item] of this.blockMeshes.entries()) {
+            item.isSelected = false;
             if (item._elevAnimFrame) {
                 cancelAnimationFrame(item._elevAnimFrame);
                 item._elevAnimFrame = null;
+            }
+            if (item._shakeAnimFrame) {
+                cancelAnimationFrame(item._shakeAnimFrame);
+                item._shakeAnimFrame = null;
             }
             if (item.restingPosition) {
                 item.group.position.copy(item.restingPosition);
@@ -1098,6 +1112,7 @@ export class TowerRenderer {
 
     /**
      * Triggers rapid jam/error shake along the block's long slide axis.
+     * Restores precisely to restingPosition (or elevated target if still selected).
      * @param {string|number} blockId 
      */
     shakeBlock(blockId, onComplete = null) {
@@ -1111,14 +1126,24 @@ export class TowerRenderer {
             item.restingPosition = item.group.position.clone();
         }
 
-        // Cancel previous shake if running
+        // Cancel previous shake or elevation animation
         if (item._shakeAnimFrame) {
             cancelAnimationFrame(item._shakeAnimFrame);
             item._shakeAnimFrame = null;
         }
+        if (item._elevAnimFrame) {
+            cancelAnimationFrame(item._elevAnimFrame);
+            item._elevAnimFrame = null;
+        }
 
-        const basePos = item.group.position.clone();
         const dir = item.model.direction || { x: 1, y: 0, z: 0 };
+        const nudgeDist = 0.18;
+
+        // Base anchor for shaking: if currently selected, shake around nudged position; otherwise resting position
+        const basePos = item.isSelected
+            ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * nudgeDist, 0, dir.z * nudgeDist))
+            : item.restingPosition.clone();
+
         const startTime = performance.now();
         const duration = 260;
 
@@ -1135,7 +1160,11 @@ export class TowerRenderer {
                 item._shakeAnimFrame = requestAnimationFrame(animateShake);
             } else {
                 item._shakeAnimFrame = null;
-                item.group.position.copy(basePos);
+                // Final position: strictly adhere to current selection state
+                const finalTarget = item.isSelected
+                    ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * nudgeDist, 0, dir.z * nudgeDist))
+                    : item.restingPosition.clone();
+                item.group.position.copy(finalTarget);
                 if (onComplete) onComplete();
             }
         };

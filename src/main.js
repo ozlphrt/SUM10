@@ -833,20 +833,15 @@ class Sum10Game {
             })(this.gameMode);
             this.showToast(mismatchMsg, 1700);
 
-            // Fully unselect and unhighlight the first block
+            // Fully unselect and unhighlight the first block and shake it back to rest
             this.renderer.setBlockSelected(first.id, false);
             this.renderer.shakeBlock(first.id);
 
             // Select and highlight the second block as the new active block
             this.topology.canBlockSlideOut(second);
             this.selectedBlock = second;
-            this.renderer.shakeBlock(second.id, () => {
-                // Ensure second block remains in its elevated selected position after shaking
-                if (this.selectedBlock && this.selectedBlock.id === second.id) {
-                    this.renderer.setBlockSelected(second.id, true);
-                }
-            });
             this.renderer.setBlockSelected(second.id, true);
+            this.renderer.shakeBlock(second.id);
 
             const secondDisplayVal = second.type === 'wild' ? '★' : second.value;
             this._updateSelectionUI(secondDisplayVal, null);
