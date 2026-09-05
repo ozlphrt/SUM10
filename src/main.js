@@ -185,11 +185,10 @@ class Sum10Game {
             });
         }
 
-        // Progress & High Score state loaded from localStorage
+        // Progress & High Score state loaded from localStorage per game mode
         const saved = this._loadProgress();
-        // Allow user to test any level up to 100
-        this.highestLevel = Math.max(100, saved.highestLevel || 1);
-        this.currentLevel = 100; // Jump directly to Level 100 for testing
+        this.highestLevel = Math.max(1, saved.highestLevel || 1);
+        this.currentLevel = Math.min(this.highestLevel, Math.max(1, saved.currentLevel || 1));
         this.score = saved.score || 0;
         this.highScore = saved.highScore || 0;
         this.starsByLevel = saved.starsByLevel || {};
@@ -236,9 +235,18 @@ class Sum10Game {
         }
     }
 
+    _getProgressKey() {
+        return `sum10_progress_${this.gameMode || 'numbers'}`;
+    }
+
     _loadProgress() {
         try {
-            const data = localStorage.getItem('sum10_progress');
+            const key = this._getProgressKey();
+            let data = localStorage.getItem(key);
+            // Fallback to legacy single key for backwards compatibility
+            if (!data && (!this.gameMode || this.gameMode === 'numbers')) {
+                data = localStorage.getItem('sum10_progress');
+            }
             return data ? JSON.parse(data) : {};
         } catch (_) {
             return {};
@@ -249,13 +257,18 @@ class Sum10Game {
         try {
             this.highScore = Math.max(this.highScore, this.score);
             this.highestLevel = Math.max(this.highestLevel, this.currentLevel);
-            localStorage.setItem('sum10_progress', JSON.stringify({
+            const progressData = {
                 currentLevel: this.currentLevel,
                 score: this.score,
                 highScore: this.highScore,
                 highestLevel: this.highestLevel,
                 starsByLevel: this.starsByLevel
-            }));
+            };
+            localStorage.setItem(this._getProgressKey(), JSON.stringify(progressData));
+            // Keep legacy key updated if in numbers mode
+            if (this.gameMode === 'numbers') {
+                localStorage.setItem('sum10_progress', JSON.stringify(progressData));
+            }
         } catch (_) {}
     }
 
@@ -304,14 +317,25 @@ class Sum10Game {
 
     setGameMode(mode) {
         if (this.gameMode === mode) return;
+        // Save current mode's progress before switching
+        this._saveProgress();
+
         this.gameMode = mode;
         try {
             localStorage.setItem('sum10_game_mode', mode);
         } catch (_) {}
 
+        // Load saved progress for the newly selected game mode
+        const saved = this._loadProgress();
+        this.highestLevel = Math.max(1, saved.highestLevel || 1);
+        this.currentLevel = Math.min(this.highestLevel, Math.max(1, saved.currentLevel || 1));
+        this.score = saved.score || 0;
+        this.highScore = saved.highScore || 0;
+        this.starsByLevel = saved.starsByLevel || {};
+
         this._updateModePill();
         sound.playSelect(1);
-        this.startLevel(1); // Start clean level 1 for new mode
+        this.startLevel(this.currentLevel);
     }
 
     _updateModePill() {
