@@ -276,6 +276,7 @@ class Sum10Game {
     handleBackgroundClick() {
         if (this.selectedBlock && !this.isProcessingMatch) {
             this.renderer.setBlockSelected(this.selectedBlock.id, false);
+            this.renderer.hideExitBeam();
             this.selectedBlock = null;
             this._updateSelectionUI(null, null);
             sound.playSelect();
@@ -287,6 +288,7 @@ class Sum10Game {
 
         // SPECIAL: If clicking a BOMB block, offer instant detonation!
         if (block.type === 'bomb') {
+            this.renderer.hideExitBeam();
             this._detonateBomb(block);
             return;
         }
@@ -294,6 +296,7 @@ class Sum10Game {
         // Clicking the already selected block deselects it
         if (this.selectedBlock && this.selectedBlock.id === block.id) {
             this.renderer.setBlockSelected(block.id, false);
+            this.renderer.hideExitBeam();
             this.selectedBlock = null;
             this._updateSelectionUI(null, null);
             sound.playSelect();
@@ -303,9 +306,10 @@ class Sum10Game {
         // First block selected
         if (!this.selectedBlock) {
             // Evaluate clear escape direction along long axis so drawer nudge matches available exit
-            this.topology.canBlockSlideOut(block);
+            const exit = this.topology.canBlockSlideOut(block);
             this.selectedBlock = block;
             this.renderer.setBlockSelected(block.id, true);
+            this.renderer.showExitBeam(block, exit);
             const displayVal = block.type === 'wild' ? '★' : block.value;
             this._updateSelectionUI(displayVal, null);
             sound.playSelect();
@@ -319,6 +323,7 @@ class Sum10Game {
         }
 
         // Second block selected -> evaluate sum
+        this.renderer.hideExitBeam();
         const first = this.selectedBlock;
         const second = block;
         this.renderer.setBlockSelected(second.id, true);
