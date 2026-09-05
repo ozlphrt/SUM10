@@ -155,10 +155,15 @@ export class TowerRenderer {
      * BackSide-rendered with procedurally textured latitude/longitude graticules,
      * glowing polar vortex rings, subtle constellations, and theme-matching atmosphere.
      */
+    /**
+     * Creates a large spherical celestial / atmospheric globe surrounding the tower.
+     * BackSide-rendered with high-resolution lighting gradients aligned with Key & Rim lights,
+     * delicate astronomical graticules, soft equator ring, and subtle stardust.
+     */
     _initGlobeDome() {
-        const radius = 60;
-        const globeGeo = new THREE.SphereGeometry(radius, 48, 36);
-        const globeTex = this._createGlobeTexture();
+        const radius = 135;
+        const globeGeo = new THREE.SphereGeometry(radius, 64, 48);
+        const globeTex = this._createGlobeTexture(this.currentLevel || 1);
 
         const globeMat = new THREE.MeshBasicMaterial({
             map: globeTex,
@@ -171,7 +176,7 @@ export class TowerRenderer {
         this.scene.add(this.globeDome);
     }
 
-    _createGlobeTexture() {
+    _createGlobeTexture(level = 1) {
         const canvas = document.createElement('canvas');
         canvas.width = 2048;
         canvas.height = 1024;
@@ -179,113 +184,140 @@ export class TowerRenderer {
         const w = canvas.width;
         const h = canvas.height;
 
-        // Base atmospheric celestial gradient (zenith to horizon to nadir)
-        let topColor = '#06281e';
-        let midColor = '#0d3d30';
-        let horizonColor = '#0a2f24';
-        let nadirColor = '#03140e';
-        let gridColor = 'rgba(110, 231, 183, 0.16)';
-        let starColor = 'rgba(255, 255, 255, 0.55)';
+        const themeIdx = (level - 1) % LEVEL_THEMES.length;
+        const theme = LEVEL_THEMES[themeIdx];
+
+        // Base atmospheric palette harmonized with the active level theme
+        let topColor, horizonColor, nadirColor, keyGlowColor, rimGlowColor, gridLineColor, starColor;
 
         if (this.isDarkTheme) {
-            topColor = '#020b08';
-            midColor = '#051812';
-            horizonColor = '#03120d';
-            nadirColor = '#010504';
-            gridColor = 'rgba(52, 211, 153, 0.14)';
-            starColor = 'rgba(255, 255, 255, 0.45)';
+            topColor = '#030a07';
+            horizonColor = '#061a12';
+            nadirColor = '#010503';
+            keyGlowColor = 'rgba(253, 230, 138, 0.045)'; // very subtle warm golden key bounce
+            rimGlowColor = 'rgba(110, 231, 183, 0.040)'; // ethereal emerald rim highlight
+            gridLineColor = 'rgba(110, 231, 183, 0.065)';
+            starColor = 'rgba(255, 255, 255, 0.28)';
+        } else {
+            // Light themes: delicate gradient from rich deep felt hue up to subtle ethereal atmosphere
+            const hex = theme.bg.toString(16).padStart(6, '0');
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+
+            topColor = `rgb(${Math.max(4, Math.round(r * 0.75))}, ${Math.max(6, Math.round(g * 0.75))}, ${Math.max(8, Math.round(b * 0.75))})`;
+            horizonColor = `rgb(${r}, ${g}, ${b})`;
+            nadirColor = `rgb(${Math.max(2, Math.round(r * 0.50))}, ${Math.max(3, Math.round(g * 0.50))}, ${Math.max(4, Math.round(b * 0.50))})`;
+            keyGlowColor = 'rgba(254, 240, 138, 0.055)'; // subtle warm sunshine key illumination
+            rimGlowColor = 'rgba(147, 197, 253, 0.045)'; // cool skylight bounce
+            gridLineColor = 'rgba(255, 255, 255, 0.075)';
+            starColor = 'rgba(255, 255, 255, 0.35)';
         }
 
+        // 1. Smooth vertical ambient gradient (zenith to horizon to nadir)
         const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
         bgGrad.addColorStop(0.0, topColor);
-        bgGrad.addColorStop(0.35, midColor);
-        bgGrad.addColorStop(0.5, horizonColor);
-        bgGrad.addColorStop(0.8, midColor);
+        bgGrad.addColorStop(0.42, horizonColor);
+        bgGrad.addColorStop(0.50, horizonColor);
+        bgGrad.addColorStop(0.58, horizonColor);
         bgGrad.addColorStop(1.0, nadirColor);
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // Spherical Globe Graticules: Parallels of Latitude (horizontal rings)
-        ctx.lineWidth = 1.8;
-        const latSteps = 16;
+        // 2. Directional Key Light Volumetric Glow (aligned with dirLight: +X, +Y, +Z at x=w*0.125, y=h*0.35)
+        // Light comes from (+16, +26, +16), mapping to roughly 45° azimuth
+        const keyCenterX = w * 0.125;
+        const keyCenterY = h * 0.32;
+        const keyGrad = ctx.createRadialGradient(
+            keyCenterX, keyCenterY, 30,
+            keyCenterX, keyCenterY, w * 0.42
+        );
+        keyGrad.addColorStop(0.0, keyGlowColor);
+        keyGrad.addColorStop(0.45, keyGlowColor.replace(/[\d.]+\)$/, '0.02)'));
+        keyGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = keyGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 3. Cool Secondary Rim Light Ambient Glow (aligned with rimLight: -X, +Y, -Z at x=w*0.625, y=h*0.40)
+        const rimCenterX = w * 0.625;
+        const rimCenterY = h * 0.40;
+        const rimGrad = ctx.createRadialGradient(
+            rimCenterX, rimCenterY, 30,
+            rimCenterX, rimCenterY, w * 0.38
+        );
+        rimGrad.addColorStop(0.0, rimGlowColor);
+        rimGrad.addColorStop(0.4, rimGlowColor.replace(/[\d.]+\)$/, '0.015)'));
+        rimGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = rimGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 4. Subtle, Delicate Astronomical Globe Graticules
+        // Parallels of Latitude (horizontal rings)
+        const latSteps = 18;
         for (let i = 1; i < latSteps; i++) {
             const y = (i / latSteps) * h;
             const isEquator = i === latSteps / 2;
-            ctx.strokeStyle = isEquator ? 'rgba(254, 240, 138, 0.32)' : gridColor;
-            ctx.lineWidth = isEquator ? 3.0 : 1.5;
+            ctx.strokeStyle = isEquator ? 'rgba(254, 240, 138, 0.16)' : gridLineColor;
+            ctx.lineWidth = isEquator ? 1.6 : 0.8;
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(w, y);
             ctx.stroke();
         }
 
-        // Spherical Globe Graticules: Meridians of Longitude (vertical elliptical arcs)
-        const lonSteps = 24;
-        ctx.lineWidth = 1.5;
+        // Meridians of Longitude (vertical lines)
+        const lonSteps = 32;
         for (let j = 0; j < lonSteps; j++) {
             const x = (j / lonSteps) * w;
-            const isPrime = j === 0 || j === lonSteps / 2;
-            ctx.strokeStyle = isPrime ? 'rgba(254, 240, 138, 0.28)' : gridColor;
-            ctx.lineWidth = isPrime ? 2.5 : 1.2;
+            const isCardinal = j % 8 === 0;
+            ctx.strokeStyle = isCardinal ? 'rgba(254, 240, 138, 0.12)' : gridLineColor;
+            ctx.lineWidth = isCardinal ? 1.4 : 0.7;
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, h);
             ctx.stroke();
         }
 
-        // Concentric Armillary Globe Rings / Polar Vortex Highlights (top and bottom poles)
-        const drawPolarRings = (cy, baseRadius, color) => {
+        // 5. Delicate Armillary Polar Rings (zenith & nadir caps)
+        const drawPolarArmillary = (cy, isNorth) => {
             ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2.0;
-            [0.2, 0.45, 0.75].forEach(scale => {
+            ctx.strokeStyle = gridLineColor;
+            ctx.lineWidth = 1.0;
+            [0.18, 0.36, 0.58].forEach(scale => {
                 ctx.beginPath();
-                ctx.ellipse(w / 2, cy, w * scale * 0.42, 60 * scale, 0, 0, Math.PI * 2);
+                ctx.ellipse(w / 2, cy, w * scale * 0.38, 48 * scale, 0, 0, Math.PI * 2);
                 ctx.stroke();
             });
             ctx.restore();
         };
-        drawPolarRings(90, 80, 'rgba(167, 243, 208, 0.22)');
-        drawPolarRings(h - 90, 80, 'rgba(110, 231, 183, 0.15)');
+        drawPolarArmillary(64, true);
+        drawPolarArmillary(h - 64, false);
 
-        // Ambient stardust / celestial points scattered across the sphere
-        // Seeded pseudorandom for deterministic star placement
-        let seed = 42;
+        // 6. Subtle Micro-Stars / Distant Stardust
+        let seed = 77;
         const random = () => {
             seed = (seed * 9301 + 49297) % 233280;
             return seed / 233280;
         };
 
-        for (let s = 0; s < 280; s++) {
+        for (let s = 0; s < 220; s++) {
             const sx = random() * w;
             const sy = random() * h;
-            const sr = 0.8 + random() * 1.8;
-            const sAlpha = 0.2 + random() * 0.65;
+            const sr = 0.5 + random() * 1.1; // small pinpoint stars
+            const sAlpha = 0.12 + random() * 0.38;
             ctx.fillStyle = starColor.replace(/[\d.]+\)$/, `${sAlpha})`);
             ctx.beginPath();
             ctx.arc(sx, sy, sr, 0, Math.PI * 2);
             ctx.fill();
-
-            // Rare sparkling star with micro-cross lens flare
-            if (s % 18 === 0) {
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = 0.8;
-                ctx.beginPath();
-                ctx.moveTo(sx - sr * 3, sy);
-                ctx.lineTo(sx + sr * 3, sy);
-                ctx.moveTo(sx, sy - sr * 3);
-                ctx.lineTo(sx, sy + sr * 3);
-                ctx.stroke();
-            }
         }
 
-        // Soft equatorial glowing aura belt
-        const auraGrad = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.58);
-        auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-        auraGrad.addColorStop(0.5, 'rgba(110, 231, 183, 0.08)');
-        auraGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
-        ctx.fillStyle = auraGrad;
-        ctx.fillRect(0, h * 0.42, w, h * 0.16);
+        // 7. Whisper-soft Equatorial Horizon Atmosphere Aura
+        const equatorGrad = ctx.createLinearGradient(0, h * 0.44, 0, h * 0.56);
+        equatorGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+        equatorGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.035)');
+        equatorGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = equatorGrad;
+        ctx.fillRect(0, h * 0.44, w, h * 0.12);
 
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
@@ -330,6 +362,12 @@ export class TowerRenderer {
                 this.baseGrid.material.color.set(0x334155);
                 this.baseGrid.material.opacity = 0.75;
             }
+            if (this.globeDome && this.globeDome.material) {
+                const oldTex = this.globeDome.material.map;
+                this.globeDome.material.map = this._createGlobeTexture(level);
+                this.globeDome.material.needsUpdate = true;
+                if (oldTex) oldTex.dispose();
+            }
             return;
         }
 
@@ -363,6 +401,14 @@ export class TowerRenderer {
             this.baseGrid.material.color.set(0xcbd5e1);
             this.baseGrid.material.opacity = 0.65;
         }
+
+        // Seamlessly update celestial globe dome atmosphere to match the active level
+        if (this.globeDome && this.globeDome.material) {
+            const oldTex = this.globeDome.material.map;
+            this.globeDome.material.map = this._createGlobeTexture(level);
+            this.globeDome.material.needsUpdate = true;
+            if (oldTex) oldTex.dispose();
+        }
     }
 
     /**
@@ -371,12 +417,6 @@ export class TowerRenderer {
      */
     setTheme(isDark = false) {
         this.isDarkTheme = isDark;
-        if (this.globeDome && this.globeDome.material) {
-            const oldTex = this.globeDome.material.map;
-            this.globeDome.material.map = this._createGlobeTexture();
-            this.globeDome.material.needsUpdate = true;
-            if (oldTex) oldTex.dispose();
-        }
         this.applyLevelTheme(this.currentLevel || 1);
     }
 
