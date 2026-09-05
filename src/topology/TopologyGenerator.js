@@ -20,26 +20,31 @@ export class TopologyGenerator {
         ];
 
         const shapeInfo = SHAPES[(level - 1) % SHAPES.length];
-        const pairCount = Math.min(45, 10 + (level - 1) * 3); // 20, 26, 32, 38...
+        const tier = Math.floor((level - 1) / SHAPES.length) + 1;
+        const romanNumerals = ['', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+        const tierSuffix = tier > 1 ? ` ${romanNumerals[tier - 1] || `Tier ${tier}`}` : '';
+        const shapeName = `${shapeInfo.name}${tierSuffix}`;
+
+        const pairCount = Math.min(55, 10 + (level - 1) * 3); // 10, 13, 16, 19, 22...
         const totalBlocks = pairCount * 2;
         const avgVol = 1.8;
         const estimatedVolume = totalBlocks * avgVol;
 
-        const baseGridSize = Math.max(5, Math.min(8, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3))));
+        const baseGridSize = Math.max(5, Math.min(9, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3))));
         // For pyramid and courtyard shapes, expand base grid slightly so tiers/atrium are well-proportioned
         const gridSize = (shapeInfo.id === 'pyramid' || shapeInfo.id === 'courtyard')
-            ? Math.min(8, baseGridSize + 1)
+            ? Math.min(9, baseGridSize + 1)
             : baseGridSize;
 
         // Scale block length distribution: more doubles & triples on higher levels
-        const length1Ratio = Math.max(0.20, 0.50 - (level - 1) * 0.05);
-        const length3Ratio = Math.min(0.35, 0.10 + (level - 1) * 0.04);
+        const length1Ratio = Math.max(0.18, 0.50 - (level - 1) * 0.04);
+        const length3Ratio = Math.min(0.38, 0.10 + (level - 1) * 0.03);
         const length2Ratio = 1.0 - length1Ratio - length3Ratio;
 
         return {
             level,
             shape: shapeInfo.id,
-            shapeName: shapeInfo.name,
+            shapeName,
             targetPairCount: pairCount,
             gridSize,
             length1Ratio,
