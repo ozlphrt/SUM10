@@ -581,14 +581,14 @@ export class TopologyGenerator {
             }
 
             const quotePairs = topology.sentenceData.pairs;
-            // Assign quote pairs to block pairs
+            // Assign quote pairs to block pairs with unique pairId for each block pair
             for (let i = 0; i < paired.length; i++) {
                 const qPair = quotePairs[i % quotePairs.length];
                 const [b1, b2] = paired[i];
                 b1.value = qPair.char1;
-                b1.pairId = qPair.pairId;
+                b1.pairId = i + 1;
                 b2.value = qPair.char2;
-                b2.pairId = qPair.pairId;
+                b2.pairId = i + 1;
             }
 
             // Guarantee at least one move

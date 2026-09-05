@@ -383,23 +383,92 @@ class Sum10Game {
         }
     }
 
-    revealQuotePair(pairId) {
+    revealQuotePair(pairId, c1, c2) {
         if (!this.quoteBanner || !this.topology || !this.topology.sentenceData) return;
         const data = this.topology.sentenceData;
+        if (!data.revealedIndices) data.revealedIndices = new Set();
         if (!data.matchedPairIds) data.matchedPairIds = new Set();
-        data.matchedPairIds.add(pairId);
-
-        const totalPairs = data.pairs ? data.pairs.length : 0;
-        const matchedCount = data.matchedPairIds.size;
-        if (this.quoteProgress) {
-            this.quoteProgress.textContent = `${matchedCount} / ${totalPairs} PAIRS`;
+        if (pairId !== null && pairId !== undefined) {
+            data.matchedPairIds.add(pairId);
         }
 
-        const charSpans = this.quoteBanner.querySelectorAll(`.quote-char[data-pair-id="${pairId}"]`);
-        charSpans.forEach(span => {
+        const charSpans = Array.from(this.quoteBanner.querySelectorAll('.quote-char'));
+        const revealedSpans = [];
+
+        // 1. Try to find unrevealed consecutive occurrences of c1 and c2 in the quote text
+        if (c1 && c2 && charSpans.length > 0) {
+            const upper1 = c1.toUpperCase();
+            const upper2 = c2.toUpperCase();
+
+            for (let i = 0; i < charSpans.length - 1; i++) {
+                const s1 = charSpans[i];
+                const s2 = charSpans[i + 1];
+                const idx1 = parseInt(s1.getAttribute('data-char-index'), 10);
+                const idx2 = parseInt(s2.getAttribute('data-char-index'), 10);
+
+                if (data.revealedIndices.has(idx1) && data.revealedIndices.has(idx2)) continue;
+
+                const text1 = s1.textContent.trim().toUpperCase();
+                const text2 = s2.textContent.trim().toUpperCase();
+
+                if ((text1 === upper1 && text2 === upper2) || (text1 === upper2 && text2 === upper1)) {
+                    data.revealedIndices.add(idx1);
+                    data.revealedIndices.add(idx2);
+                    revealedSpans.push(s1, s2);
+                    break;
+                }
+            }
+
+            // Fallback: match individual unrevealed occurrences of c1 and c2
+            if (revealedSpans.length === 0) {
+                const unrevealed1 = charSpans.find(s => {
+                    const idx = parseInt(s.getAttribute('data-char-index'), 10);
+                    return !data.revealedIndices.has(idx) && s.textContent.trim().toUpperCase() === upper1;
+                });
+                if (unrevealed1) {
+                    const idx = parseInt(unrevealed1.getAttribute('data-char-index'), 10);
+                    data.revealedIndices.add(idx);
+                    revealedSpans.push(unrevealed1);
+                }
+
+                const unrevealed2 = charSpans.find(s => {
+                    const idx = parseInt(s.getAttribute('data-char-index'), 10);
+                    return !data.revealedIndices.has(idx) && s.textContent.trim().toUpperCase() === upper2 && s !== unrevealed1;
+                });
+                if (unrevealed2) {
+                    const idx = parseInt(unrevealed2.getAttribute('data-char-index'), 10);
+                    data.revealedIndices.add(idx);
+                    revealedSpans.push(unrevealed2);
+                }
+            }
+        }
+
+        // 2. If pairId is provided and spans matched by pairId are not yet revealed
+        if (pairId !== null && pairId !== undefined) {
+            const pairSpans = this.quoteBanner.querySelectorAll(`.quote-char[data-pair-id="${pairId}"]`);
+            pairSpans.forEach(span => {
+                const idx = parseInt(span.getAttribute('data-char-index'), 10);
+                data.revealedIndices.add(idx);
+                if (!revealedSpans.includes(span)) {
+                    revealedSpans.push(span);
+                }
+            });
+        }
+
+        // Animate all newly revealed spans
+        revealedSpans.forEach(span => {
             span.classList.add('revealed', 'just-revealed');
             setTimeout(() => span.classList.remove('just-revealed'), 700);
         });
+
+        // Update progress counter
+        const totalLetters = charSpans.length;
+        const revealedCount = data.revealedIndices.size;
+        const totalPairs = Math.ceil(totalLetters / 2);
+        const matchedPairsCount = Math.min(totalPairs, Math.ceil(revealedCount / 2));
+        if (this.quoteProgress) {
+            this.quoteProgress.textContent = `${matchedPairsCount} / ${totalPairs} PAIRS`;
+        }
     }
 
     showToast(message, duration = 1800) {
@@ -774,9 +843,7 @@ class Sum10Game {
                     resolvedPairId = first.pairId !== undefined ? first.pairId : second.pairId;
                 }
 
-                if (resolvedPairId !== undefined && resolvedPairId !== null) {
-                    this.revealQuotePair(resolvedPairId);
-                }
+                this.revealQuotePair(resolvedPairId, c1, c2);
             }
 
             setTimeout(() => {

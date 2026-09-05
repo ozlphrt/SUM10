@@ -190,19 +190,10 @@ export class GridTopology {
      */
     canBlocksBePaired(blockA, blockB) {
         if (!blockA || !blockB || blockA.id === blockB.id) return false;
-        // Always allowed if physically adjacent
-        if (this.areBlocksAdjacent(blockA, blockB)) return true;
-        // Allowed in endgame
-        if (this.blocks.size <= 2) return true;
-        // Allowed if either block has no touching neighbors (isolated)
-        const neighborsA = this.getNeighborBlocks(blockA.id);
-        const neighborsB = this.getNeighborBlocks(blockB.id);
-        if (neighborsA.size === 0 || neighborsB.size === 0) return true;
-        // Allowed across space if both blocks have a clear sliding exit route out of the tower!
-        const exitA = this.canBlockSlideOut(blockA, blockB);
-        const exitB = this.canBlockSlideOut(blockB, blockA);
-        if (exitA.canExit && exitB.canExit) return true;
-        return false;
+        // Any two distinct blocks can be evaluated as a candidate pair.
+        // Whether they are physical neighbors, unobstructed to slide, or blocked
+        // will be evaluated by isMatch and canBlockSlideOut with appropriate user feedback.
+        return true;
     }
 
 
@@ -444,17 +435,25 @@ export class GridTopology {
                 return true;
             }
 
-            // 2. Check if (c1, c2) or (c2, c1) forms ANY available consecutive pair in the quote
+            // 2. Check if (c1, c2) or (c2, c1) forms ANY consecutive letter sequence in the quote
+            if (this.sentenceData && this.sentenceData.quote) {
+                const rawLetters = this.sentenceData.quote.toUpperCase().replace(/[^A-Z]/g, '');
+                const pairForward = c1 + c2;
+                const pairBackward = c2 + c1;
+                if (rawLetters.includes(pairForward) || rawLetters.includes(pairBackward)) {
+                    return true;
+                }
+            }
+
+            // 3. Check sentenceData.pairs if defined
             if (this.sentenceData && Array.isArray(this.sentenceData.pairs)) {
-                const matchedSet = this.sentenceData.matchedPairIds || new Set();
                 const matchFound = this.sentenceData.pairs.some((p) => {
-                    if (matchedSet.has(p.pairId)) return false;
                     return (p.char1 === c1 && p.char2 === c2) || (p.char1 === c2 && p.char2 === c1);
                 });
                 if (matchFound) return true;
             }
 
-            // Fallback if no sentenceData (plain letters matching)
+            // Fallback: identical letters match
             return c1 === c2;
         }
 
