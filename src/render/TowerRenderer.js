@@ -222,9 +222,10 @@ export class TowerRenderer {
     _initControls() {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
+        this.controls.dampingFactor = 0.08; // Buttery smooth rotational and zoom deceleration
+        this.controls.zoomSpeed = 0.85; // Refined zoom sensitivity for silky transitions
         this.controls.maxPolarAngle = Math.PI / 2 + 0.05; // allow viewing slightly below horizon
-        this.controls.minDistance = 6;
+        this.controls.minDistance = 3.0;
         this.controls.maxDistance = 50;
         this.controls.target.set(0, 4, 0);
     }
@@ -260,6 +261,22 @@ export class TowerRenderer {
                 this._handleClick(e);
             }
         });
+
+        // Smooth Wheel Zoom: intercepts mouse wheel to apply silky, inertia-smoothed zooming
+        this._targetZoomDist = null;
+        this.renderer.domElement.addEventListener('wheel', (e) => {
+            if (this._isCameraAnimating) {
+                this._isCameraAnimating = false;
+            }
+            e.preventDefault();
+            const currentDist = this.camera.position.distanceTo(this.controls.target);
+            if (this._targetZoomDist === null || Math.abs(this._targetZoomDist - currentDist) > currentDist * 0.5) {
+                this._targetZoomDist = currentDist;
+            }
+            // Proportional smooth scaling: small notches produce smooth, continuous zoom
+            const factor = Math.exp(e.deltaY * 0.0015);
+            this._targetZoomDist = Math.max(this.controls.minDistance, Math.min(this.controls.maxDistance, this._targetZoomDist * factor));
+        }, { passive: false });
     }
 
     handleResize() {
@@ -400,7 +417,7 @@ export class TowerRenderer {
         if (this._isPointerDown) return; // Don't interrupt active manual orbit dragging
 
         const fit = this._calculateOptimalCameraFit();
-        this.controls.minDistance = Math.max(3.0, fit.optimalDist * 0.4);
+        this.controls.minDistance = Math.max(2.5, fit.optimalDist * 0.35);
         this.controls.maxDistance = fit.optimalDist * 2.8;
 
         // Preserve player's current orbit angle if camera was already rotated
@@ -413,10 +430,16 @@ export class TowerRenderer {
             targetPos = fit.position;
         }
 
+        if (this._activeFitAnimFrame) {
+            cancelAnimationFrame(this._activeFitAnimFrame);
+            this._activeFitAnimFrame = null;
+        }
+
         if (!animate) {
             this.controls.target.copy(fit.center);
             this.camera.position.copy(targetPos);
             this.controls.update();
+            this._targetZoomDist = null;
             if (onComplete) onComplete();
             return;
         }
@@ -430,26 +453,30 @@ export class TowerRenderer {
         const animateFit = () => {
             if (this._isPointerDown) {
                 this._isCameraAnimating = false;
+                this._activeFitAnimFrame = null;
                 return;
             }
 
             const elapsed = performance.now() - startTime;
             const progress = Math.min(1.0, elapsed / duration);
-            const easeOut = 1 - Math.pow(1 - progress, 3);
+            // Smooth natural ease-in-out curve (smoothstep / sinusoidal S-curve)
+            const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
 
-            this.camera.position.lerpVectors(startPos, targetPos, easeOut);
-            this.controls.target.lerpVectors(startTarget, destTarget, easeOut);
+            this.camera.position.lerpVectors(startPos, targetPos, ease);
+            this.controls.target.lerpVectors(startTarget, destTarget, ease);
             this.controls.update();
 
             if (progress < 1.0) {
-                requestAnimationFrame(animateFit);
+                this._activeFitAnimFrame = requestAnimationFrame(animateFit);
             } else {
                 this._isCameraAnimating = false;
+                this._activeFitAnimFrame = null;
+                this._targetZoomDist = this.camera.position.distanceTo(this.controls.target);
                 if (onComplete) onComplete();
             }
         };
 
-        requestAnimationFrame(animateFit);
+        this._activeFitAnimFrame = requestAnimationFrame(animateFit);
     }
 
     /**
@@ -1185,6 +1212,20 @@ export class TowerRenderer {
     _animate() {
         if (this._isDisposed) return;
         requestAnimationFrame(this._animate);
+
+        // Smooth Wheel Zoom: seamlessly interpolate camera distance towards target distance
+        if (this._targetZoomDist !== null && !this._isCameraAnimating && !this._isPointerDown) {
+            const rel = this.camera.position.clone().sub(this.controls.target);
+            const currentDist = rel.length();
+            if (Math.abs(currentDist - this._targetZoomDist) > 0.02) {
+                // Smooth exponential dampening towards target zoom distance
+                const newDist = THREE.MathUtils.lerp(currentDist, this._targetZoomDist, 0.12);
+                rel.normalize().multiplyScalar(newDist);
+                this.camera.position.copy(this.controls.target).add(rel);
+            } else {
+                this._targetZoomDist = null;
+            }
+        }
 
         this.controls.update();
 
