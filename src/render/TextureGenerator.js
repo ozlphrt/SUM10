@@ -193,10 +193,10 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
                 name: 'Solar Star'
             },
             hexagon: {
-                main: ['#f43f5e', '#be123c', '#881337'],
-                glow: 'rgba(244, 63, 94, 0.45)',
-                accent: '#fecdd3',
-                name: 'Ruby Crest'
+                main: ['#64748b', '#475569', '#1e293b'],
+                glow: 'rgba(100, 116, 139, 0.45)',
+                accent: '#cbd5e1',
+                name: 'Platinum Crest'
             },
             crescent: {
                 main: ['#38bdf8', '#0284c7', '#082f49'],
@@ -211,9 +211,9 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
                 name: 'Aegis Shield'
             },
             cross: {
-                main: ['#ec4899', '#be185d', '#700733'],
-                glow: 'rgba(236, 72, 153, 0.45)',
-                accent: '#fbcfe8',
+                main: ['#475569', '#334155', '#0f172a'],
+                glow: 'rgba(71, 85, 105, 0.50)',
+                accent: '#94a3b8',
                 name: 'Nordic Cross'
             },
             ring: {
@@ -475,10 +475,10 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
             ctx.stroke();
 
         } else if (value === 'hexagon') {
-            // RUBY CREST: Honeycomb faceted medallion with concentric inscribed hex and core shield
+            // PLATINUM CREST: Honeycomb faceted medallion with concentric inscribed hex and core shield
             const hexR = 60;
             const hexGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, hexR);
-            hexGrad.addColorStop(0, '#fb7185');
+            hexGrad.addColorStop(0, '#94a3b8');
             hexGrad.addColorStop(0.5, theme.main[0]);
             hexGrad.addColorStop(1, theme.main[2]);
 
@@ -630,13 +630,13 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
             ctx.fill();
 
         } else if (value === 'cross') {
-            // NORDIC CROSS: 4-way heraldic knight cross with flared beveled arms
+            // NORDIC CROSS: 4-way heraldic titanium cross with flared beveled arms
             const armL = 58;
             const armW = 16;
             const flare = 26;
 
             const crossGrad = ctx.createRadialGradient(cx, cy, 6, cx, cy, armL);
-            crossGrad.addColorStop(0, '#f472b6');
+            crossGrad.addColorStop(0, '#64748b');
             crossGrad.addColorStop(0.5, theme.main[0]);
             crossGrad.addColorStop(1, theme.main[2]);
 
