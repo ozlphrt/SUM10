@@ -302,6 +302,70 @@ export class GridTopology {
     }
 
     /**
+     * Checks if there is at least one playable move right now:
+     * - Any active bomb (can always be detonated)
+     * - Any unblocked Wildcard paired with any unblocked block
+     * - Any pair of unblocked blocks summing to 10
+     * @returns {boolean}
+     */
+    hasAnyValidMove() {
+        const active = Array.from(this.blocks.values());
+        if (active.length === 0) return true; // Cleared
+
+        // If a bomb exists, it's always an available tactical move
+        if (active.some((b) => b.type === 'bomb')) return true;
+
+        // Filter blocks that currently have clear exit paths
+        const clearBlocks = active.filter((b) => this.canBlockSlideOut(b).canExit);
+        if (clearBlocks.length < 2) return false;
+
+        // If any wildcard is clear, it can pair with any other clear block
+        if (clearBlocks.some((b) => b.type === 'wild')) return true;
+
+        // Check if any two clear blocks sum to 10
+        for (let i = 0; i < clearBlocks.length; i++) {
+            for (let j = i + 1; j < clearBlocks.length; j++) {
+                if (clearBlocks[i].value + clearBlocks[j].value === 10) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Shuffles values among remaining blocks to break deadlocks and guarantee
+     * that at least one clear exit pair sums to 10.
+     */
+    shuffleDeadlock() {
+        const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
+        if (active.length < 2) return;
+
+        // Find clear exit blocks
+        const clearBlocks = Array.from(this.blocks.values()).filter((b) => this.canBlockSlideOut(b).canExit && b.type === 'normal');
+
+        if (clearBlocks.length >= 2) {
+            // Pick two clear blocks and ensure their values sum to 10
+            const b1 = clearBlocks[0];
+            const b2 = clearBlocks[1];
+            const v1 = Math.floor(Math.random() * 9) + 1;
+            const v2 = 10 - v1;
+            b1.value = v1;
+            b2.value = v2;
+        }
+
+        // Shuffle values of the remaining active blocks in pairs
+        const remainingNormal = active.filter((b) => !clearBlocks.slice(0, 2).includes(b));
+        for (let i = 0; i < remainingNormal.length - 1; i += 2) {
+            const v1 = Math.floor(Math.random() * 9) + 1;
+            const v2 = 10 - v1;
+            remainingNormal[i].value = v1;
+            remainingNormal[i + 1].value = v2;
+        }
+    }
+
+    /**
      * Clears all blocks and resets the grid.
      */
     clear() {

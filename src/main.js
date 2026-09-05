@@ -13,6 +13,7 @@ class Sum10Game {
         this.slot2Elem = document.getElementById('slot-2');
         this.toastElem = document.getElementById('toast-msg');
         this.btnNewGame = document.getElementById('btn-new-game');
+        this.btnShuffle = document.getElementById('btn-shuffle');
 
         this.currentLevel = 1;
         this.score = 0;
@@ -29,6 +30,8 @@ class Sum10Game {
             this.score = 0;
             this.startLevel(this.currentLevel);
         });
+
+        this.btnShuffle.addEventListener('click', () => this.handleShuffle());
 
         this.startLevel(this.currentLevel);
     }
@@ -48,6 +51,7 @@ class Sum10Game {
         this.selectedBlock = null;
         this.isProcessingMatch = false;
         this._updateSelectionUI(null, null);
+        if (this.btnShuffle) this.btnShuffle.style.display = 'none';
 
         const config = TopologyGenerator.getLevelConfig(level);
         const generator = new TopologyGenerator(config);
@@ -57,6 +61,28 @@ class Sum10Game {
 
         this.updateStats();
         this.showToast(`🏰 Level ${level} — Find pairs summing to 10!`, 2200);
+        this._checkDeadlock();
+    }
+
+    _checkDeadlock() {
+        if (!this.topology || this.topology.blocks.size === 0) return;
+        const hasMove = this.topology.hasAnyValidMove();
+        if (!hasMove) {
+            if (this.btnShuffle) this.btnShuffle.style.display = 'flex';
+            this.showToast('⚠️ No unblocked pairs left! Tap Shuffle to break deadlock.', 4000);
+        } else {
+            if (this.btnShuffle) this.btnShuffle.style.display = 'none';
+        }
+    }
+
+    handleShuffle() {
+        if (!this.topology || this.isProcessingMatch) return;
+        sound.playExplosion();
+        this.renderer.shakeCamera(0.5, 600);
+        this.topology.shuffleDeadlock();
+        this.renderer.setTopology(this.topology);
+        if (this.btnShuffle) this.btnShuffle.style.display = 'none';
+        this.showToast('🌋 Tower Quake! Blocks reshuffled with new clear pairs!', 2500);
     }
 
     updateStats() {
@@ -179,9 +205,11 @@ class Sum10Game {
                         this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
                             sound.playLandThud();
                             this.isProcessingMatch = false;
+                            this._checkDeadlock();
                         });
                     } else {
                         this.isProcessingMatch = false;
+                        this._checkDeadlock();
                     }
                 }, 150);
 
@@ -239,9 +267,11 @@ class Sum10Game {
                 this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
                     sound.playLandThud();
                     this.isProcessingMatch = false;
+                    this._checkDeadlock();
                 });
             } else {
                 this.isProcessingMatch = false;
+                this._checkDeadlock();
             }
         }, 200);
 
