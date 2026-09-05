@@ -245,27 +245,7 @@ export class TopologyGenerator {
         let idCounter = 1;
 
         const currentLevel = overrideConfig.level || 1;
-        // From Level 2+, include special blocks (1 Bomb, 1 Wildcard)
-        const includeSpecial = currentLevel >= 2;
-
-        let pairsToGenerate = pairCount;
-        if (includeSpecial) {
-            pairsToGenerate = Math.max(1, pairCount - 1);
-            // Add a Bomb block
-            blockSpecs.push({
-                id: `b_${idCounter++}`,
-                value: mode === 'sum20' ? 10 : (mode === 'shapes' ? 'circle' : (mode === 'alphabet' ? 'A' : 5)),
-                length: 1, // bombs are compact 1-cell blocks
-                type: 'bomb'
-            });
-            // Add a Wildcard block
-            blockSpecs.push({
-                id: `b_${idCounter++}`,
-                value: '★', // wildcard matches anything
-                length: 1,
-                type: 'wild'
-            });
-        }
+        const pairsToGenerate = pairCount;
 
         for (let p = 0; p < pairsToGenerate; p++) {
             const [v1, v2] = this._generatePairForMode(mode);
