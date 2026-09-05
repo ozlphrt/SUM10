@@ -71,6 +71,8 @@ export class TowerRenderer {
         this.exitGuideBeam = null;
         this.currentGridSize = 5;
         this.currentCellSize = 1.0;
+        this.currentLevel = 1;
+        this.isDarkTheme = false;
 
         this.basePlate = null;
         this._isDisposed = false;
@@ -140,10 +142,35 @@ export class TowerRenderer {
     }
 
     /**
-     * Dynamically smoothly transitions visual atmosphere based on current level.
+     * Dynamically smoothly transitions visual atmosphere based on current level and theme.
      * @param {number} level 
      */
     applyLevelTheme(level = 1) {
+        this.currentLevel = level;
+
+        if (this.isDarkTheme) {
+            // Slate Obsidian Dark Mode atmosphere
+            if (this.scene && this.scene.background) {
+                this.scene.background.set(0x090d16);
+            }
+            if (this.ambientLight) {
+                this.ambientLight.color.set(0x94a3b8);
+                this.ambientLight.intensity = 0.65;
+            }
+            if (this.dirLight) {
+                this.dirLight.color.set(0xf8fafc);
+                this.dirLight.intensity = 1.05;
+            }
+            if (this.rimLight) {
+                this.rimLight.color.set(0x38bdf8);
+                this.rimLight.intensity = 0.70;
+            }
+            if (this.basePlate && this.basePlate.material) {
+                this.basePlate.material.color.set(0x1e293b);
+            }
+            return;
+        }
+
         const themeIdx = (level - 1) % LEVEL_THEMES.length;
         const theme = LEVEL_THEMES[themeIdx];
 
@@ -154,12 +181,26 @@ export class TowerRenderer {
             this.ambientLight.color.set(theme.ambient);
             this.ambientLight.intensity = theme.ambientInt;
         }
+        if (this.dirLight) {
+            this.dirLight.color.set(0xffffff);
+            this.dirLight.intensity = 1.2;
+        }
         if (this.rimLight) {
             this.rimLight.color.set(theme.rim);
+            this.rimLight.intensity = 0.6;
         }
         if (this.basePlate && this.basePlate.material) {
             this.basePlate.material.color.set(theme.plate);
         }
+    }
+
+    /**
+     * Toggles between Scandinavian Light and Slate Obsidian Dark mode.
+     * @param {boolean} isDark 
+     */
+    setTheme(isDark = false) {
+        this.isDarkTheme = isDark;
+        this.applyLevelTheme(this.currentLevel || 1);
     }
 
     _initControls() {

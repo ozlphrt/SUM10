@@ -11,6 +11,58 @@
     --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+body.dark-theme {
+    --bg-main: #090d16;
+    --card-bg: rgba(15, 23, 42, 0.90);
+    --card-border: rgba(51, 65, 85, 0.7);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+}
+
+body.dark-theme .btn-icon,
+body.dark-theme .btn-icon-subtle,
+body.dark-theme .btn-subtle,
+body.dark-theme .stat-pill,
+body.dark-theme .selection-card,
+body.dark-theme .hint-chip,
+body.dark-theme .modal-card,
+body.dark-theme .complete-stat-item,
+body.dark-theme .level-btn {
+    background: rgba(30, 41, 59, 0.88);
+    border-color: rgba(71, 85, 105, 0.6);
+    color: #f1f5f9;
+}
+
+body.dark-theme .stat-label,
+body.dark-theme .complete-stat-label {
+    color: #94a3b8;
+}
+
+body.dark-theme .level-btn {
+    color: #cbd5e1;
+}
+
+body.dark-theme .level-btn:hover {
+    background: #334155;
+    border-color: #38bdf8;
+}
+
+body.dark-theme .btn-outline-subtle {
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+body.dark-theme .btn-outline-subtle:hover {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+body.dark-theme .toast-msg {
+    background: rgba(15, 23, 42, 0.92);
+    border-color: rgba(71, 85, 105, 0.8);
+    color: #f8fafc;
+}
+
 * {
     margin: 0;
     padding: 0;

@@ -17,6 +17,8 @@ class Sum10Game {
         this.btnShuffle = document.getElementById('btn-shuffle');
         this.btnSound = document.getElementById('btn-sound');
         this.iconSound = document.getElementById('icon-sound');
+        this.btnTheme = document.getElementById('btn-theme');
+        this.iconTheme = document.getElementById('icon-theme');
         this.pillLevel = document.getElementById('pill-level');
         this.modalLevel = document.getElementById('modal-level-select');
         this.btnCloseModal = document.getElementById('btn-close-modal');
@@ -86,6 +88,27 @@ class Sum10Game {
             });
         }
 
+        // Theme toggle (Scandinavian Light vs Slate Obsidian Dark)
+        this.isDarkTheme = (function() {
+            try {
+                return localStorage.getItem('sum10_theme') === 'dark';
+            } catch (_) {
+                return false;
+            }
+        })();
+
+        if (this.btnTheme) {
+            this.btnTheme.addEventListener('click', () => {
+                this.isDarkTheme = !this.isDarkTheme;
+                try {
+                    localStorage.setItem('sum10_theme', this.isDarkTheme ? 'dark' : 'light');
+                } catch (_) {}
+                this._applyTheme(this.isDarkTheme);
+                sound.playSelect(1);
+                this.showToast(this.isDarkTheme ? '🌙 Obsidian Dark Mode' : '☀️ Scandinavian Light Mode', 1200);
+            });
+        }
+
         // Retry current level (doesn't reset level progress)
         if (this.btnRetry) {
             this.btnRetry.addEventListener('click', () => {
@@ -135,11 +158,23 @@ class Sum10Game {
             onBackgroundClick: () => this.handleBackgroundClick()
         });
 
+        this._applyTheme(this.isDarkTheme);
+
         if (this.btnShuffle) {
             this.btnShuffle.addEventListener('click', () => this.handleShuffle());
         }
 
         this.startLevel(this.currentLevel);
+    }
+
+    _applyTheme(isDark) {
+        document.body.classList.toggle('dark-theme', isDark);
+        if (this.iconTheme) {
+            this.iconTheme.textContent = isDark ? '☀️' : '🌙';
+        }
+        if (this.renderer) {
+            this.renderer.setTheme(isDark);
+        }
     }
 
     _loadProgress() {
