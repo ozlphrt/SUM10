@@ -13,6 +13,7 @@ export class BlockModel {
      * @param {number} options.gridY - Starting Y grid layer (0 = base ground)
      * @param {number} options.gridZ - Starting Z grid index
      * @param {{x: number, y: number, z: number}} [options.direction] - Sliding / escape direction
+     * @param {'normal'|'bomb'|'wild'} [options.type='normal'] - Special block type
      */
     constructor({
         id,
@@ -22,7 +23,8 @@ export class BlockModel {
         gridX = 0,
         gridY = 0,
         gridZ = 0,
-        direction = { x: 1, y: 0, z: 0 }
+        direction = { x: 1, y: 0, z: 0 },
+        type = 'normal'
     }) {
         this.id = id;
         this.value = value;
@@ -32,6 +34,7 @@ export class BlockModel {
         this.gridY = gridY;
         this.gridZ = gridZ;
         this.direction = { ...direction };
+        this.type = type; // 'normal', 'bomb', or 'wild'
 
         // State flags
         this.isRemoved = false;

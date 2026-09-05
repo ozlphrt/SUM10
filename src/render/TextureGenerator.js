@@ -18,15 +18,17 @@ export const NUMBER_COLORS = {
 
 /**
  * Creates or retrieves a procedural high-contrast canvas texture with the block's number and exit direction.
+ * Supports special types: 'bomb' and 'wild'.
  * @param {number} value - Number from 1 to 9
  * @param {number} length - Block length (1, 2, or 3 cells)
  * @param {'X'|'Z'|'Y'} orientation
  * @param {{x: number, y: number, z: number}} [direction]
+ * @param {'normal'|'bomb'|'wild'} [type='normal']
  * @returns {THREE.CanvasTexture}
  */
-export function getBlockTexture(value, length = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }) {
+export function getBlockTexture(value, length = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal') {
     const dirKey = `${direction.x}_${direction.y}_${direction.z}`;
-    const key = `${value}_${length}_${orientation}_${dirKey}`;
+    const key = `${type}_${value}_${length}_${orientation}_${dirKey}`;
     if (textureCache.has(key)) return textureCache.get(key);
 
     const canvas = document.createElement('canvas');
@@ -36,43 +38,101 @@ export function getBlockTexture(value, length = 1, orientation = 'X', direction 
     canvas.height = height;
     const ctx = canvas.getContext('2d');
 
-    const palette = NUMBER_COLORS[value] || NUMBER_COLORS[1];
+    if (type === 'bomb') {
+        // HAZARD YELLOW / BLACK STRIPES
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(0, 0, width, height);
 
-    // Background base
-    ctx.fillStyle = palette.bg;
-    ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#111827';
+        const stripeW = 32;
+        for (let i = -width; i < width * 2; i += stripeW * 2) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + width, height);
+            ctx.lineTo(i + width + stripeW, height);
+            ctx.lineTo(i + stripeW, 0);
+            ctx.fill();
+        }
 
-    // Inner bevel border
-    ctx.lineWidth = 12;
-    ctx.strokeStyle = palette.border;
-    ctx.strokeRect(6, 6, width - 12, height - 12);
+        // Central bomb badge
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+        ctx.fillStyle = '#dc2626';
+        ctx.fill();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
 
-    // Subtle radial gradient for depth
-    const grad = ctx.createRadialGradient(width / 2, height / 2, 20, width / 2, height / 2, width / 1.5);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(12, 12, width - 24, height - 24);
+        ctx.font = '72px "Segoe UI Emoji", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💣', width / 2, height / 2 + 4);
+    } else if (type === 'wild') {
+        // PRISMATIC COSMIC GRADIENT
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, '#ec4899');
+        grad.addColorStop(0.5, '#8b5cf6');
+        grad.addColorStop(1, '#06b6d4');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
 
-    // Circular badge behind the number
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.stroke();
+        // Inner bevel
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(5, 5, width - 10, height - 10);
 
-    // Large crisp typography for number
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 96px "Outfit", "Inter", -apple-system, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 4;
-    ctx.fillText(String(value), width / 2, height / 2 - 6);
+        // Central star badge
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#facc15';
+        ctx.stroke();
+
+        ctx.fillStyle = '#facc15';
+        ctx.font = 'bold 88px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#facc15';
+        ctx.shadowBlur = 12;
+        ctx.fillText('★', width / 2, height / 2 + 2);
+        ctx.shadowBlur = 0;
+    } else {
+        // STANDARD NUMBER 1-9 BLOCK
+        const palette = NUMBER_COLORS[value] || NUMBER_COLORS[1];
+
+        ctx.fillStyle = palette.bg;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.lineWidth = 12;
+        ctx.strokeStyle = palette.border;
+        ctx.strokeRect(6, 6, width - 12, height - 12);
+
+        const grad = ctx.createRadialGradient(width / 2, height / 2, 20, width / 2, height / 2, width / 1.5);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(12, 12, width - 24, height - 24);
+
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 96px "Outfit", "Inter", -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+        ctx.fillText(String(value), width / 2, height / 2 - 6);
+    }
 
     // Subtle arrow icon indicating sliding direction
     ctx.save();

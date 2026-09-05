@@ -130,6 +130,35 @@ export class GridTopology {
     }
 
     /**
+     * Finds all neighboring blocks adjacent to a given block (for Bomb explosions).
+     * @param {string|number} blockId 
+     * @returns {Set<BlockModel>}
+     */
+    getNeighborBlocks(blockId) {
+        const block = this.blocks.get(blockId);
+        const neighbors = new Set();
+        if (!block) return neighbors;
+
+        const myVoxels = block.getOccupiedVoxels();
+        for (const v of myVoxels) {
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dz = -1; dz <= 1; dz++) {
+                        const nx = v.x + dx;
+                        const ny = v.y + dy;
+                        const nz = v.z + dz;
+                        const otherId = this.voxelMap.get(GridTopology.toKey(nx, ny, nz));
+                        if (otherId && otherId !== blockId && this.blocks.has(otherId)) {
+                            neighbors.add(this.blocks.get(otherId));
+                        }
+                    }
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    /**
      * Simulates downward gravity fall for any blocks that have lost support.
      * Iterates from bottom to top so lower drops happen first.
      * @returns {Array<{ block: BlockModel, oldGridY: number, newGridY: number, dropLayers: number }>}

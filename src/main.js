@@ -79,6 +79,12 @@ class Sum10Game {
     handleBlockClick(block) {
         if (this.isProcessingMatch || block.isRemoved) return;
 
+        // SPECIAL: If clicking a BOMB block, offer instant detonation!
+        if (block.type === 'bomb') {
+            this._detonateBomb(block);
+            return;
+        }
+
         // Clicking the already selected block deselects it
         if (this.selectedBlock && this.selectedBlock.id === block.id) {
             this.renderer.setBlockSelected(block.id, false);
@@ -92,10 +98,15 @@ class Sum10Game {
         if (!this.selectedBlock) {
             this.selectedBlock = block;
             this.renderer.setBlockSelected(block.id, true);
-            this._updateSelectionUI(block.value, null);
+            const displayVal = block.type === 'wild' ? '★' : block.value;
+            this._updateSelectionUI(displayVal, null);
             sound.playSelect();
-            const needed = 10 - block.value;
-            this.showToast(`Selected [${block.value}]. Tap a [${needed}]!`);
+            if (block.type === 'wild') {
+                this.showToast('🌟 Wildcard selected! Tap ANY block to match!');
+            } else {
+                const needed = 10 - block.value;
+                this.showToast(`Selected [${block.value}]. Tap a [${needed}] or [★]!`);
+            }
             return;
         }
 
@@ -103,9 +114,14 @@ class Sum10Game {
         const first = this.selectedBlock;
         const second = block;
         this.renderer.setBlockSelected(second.id, true);
-        this._updateSelectionUI(first.value, second.value);
 
-        const sum = first.value + second.value;
+        const firstDisp = first.type === 'wild' ? '★' : first.value;
+        const secondDisp = second.type === 'wild' ? '★' : second.value;
+        this._updateSelectionUI(firstDisp, secondDisp);
+
+        // Check if either is a Wildcard block (Wildcard pairs with anything)
+        const isWildMatch = first.type === 'wild' || second.type === 'wild';
+        const sum = isWildMatch ? 10 : first.value + second.value;
 
         if (sum === 10) {
             // Check if BOTH blocks have a clear exit path out of the tower
@@ -113,17 +129,16 @@ class Sum10Game {
             const exitSecond = this.topology.canBlockSlideOut(second);
 
             if (!exitFirst.canExit || !exitSecond.canExit) {
-                // At least one block is blocked by another block
                 sound.playMismatch();
                 if (!exitFirst.canExit && !exitSecond.canExit) {
                     this.showToast('🚫 Both blocks are blocked! Clear their exit paths first.');
                     this.renderer.shakeBlock(first.id);
                     this.renderer.shakeBlock(second.id);
                 } else if (!exitFirst.canExit) {
-                    this.showToast(`🚫 Block [${first.value}] is obstructed! Clear its path first.`);
+                    this.showToast(`🚫 Block [${firstDisp}] is obstructed! Clear its path first.`);
                     this.renderer.shakeBlock(first.id);
                 } else {
-                    this.showToast(`🚫 Block [${second.value}] is obstructed! Clear its path first.`);
+                    this.showToast(`🚫 Block [${secondDisp}] is obstructed! Clear its path first.`);
                     this.renderer.shakeBlock(second.id);
                 }
 
@@ -138,8 +153,13 @@ class Sum10Game {
 
             // Both have clear paths: MATCH & FLY OUT!
             this.isProcessingMatch = true;
-            sound.playMatch();
-            this.showToast(`✨ ${first.value} + ${second.value} = 10! Clear path! Flying out!`);
+            if (isWildMatch) {
+                sound.playWildChime();
+                this.showToast(`🌟 WILDCARD MATCH! ${firstDisp} + ${secondDisp} = 10! Flying out!`);
+            } else {
+                sound.playMatch();
+                this.showToast(`✨ ${first.value} + ${second.value} = 10! Flying out!`);
+            }
 
             setTimeout(() => {
                 sound.playWhoosh();
@@ -147,7 +167,7 @@ class Sum10Game {
                 this.topology.removeBlock(first.id);
                 this.topology.removeBlock(second.id);
 
-                this.score += 100;
+                this.score += isWildMatch ? 150 : 100;
                 this.selectedBlock = null;
                 this._updateSelectionUI(null, null);
                 this.updateStats();
@@ -186,6 +206,51 @@ class Sum10Game {
                 this.selectedBlock = null;
                 this._updateSelectionUI(null, null);
             }, 400);
+        }
+    }
+
+    _detonateBomb(bombBlock) {
+        this.isProcessingMatch = true;
+        sound.playExplosion();
+        this.renderer.shakeCamera(0.45, 500);
+        this.showToast('💥 BOMB DETONATED! Clearing adjacent blocks!', 2000);
+
+        // Find all adjacent neighboring blocks within blast radius
+        const neighbors = Array.from(this.topology.getNeighborBlocks(bombBlock.id));
+        const allToBlast = [bombBlock, ...neighbors];
+
+        const idsToBlast = allToBlast.map((b) => b.id);
+
+        this.renderer.flyOutBlocks(idsToBlast);
+        idsToBlast.forEach((id) => this.topology.removeBlock(id));
+
+        this.score += 50 * allToBlast.length;
+        if (this.selectedBlock) {
+            this.renderer.setBlockSelected(this.selectedBlock.id, false);
+            this.selectedBlock = null;
+        }
+        this._updateSelectionUI(null, null);
+        this.updateStats();
+
+        // Gravity settle after explosion
+        setTimeout(() => {
+            const fallen = this.topology.settleGravity();
+            if (fallen.length > 0) {
+                this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
+                    sound.playLandThud();
+                    this.isProcessingMatch = false;
+                });
+            } else {
+                this.isProcessingMatch = false;
+            }
+        }, 200);
+
+        if (this.topology.blocks.size === 0) {
+            this.score += 500;
+            this.showToast(`🎉 LEVEL ${this.currentLevel} CLEARED! +500 Bonus!`, 3500);
+            setTimeout(() => {
+                this.startLevel(this.currentLevel + 1);
+            }, 2500);
         }
     }
 }

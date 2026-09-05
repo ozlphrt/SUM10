@@ -132,11 +132,35 @@ export class TopologyGenerator {
         // 1. Generate value pairs (e.g. 10 pairs = 20 blocks, all summing to 10 in pairs)
         const blockSpecs = [];
         let idCounter = 1;
-        for (let p = 0; p < pairCount; p++) {
+
+        const currentLevel = overrideConfig.level || 1;
+        // From Level 2+, include special blocks (1 Bomb, 1 Wildcard)
+        const includeSpecial = currentLevel >= 2;
+
+        let pairsToGenerate = pairCount;
+        if (includeSpecial) {
+            pairsToGenerate = Math.max(1, pairCount - 1);
+            // Add a Bomb block
+            blockSpecs.push({
+                id: `b_${idCounter++}`,
+                value: 5, // nominal value
+                length: 1, // bombs are compact 1-cell blocks
+                type: 'bomb'
+            });
+            // Add a Wildcard block
+            blockSpecs.push({
+                id: `b_${idCounter++}`,
+                value: 10, // wildcard matches anything
+                length: 1,
+                type: 'wild'
+            });
+        }
+
+        for (let p = 0; p < pairsToGenerate; p++) {
             const [v1, v2] = this._generateSum10Pair();
             blockSpecs.push(
-                { id: `b_${idCounter++}`, value: v1, length: this._sampleLength() },
-                { id: `b_${idCounter++}`, value: v2, length: this._sampleLength() }
+                { id: `b_${idCounter++}`, value: v1, length: this._sampleLength(), type: 'normal' },
+                { id: `b_${idCounter++}`, value: v2, length: this._sampleLength(), type: 'normal' }
             );
         }
 
@@ -187,7 +211,8 @@ export class TopologyGenerator {
                     gridX: gx,
                     gridY: layer,
                     gridZ: gz,
-                    direction: dir
+                    direction: dir,
+                    type: spec.type || 'normal'
                 });
 
                 // Check collision and support
@@ -217,7 +242,8 @@ export class TopologyGenerator {
                                     gridX: gx,
                                     gridY: y,
                                     gridZ: gz,
-                                    direction: dir
+                                    direction: dir,
+                                    type: spec.type || 'normal'
                                 });
 
                                 if (topology.canPlace(fallbackBlock) && topology.hasSupport(fallbackBlock)) {

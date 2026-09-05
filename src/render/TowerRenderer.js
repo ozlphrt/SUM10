@@ -28,11 +28,27 @@ export class TowerRenderer {
         this.basePlate = null;
         this._isDisposed = false;
 
+        this.cameraShakeIntensity = 0;
+        this.cameraShakeStartTime = 0;
+        this.cameraShakeDuration = 0;
+        this._cameraShakeOffset = new THREE.Vector3();
+
         this._initScene();
         this._initControls();
         this._initEvents();
         this._animate = this._animate.bind(this);
         requestAnimationFrame(this._animate);
+    }
+
+    /**
+     * Triggers dynamic camera shake effect on explosions.
+     * @param {number} intensity 
+     * @param {number} durationMs 
+     */
+    shakeCamera(intensity = 0.35, durationMs = 400) {
+        this.cameraShakeIntensity = intensity;
+        this.cameraShakeDuration = durationMs;
+        this.cameraShakeStartTime = performance.now();
     }
 
     _initScene() {
@@ -192,8 +208,8 @@ export class TowerRenderer {
 
         const geometry = new RoundedBoxGeometry(w, h, d, 4, 0.08);
 
-        // Get procedural number texture
-        const texture = getBlockTexture(block.value, block.length, block.orientation, block.direction);
+        // Get procedural number texture (supports normal, bomb, wild)
+        const texture = getBlockTexture(block.value, block.length, block.orientation, block.direction, block.type || 'normal');
         const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
 
         // 6-face material array: faces show the number texture
@@ -389,6 +405,27 @@ export class TowerRenderer {
         requestAnimationFrame(this._animate);
 
         this.controls.update();
+
+        // Apply camera shake if active
+        if (this.cameraShakeDuration > 0) {
+            const elapsed = performance.now() - this.cameraShakeStartTime;
+            if (elapsed < this.cameraShakeDuration) {
+                const progress = elapsed / this.cameraShakeDuration;
+                const decay = Math.pow(1 - progress, 1.5);
+                const currentAmp = this.cameraShakeIntensity * decay;
+                this.camera.position.sub(this._cameraShakeOffset);
+                this._cameraShakeOffset.set(
+                    (Math.random() - 0.5) * 2 * currentAmp,
+                    (Math.random() - 0.5) * 2 * currentAmp,
+                    (Math.random() - 0.5) * 2 * currentAmp
+                );
+                this.camera.position.add(this._cameraShakeOffset);
+            } else {
+                this.camera.position.sub(this._cameraShakeOffset);
+                this._cameraShakeOffset.set(0, 0, 0);
+                this.cameraShakeDuration = 0;
+            }
+        }
 
         // Update flying blocks physics
         const dt = 0.016;
