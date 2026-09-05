@@ -440,7 +440,10 @@ export class GridTopology {
         } else if (mode === 'shapes') {
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
-                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
+                'octagon', 'heart', 'clover', 'infinity', 'spiral',
+                'hourglass', 'teardrop', 'shield', 'compass', 'rhombus',
+                'triskelion', 'prism', 'pillar', 'vortex'
             ];
             const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             return [s, s];
@@ -592,7 +595,10 @@ export class GridTopology {
         if (this.mode === 'shapes' || this.mode === 'alphabet') {
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
-                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
+                'octagon', 'heart', 'clover', 'infinity', 'spiral',
+                'hourglass', 'teardrop', 'shield', 'compass', 'rhombus',
+                'triskelion', 'prism', 'pillar', 'vortex'
             ];
             const half = Math.floor(remainingNormal.length / 2);
             const pool = [];

@@ -440,7 +440,21 @@ class Sum10Game {
                         crescent: '🌙',
                         pentagon: '⬟',
                         cross: '✚',
-                        ring: '◎'
+                        ring: '◎',
+                        octagon: '🛑',
+                        heart: '🩶',
+                        clover: '☘️',
+                        infinity: '∞',
+                        spiral: '🌀',
+                        hourglass: '⏳',
+                        teardrop: '💧',
+                        shield: '🛡️',
+                        compass: '🧭',
+                        rhombus: '◇',
+                        triskelion: '☸',
+                        prism: '⏢',
+                        pillar: '🏛️',
+                        vortex: '⚛'
                     };
                     return SHAPE_ICONS[v] || v;
                 }

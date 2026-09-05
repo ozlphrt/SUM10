@@ -105,10 +105,13 @@ export class TopologyGenerator {
             const v2 = 20 - v1;
             return [v1, v2];
         } else if (mode === 'shapes') {
-            // 10 luxury geometric rune shapes
+            // 24 luxury geometric rune emblems (no red/crimson, pure Nordic obsidian & jewel tones)
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
-                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
+                'octagon', 'heart', 'clover', 'infinity', 'spiral',
+                'hourglass', 'teardrop', 'shield', 'compass', 'rhombus',
+                'triskelion', 'prism', 'pillar', 'vortex'
             ];
             const shape = SHAPES[this._randInt(0, SHAPES.length - 1)];
             return [shape, shape]; // Identical matching pairs
@@ -492,7 +495,10 @@ export class TopologyGenerator {
         if (mode === 'shapes') {
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
-                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
+                'octagon', 'heart', 'clover', 'infinity', 'spiral',
+                'hourglass', 'teardrop', 'shield', 'compass', 'rhombus',
+                'triskelion', 'prism', 'pillar', 'vortex'
             ];
             for (let i = 0; i < totalPairs; i++) {
                 const s = SHAPES[i % SHAPES.length];

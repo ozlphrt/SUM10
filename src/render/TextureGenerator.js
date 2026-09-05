@@ -135,8 +135,14 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
-    } else if (typeof value === 'string' && ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon', 'crescent', 'pentagon', 'cross', 'ring'].includes(value)) {
-        // LUXURY JEWELED RUNIC EMBLEMS (High-detail layered geometry, metallic sheen, facet depth)
+    } else if (typeof value === 'string' && [
+        'circle', 'triangle', 'square', 'diamond', 'star',
+        'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
+        'octagon', 'heart', 'clover', 'infinity', 'spiral',
+        'hourglass', 'teardrop', 'shield', 'compass', 'rhombus',
+        'triskelion', 'prism', 'pillar', 'vortex'
+    ].includes(value)) {
+        // LUXURY JEWELED RUNIC EMBLEMS (24 High-detail layered geometric medallions, metallic sheen, facet depth)
         const cx = width / 2;
         const cy = height / 2;
 
@@ -160,7 +166,7 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
         ctx.stroke();
 
-        // 2. Shape Theme Palettes (Deep Obsidian/Sapphire/Emerald/Ruby/Amber/Amethyst Luxury Gradients)
+        // 2. Shape Theme Palettes (Deep Obsidian/Sapphire/Emerald/Amber/Amethyst/Platinum/Cyan Luxury Gradients)
         const SHAPE_PALETTES = {
             circle: {
                 main: ['#3b82f6', '#1d4ed8', '#0f172a'],
@@ -221,6 +227,90 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
                 glow: 'rgba(234, 179, 8, 0.50)',
                 accent: '#fef08a',
                 name: 'Eternity Ring'
+            },
+            octagon: {
+                main: ['#0284c7', '#0369a1', '#0c4a6e'],
+                glow: 'rgba(2, 132, 199, 0.45)',
+                accent: '#bae6fd',
+                name: 'Cobalt Octagon'
+            },
+            heart: {
+                main: ['#6366f1', '#4f46e5', '#312e81'],
+                glow: 'rgba(99, 102, 241, 0.45)',
+                accent: '#c7d2fe',
+                name: 'Indigo Heart'
+            },
+            clover: {
+                main: ['#059669', '#047857', '#064e3b'],
+                glow: 'rgba(5, 150, 105, 0.45)',
+                accent: '#a7f3d0',
+                name: 'Verdant Clover'
+            },
+            infinity: {
+                main: ['#7c3aed', '#6d28d9', '#2e1065'],
+                glow: 'rgba(124, 58, 237, 0.45)',
+                accent: '#ddd6fe',
+                name: 'Infinity Loop'
+            },
+            spiral: {
+                main: ['#0ea5e9', '#0284c7', '#075985'],
+                glow: 'rgba(14, 165, 233, 0.45)',
+                accent: '#bae6fd',
+                name: 'Mystic Spiral'
+            },
+            hourglass: {
+                main: ['#d97706', '#b45309', '#451a03'],
+                glow: 'rgba(217, 119, 6, 0.45)',
+                accent: '#fde68a',
+                name: 'Chrono Hourglass'
+            },
+            teardrop: {
+                main: ['#2563eb', '#1d4ed8', '#1e3a8a'],
+                glow: 'rgba(37, 99, 235, 0.45)',
+                accent: '#bfdbfe',
+                name: 'Azure Teardrop'
+            },
+            shield: {
+                main: ['#334155', '#1e293b', '#0f172a'],
+                glow: 'rgba(51, 65, 85, 0.50)',
+                accent: '#cbd5e1',
+                name: 'Obsidian Shield'
+            },
+            compass: {
+                main: ['#d97706', '#92400e', '#451a03'],
+                glow: 'rgba(217, 119, 6, 0.45)',
+                accent: '#fef08a',
+                name: 'Runic Compass'
+            },
+            rhombus: {
+                main: ['#0d9488', '#0f766e', '#115e59'],
+                glow: 'rgba(13, 148, 136, 0.45)',
+                accent: '#99f6e4',
+                name: 'Teal Rhombus'
+            },
+            triskelion: {
+                main: ['#4f46e5', '#4338ca', '#1e1b4b'],
+                glow: 'rgba(79, 70, 229, 0.45)',
+                accent: '#c7d2fe',
+                name: 'Celtic Triskelion'
+            },
+            prism: {
+                main: ['#0284c7', '#0369a1', '#075985'],
+                glow: 'rgba(2, 132, 199, 0.45)',
+                accent: '#e0f2fe',
+                name: 'Ice Prism'
+            },
+            pillar: {
+                main: ['#475569', '#334155', '#1e293b'],
+                glow: 'rgba(71, 85, 105, 0.45)',
+                accent: '#e2e8f0',
+                name: 'Nordic Pillar'
+            },
+            vortex: {
+                main: ['#10b981', '#059669', '#022c22'],
+                glow: 'rgba(16, 185, 129, 0.45)',
+                accent: '#a7f3d0',
+                name: 'Emerald Vortex'
             }
         };
 
@@ -725,6 +815,513 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
             ctx.lineWidth = 2.5;
             ctx.strokeStyle = '#ca8a04';
             ctx.stroke();
+
+        } else if (value === 'octagon') {
+            // COBALT OCTAGON: 8-sided faceted imperial stop gem
+            const octR = 60;
+            const octGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, octR);
+            octGrad.addColorStop(0, '#38bdf8');
+            octGrad.addColorStop(0.5, theme.main[0]);
+            octGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i - Math.PI / 8;
+                const ox = cx + octR * Math.cos(angle);
+                const oy = cy + octR * Math.sin(angle);
+                if (i === 0) ctx.moveTo(ox, oy);
+                else ctx.lineTo(ox, oy);
+            }
+            ctx.closePath();
+            ctx.fillStyle = octGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Inner Octagon Inset
+            const inR = 32;
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i - Math.PI / 8;
+                const ox = cx + inR * Math.cos(angle);
+                const oy = cy + inR * Math.sin(angle);
+                if (i === 0) ctx.moveTo(ox, oy);
+                else ctx.lineTo(ox, oy);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Core Pearl
+            ctx.beginPath();
+            ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'heart') {
+            // INDIGO HEART: Bevelled royal gem heart
+            const heartGrad = ctx.createLinearGradient(cx, cy - 50, cx, cy + 50);
+            heartGrad.addColorStop(0, '#818cf8');
+            heartGrad.addColorStop(0.5, theme.main[0]);
+            heartGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + 46);
+            ctx.bezierCurveTo(cx - 65, cy + 10, cx - 65, cy - 45, cx, cy - 18);
+            ctx.bezierCurveTo(cx + 65, cy - 45, cx + 65, cy + 10, cx, cy + 46);
+            ctx.closePath();
+            ctx.fillStyle = heartGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Inner Core Accent
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + 22);
+            ctx.bezierCurveTo(cx - 30, cy + 4, cx - 30, cy - 22, cx, cy - 8);
+            ctx.bezierCurveTo(cx + 30, cy - 22, cx + 30, cy + 4, cx, cy + 22);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+        } else if (value === 'clover') {
+            // VERDANT CLOVER: 4-leaf heraldic talisman
+            const r = 26;
+            const dist = 22;
+            const offsets = [
+                { x: 0, y: -dist },
+                { x: dist, y: 0 },
+                { x: 0, y: dist },
+                { x: -dist, y: 0 }
+            ];
+
+            const cloverGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 58);
+            cloverGrad.addColorStop(0, '#34d399');
+            cloverGrad.addColorStop(0.6, theme.main[0]);
+            cloverGrad.addColorStop(1, theme.main[2]);
+
+            for (const off of offsets) {
+                ctx.beginPath();
+                ctx.arc(cx + off.x, cy + off.y, r, 0, Math.PI * 2);
+                ctx.fillStyle = cloverGrad;
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.80)';
+                ctx.stroke();
+            }
+
+            // Center Gold Diamond
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 14);
+            ctx.lineTo(cx + 14, cy);
+            ctx.lineTo(cx, cy + 14);
+            ctx.lineTo(cx - 14, cy);
+            ctx.closePath();
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'infinity') {
+            // INFINITY LOOP: Figure-8 mobius strip
+            ctx.save();
+            ctx.translate(cx, cy);
+            const infGrad = ctx.createLinearGradient(-50, 0, 50, 0);
+            infGrad.addColorStop(0, '#a855f7');
+            infGrad.addColorStop(0.5, theme.main[0]);
+            infGrad.addColorStop(1, theme.main[2]);
+
+            // Left loop
+            ctx.beginPath();
+            ctx.arc(-26, 0, 24, 0, Math.PI * 2);
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = infGrad;
+            ctx.stroke();
+
+            // Right loop
+            ctx.beginPath();
+            ctx.arc(26, 0, 24, 0, Math.PI * 2);
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = infGrad;
+            ctx.stroke();
+
+            // Outer highlight rims
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-26, 0, 31, 0, Math.PI * 2);
+            ctx.arc(-26, 0, 17, 0, Math.PI * 2);
+            ctx.arc(26, 0, 31, 0, Math.PI * 2);
+            ctx.arc(26, 0, 17, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Center core
+            ctx.beginPath();
+            ctx.arc(0, 0, 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.restore();
+
+        } else if (value === 'spiral') {
+            // MYSTIC SPIRAL: Archimedean celestial spiral galaxy
+            const spiralGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 60);
+            spiralGrad.addColorStop(0, '#38bdf8');
+            spiralGrad.addColorStop(0.5, theme.main[0]);
+            spiralGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+            ctx.fillStyle = spiralGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Intertwined spirals
+            ctx.beginPath();
+            for (let a = 0; a < Math.PI * 4; a += 0.1) {
+                const r = 8 + a * 3.6;
+                const x = cx + r * Math.cos(a);
+                const y = cy + r * Math.sin(a);
+                if (a === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'hourglass') {
+            // CHRONO HOURGLASS: Double triangular time facet
+            const hgGrad = ctx.createLinearGradient(cx, cy - 56, cx, cy + 56);
+            hgGrad.addColorStop(0, '#fbbf24');
+            hgGrad.addColorStop(0.5, theme.main[0]);
+            hgGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx - 42, cy - 54);
+            ctx.lineTo(cx + 42, cy - 54);
+            ctx.lineTo(cx, cy);
+            ctx.lineTo(cx + 42, cy + 54);
+            ctx.lineTo(cx - 42, cy + 54);
+            ctx.lineTo(cx, cy);
+            ctx.closePath();
+            ctx.fillStyle = hgGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Inner chambers
+            ctx.beginPath();
+            ctx.arc(cx, cy - 28, 14, 0, Math.PI * 2);
+            ctx.arc(cx, cy + 28, 14, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Center waist jewel
+            ctx.beginPath();
+            ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'teardrop') {
+            // AZURE TEARDROP: Polished pendeloque droplet gem
+            const tearGrad = ctx.createLinearGradient(cx, cy - 60, cx, cy + 55);
+            tearGrad.addColorStop(0, '#60a5fa');
+            tearGrad.addColorStop(0.5, theme.main[0]);
+            tearGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 58);
+            ctx.bezierCurveTo(cx + 56, cy - 6, cx + 48, cy + 52, cx, cy + 54);
+            ctx.bezierCurveTo(cx - 48, cy + 52, cx - 56, cy - 6, cx, cy - 58);
+            ctx.closePath();
+            ctx.fillStyle = tearGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.90)';
+            ctx.stroke();
+
+            // Inner Facet Tear
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 28);
+            ctx.bezierCurveTo(cx + 26, cy, cx + 22, cy + 28, cx, cy + 30);
+            ctx.bezierCurveTo(cx - 22, cy + 28, cx - 26, cy, cx, cy - 28);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+        } else if (value === 'shield') {
+            // OBSIDIAN SHIELD: Nordic heraldic kite shield with chevrons
+            const shGrad = ctx.createLinearGradient(cx, cy - 58, cx, cy + 58);
+            shGrad.addColorStop(0, '#64748b');
+            shGrad.addColorStop(0.5, theme.main[0]);
+            shGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, cy - 52);
+            ctx.lineTo(cx + 45, cy - 52);
+            ctx.lineTo(cx + 45, cy);
+            ctx.bezierCurveTo(cx + 45, cy + 36, cx + 22, cy + 56, cx, cy + 62);
+            ctx.bezierCurveTo(cx - 22, cy + 56, cx - 45, cy + 36, cx - 45, cy);
+            ctx.closePath();
+            ctx.fillStyle = shGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Chevron Cross
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 52);
+            ctx.lineTo(cx, cy + 62);
+            ctx.moveTo(cx - 45, cy - 10);
+            ctx.lineTo(cx + 45, cy - 10);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Center Boss
+            ctx.beginPath();
+            ctx.arc(cx, cy - 10, 11, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'compass') {
+            // RUNIC COMPASS: 4-pointed mariner compass star inside circular rim
+            ctx.beginPath();
+            ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+            const compGrad = ctx.createRadialGradient(cx, cy, 8, cx, cy, 58);
+            compGrad.addColorStop(0, '#fde68a');
+            compGrad.addColorStop(0.5, theme.main[0]);
+            compGrad.addColorStop(1, theme.main[2]);
+            ctx.fillStyle = compGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Compass Needles
+            const needleR = 52;
+            const needleW = 14;
+            const needleDirs = [
+                { x: 0, y: -needleR },
+                { x: needleR, y: 0 },
+                { x: 0, y: needleR },
+                { x: -needleR, y: 0 }
+            ];
+
+            ctx.fillStyle = '#ffffff';
+            for (const d of needleDirs) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                const perpX = -d.y / needleR * needleW;
+                const perpY = d.x / needleR * needleW;
+                ctx.lineTo(cx + perpX, cy + perpY);
+                ctx.lineTo(cx + d.x, cy + d.y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Center Golden Ring
+            ctx.beginPath();
+            ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+            ctx.fillStyle = theme.main[0];
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+        } else if (value === 'rhombus') {
+            // TEAL RHOMBUS: 60-degree skewed parallelogram gem
+            const rw = 52;
+            const rh = 40;
+            const skew = 22;
+
+            const rhomGrad = ctx.createLinearGradient(cx - rw, cy - rh, cx + rw, cy + rh);
+            rhomGrad.addColorStop(0, '#2dd4bf');
+            rhomGrad.addColorStop(0.5, theme.main[0]);
+            rhomGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx - rw + skew, cy - rh);
+            ctx.lineTo(cx + rw, cy - rh);
+            ctx.lineTo(cx + rw - skew, cy + rh);
+            ctx.lineTo(cx - rw, cy + rh);
+            ctx.closePath();
+            ctx.fillStyle = rhomGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.90)';
+            ctx.stroke();
+
+            // Inner Rhombus
+            const irw = 26;
+            const irh = 20;
+            const iskew = 11;
+            ctx.beginPath();
+            ctx.moveTo(cx - irw + iskew, cy - irh);
+            ctx.lineTo(cx + irw, cy - irh);
+            ctx.lineTo(cx + irw - iskew, cy + irh);
+            ctx.lineTo(cx - irw, cy + irh);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Center pearl
+            ctx.beginPath();
+            ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'triskelion') {
+            // CELTIC TRISKELION: 3-armed spiral vortex
+            const triGrad = ctx.createRadialGradient(cx, cy, 6, cx, cy, 58);
+            triGrad.addColorStop(0, '#818cf8');
+            triGrad.addColorStop(0.5, theme.main[0]);
+            triGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+            ctx.fillStyle = triGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // 3 spiral arms
+            for (let i = 0; i < 3; i++) {
+                const angle = (Math.PI * 2 / 3) * i - Math.PI / 2;
+                const armX = cx + 26 * Math.cos(angle);
+                const armY = cy + 26 * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(armX, armY, 18, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'prism') {
+            // ICE PRISM: Trapezoidal perspective 3D crystal prism
+            const pw = 48;
+            const ph = 54;
+
+            const prismGrad = ctx.createLinearGradient(cx - pw, cy, cx + pw, cy);
+            prismGrad.addColorStop(0, '#38bdf8');
+            prismGrad.addColorStop(0.5, theme.main[0]);
+            prismGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.moveTo(cx - pw * 0.5, cy - ph);
+            ctx.lineTo(cx + pw * 0.5, cy - ph);
+            ctx.lineTo(cx + pw, cy + ph);
+            ctx.lineTo(cx - pw, cy + ph);
+            ctx.closePath();
+            ctx.fillStyle = prismGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.90)';
+            ctx.stroke();
+
+            // Facet split line down middle
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - ph);
+            ctx.lineTo(cx, cy + ph);
+            ctx.moveTo(cx - pw * 0.5, cy - ph);
+            ctx.lineTo(cx, cy);
+            ctx.moveTo(cx + pw * 0.5, cy - ph);
+            ctx.lineTo(cx, cy);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'pillar') {
+            // NORDIC PILLAR: Classic stone colosseum column medallion
+            const pilGrad = ctx.createLinearGradient(cx - 40, cy, cx + 40, cy);
+            pilGrad.addColorStop(0, '#94a3b8');
+            pilGrad.addColorStop(0.5, theme.main[0]);
+            pilGrad.addColorStop(1, theme.main[2]);
+
+            // Outer capital top & base
+            ctx.beginPath();
+            ctx.roundRect(cx - 44, cy - 54, 88, 22, 6);
+            ctx.roundRect(cx - 44, cy + 32, 88, 22, 6);
+            // 3 vertical flutes
+            ctx.roundRect(cx - 36, cy - 32, 20, 64, 4);
+            ctx.roundRect(cx - 10, cy - 32, 20, 64, 4);
+            ctx.roundRect(cx + 16, cy - 32, 20, 64, 4);
+            ctx.fillStyle = pilGrad;
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+        } else if (value === 'vortex') {
+            // EMERALD VORTEX: 3 orbital atomic rings with radiant green nucleus
+            const vortGrad = ctx.createRadialGradient(cx, cy, 8, cx, cy, 58);
+            vortGrad.addColorStop(0, '#6ee7b7');
+            vortGrad.addColorStop(0.5, theme.main[0]);
+            vortGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+            ctx.fillStyle = vortGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // 3 rotated ellipse orbits
+            for (let i = 0; i < 3; i++) {
+                const angle = (Math.PI / 3) * i;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 48, 18, 0, 0, Math.PI * 2);
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Central nucleus
+            ctx.beginPath();
+            ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
         }
 
         ctx.shadowBlur = 0;
