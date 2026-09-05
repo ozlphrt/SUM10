@@ -130,6 +130,87 @@ export class GridTopology {
     }
 
     /**
+     * Simulates downward gravity fall for any blocks that have lost support.
+     * Iterates from bottom to top so lower drops happen first.
+     * @returns {Array<{ block: BlockModel, oldGridY: number, newGridY: number, dropLayers: number }>}
+     */
+    settleGravity() {
+        const fallenBlocks = [];
+        let anyMoved = true;
+
+        // Iterate repeatedly until no more blocks can fall
+        while (anyMoved) {
+            anyMoved = false;
+
+            // Sort active blocks by gridY ascending so lower blocks drop first
+            const sortedBlocks = Array.from(this.blocks.values()).sort((a, b) => a.gridY - b.gridY);
+
+            for (const block of sortedBlocks) {
+                if (block.gridY === 0) continue; // Already at ground
+
+                // Test how many layers this block can drop
+                let dropCount = 0;
+                let currentY = block.gridY;
+
+                while (currentY > 0) {
+                    const testY = currentY - 1;
+                    let canDropOne = true;
+
+                    // Footprint check for the slice at testY
+                    const voxels = block.getOccupiedVoxels();
+                    for (const v of voxels) {
+                        const checkX = v.x;
+                        const checkY = v.y - (block.gridY - testY);
+                        const checkZ = v.z;
+
+                        const occupantId = this.voxelMap.get(GridTopology.toKey(checkX, checkY, checkZ));
+                        if (occupantId && occupantId !== block.id) {
+                            canDropOne = false;
+                            break;
+                        }
+                    }
+
+                    if (canDropOne) {
+                        dropCount++;
+                        currentY = testY;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (dropCount > 0) {
+                    const oldGridY = block.gridY;
+                    const newGridY = oldGridY - dropCount;
+
+                    // Remove old voxels from voxelMap
+                    for (const v of block.getOccupiedVoxels()) {
+                        this.voxelMap.delete(GridTopology.toKey(v.x, v.y, v.z));
+                    }
+
+                    // Apply new layer
+                    block.gridY = newGridY;
+
+                    // Register new voxels
+                    for (const v of block.getOccupiedVoxels()) {
+                        this.voxelMap.set(GridTopology.toKey(v.x, v.y, v.z), block.id);
+                    }
+
+                    fallenBlocks.push({
+                        block,
+                        oldGridY,
+                        newGridY,
+                        dropLayers: dropCount
+                    });
+
+                    anyMoved = true;
+                }
+            }
+        }
+
+        return fallenBlocks;
+    }
+
+    /**
      * Checks if a block has an unobstructed path to slide out of the tower
      * along its assigned escape direction.
      * @param {BlockModel} block 

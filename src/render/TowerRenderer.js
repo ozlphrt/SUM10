@@ -304,6 +304,64 @@ export class TowerRenderer {
         });
     }
 
+    /**
+     * Animates blocks falling down due to gravity.
+     * @param {Array<{ block: any, oldGridY: number, newGridY: number, dropLayers: number }>} fallenList 
+     * @param {number} cellSize 
+     * @param {Function} [onComplete] 
+     */
+    animateFallingBlocks(fallenList, cellSize = 1.0, onComplete = () => {}) {
+        if (!fallenList || fallenList.length === 0) {
+            onComplete();
+            return;
+        }
+
+        const animations = [];
+        fallenList.forEach(({ block, oldGridY, newGridY }) => {
+            const item = this.blockMeshes.get(block.id);
+            if (!item) return;
+
+            const startY = item.group.position.y;
+            const targetY = startY - (oldGridY - newGridY) * cellSize;
+            const duration = Math.min(450, 180 + (oldGridY - newGridY) * 90); // duration scales with distance
+
+            animations.push({
+                group: item.group,
+                startY,
+                targetY,
+                duration,
+                startTime: performance.now()
+            });
+        });
+
+        const updateFalls = () => {
+            const now = performance.now();
+            let allDone = true;
+
+            animations.forEach((anim) => {
+                const elapsed = now - anim.startTime;
+                const progress = Math.min(1.0, elapsed / anim.duration);
+
+                // Quadratic ease-in (gravity acceleration) with small bounce at end
+                if (progress < 1.0) {
+                    allDone = false;
+                    const easeIn = progress * progress;
+                    anim.group.position.y = anim.startY + (anim.targetY - anim.startY) * easeIn;
+                } else {
+                    anim.group.position.y = anim.targetY;
+                }
+            });
+
+            if (!allDone) {
+                requestAnimationFrame(updateFalls);
+            } else {
+                onComplete();
+            }
+        };
+
+        requestAnimationFrame(updateFalls);
+    }
+
     _animate() {
         if (this._isDisposed) return;
         requestAnimationFrame(this._animate);

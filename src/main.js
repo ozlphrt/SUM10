@@ -143,9 +143,21 @@ class Sum10Game {
 
                 this.score += 100;
                 this.selectedBlock = null;
-                this.isProcessingMatch = false;
                 this._updateSelectionUI(null, null);
                 this.updateStats();
+
+                // Downward Gravity Fall (Jarrows style)
+                setTimeout(() => {
+                    const fallen = this.topology.settleGravity();
+                    if (fallen.length > 0) {
+                        this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
+                            sound.playLandThud();
+                            this.isProcessingMatch = false;
+                        });
+                    } else {
+                        this.isProcessingMatch = false;
+                    }
+                }, 150);
 
                 if (this.topology.blocks.size === 0) {
                     this.showToast('🎉 TOWER CLEARED! Spectacular job!', 4000);
