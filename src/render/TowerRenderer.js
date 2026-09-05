@@ -193,33 +193,27 @@ export class TowerRenderer {
         const theme = LEVEL_THEMES[themeIdx];
 
         // Harmonious low-contrast atmospheric palette
-        let topColor, horizonColor, nadirColor, milkyGlow1, milkyGlow2, dustLaneColor, starAlphaBase;
+        let topColor, horizonColor, nadirColor;
+        let nebR, nebG, nebB;
 
         if (this.isDarkTheme) {
             topColor = '#030a08';
             horizonColor = '#061611';
             nadirColor = '#020605';
-            milkyGlow1 = 'rgba(110, 231, 183, 0.038)'; // Whisper of ethereal emerald nebula
-            milkyGlow2 = 'rgba(254, 240, 138, 0.024)'; // Gentle champagne dust cloud
-            dustLaneColor = 'rgba(2, 8, 6, 0.40)';
-            starAlphaBase = 0.22;
+            nebR = 110; nebG = 231; nebB = 183; // Soft emerald stardust
         } else {
             const hex = theme.bg.toString(16).padStart(6, '0');
             const r = parseInt(hex.slice(0, 2), 16);
             const g = parseInt(hex.slice(2, 4), 16);
             const b = parseInt(hex.slice(4, 6), 16);
 
-            // Very subtle low-contrast gradient so the dome feels like a velvety endless cosmos
             topColor = `rgb(${Math.max(4, Math.round(r * 0.72))}, ${Math.max(6, Math.round(g * 0.72))}, ${Math.max(8, Math.round(b * 0.72))})`;
             horizonColor = `rgb(${r}, ${g}, ${b})`;
             nadirColor = `rgb(${Math.max(3, Math.round(r * 0.60))}, ${Math.max(4, Math.round(g * 0.60))}, ${Math.max(5, Math.round(b * 0.60))})`;
-            milkyGlow1 = 'rgba(240, 249, 255, 0.040)'; // Ethereal starlight haze
-            milkyGlow2 = 'rgba(254, 243, 199, 0.028)'; // Warm golden galactic core shimmer
-            dustLaneColor = 'rgba(10, 25, 20, 0.35)';
-            starAlphaBase = 0.25;
+            nebR = 254; nebG = 243; nebB = 199; // Soft golden celestial dust
         }
 
-        // 1. Soft, low-contrast celestial backdrop
+        // 1. Perfectly horizontal base celestial atmosphere (naturally seamless on X)
         const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
         bgGrad.addColorStop(0.0, topColor);
         bgGrad.addColorStop(0.38, horizonColor);
@@ -229,90 +223,104 @@ export class TowerRenderer {
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Sweeping Diagonal Milky Way Nebula Band
-        // Tilted across the spherical canvas with soft curved clouds
-        ctx.save();
-        ctx.translate(w / 2, h / 2);
-        ctx.rotate(-0.38); // Classic galactic plane tilt angle
-        ctx.translate(-w / 2, -h / 2);
+        // 2. Seamless Milky Way Nebula Clouds using exact periodic sine/cosine harmonics
+        // Any function of theta = (x / w) * 2 * PI is mathematically 100% seamless at x = 0 and x = w
+        const numSlices = 128;
+        const sliceW = w / numSlices;
 
-        // Broad diffuse galactic disc glow
-        const milkyMainGrad = ctx.createLinearGradient(0, h * 0.30, 0, h * 0.70);
-        milkyMainGrad.addColorStop(0.0, 'rgba(255, 255, 255, 0.0)');
-        milkyMainGrad.addColorStop(0.32, milkyGlow1);
-        milkyMainGrad.addColorStop(0.50, milkyGlow2);
-        milkyMainGrad.addColorStop(0.68, milkyGlow1);
-        milkyMainGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
-        ctx.fillStyle = milkyMainGrad;
-        ctx.fillRect(-w * 0.5, h * 0.20, w * 2.0, h * 0.60);
+        for (let i = 0; i < numSlices; i++) {
+            const x0 = i * sliceW;
+            const theta = (i / numSlices) * Math.PI * 2;
 
-        // Galactic Core Concentric Luminous Shimmer
-        const coreX = w * 0.42;
-        const coreY = h * 0.50;
-        const coreGrad = ctx.createRadialGradient(coreX, coreY, 20, coreX, coreY, w * 0.32);
-        coreGrad.addColorStop(0.0, milkyGlow2.replace(/[\d.]+\)$/, '0.055)'));
-        coreGrad.addColorStop(0.45, milkyGlow1.replace(/[\d.]+\)$/, '0.022)'));
-        coreGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = coreGrad;
-        ctx.fillRect(-w * 0.5, 0, w * 2.0, h);
+            // Continuous sinusoidal galactic spine curve
+            const spineY = (h * 0.50) + Math.sin(theta) * (h * 0.18) + Math.sin(theta * 2 + 0.5) * (h * 0.04);
+            const bandThickness = (h * 0.26) + Math.cos(theta) * (h * 0.06);
 
-        // Subtle Interstellar Dark Dust Rift (Great Rift of the Milky Way)
+            // Periodic luminosity modulation (galactic core at theta = PI)
+            const coreWeight = 0.5 - 0.5 * Math.cos(theta); // 0 at edges, 1 at center
+            const alphaBase = 0.020 + coreWeight * 0.024;
+
+            const sliceGrad = ctx.createLinearGradient(0, spineY - bandThickness, 0, spineY + bandThickness);
+            sliceGrad.addColorStop(0.0, 'rgba(255, 255, 255, 0)');
+            sliceGrad.addColorStop(0.32, `rgba(${nebR}, ${nebG}, ${nebB}, ${(alphaBase * 0.65).toFixed(4)})`);
+            sliceGrad.addColorStop(0.50, `rgba(${nebR}, ${nebG}, ${nebB}, ${alphaBase.toFixed(4)})`);
+            sliceGrad.addColorStop(0.68, `rgba(${nebR}, ${nebG}, ${nebB}, ${(alphaBase * 0.65).toFixed(4)})`);
+            sliceGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+
+            ctx.fillStyle = sliceGrad;
+            ctx.fillRect(x0 - 1, spineY - bandThickness, sliceW + 2, bandThickness * 2);
+        }
+
+        // 3. Subtle Periodic Interstellar Dust Rift (dark lane running seamlessly along the galactic band)
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, coreY - 12);
-        ctx.bezierCurveTo(w * 0.2, coreY + 18, w * 0.4, coreY - 22, w * 0.6, coreY + 14);
-        ctx.bezierCurveTo(w * 0.8, coreY - 10, w * 1.0, coreY + 8, w * 1.2, coreY - 15);
-        ctx.lineWidth = 32;
-        ctx.strokeStyle = dustLaneColor;
-        ctx.filter = 'blur(16px)';
+        for (let i = 0; i <= numSlices; i++) {
+            const x = i * sliceW;
+            const theta = (i / numSlices) * Math.PI * 2;
+            const riftY = (h * 0.50) + Math.sin(theta) * (h * 0.18) + Math.cos(theta * 3) * (h * 0.022);
+            if (i === 0) {
+                ctx.moveTo(x, riftY);
+            } else {
+                ctx.lineTo(x, riftY);
+            }
+        }
+        ctx.lineWidth = 18;
+        ctx.strokeStyle = this.isDarkTheme ? 'rgba(2, 6, 5, 0.22)' : 'rgba(8, 20, 16, 0.18)';
+        ctx.filter = 'blur(10px)';
         ctx.stroke();
         ctx.filter = 'none';
 
-        ctx.restore();
-
-        // 3. Low-Contrast Key Light Volumetric Warmth (aligned with Key Light: +X, +Y, +Z)
-        const keyCenterX = w * 0.125;
-        const keyCenterY = h * 0.32;
-        const keyGrad = ctx.createRadialGradient(keyCenterX, keyCenterY, 20, keyCenterX, keyCenterY, w * 0.45);
-        keyGrad.addColorStop(0.0, 'rgba(254, 240, 138, 0.032)');
-        keyGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.010)');
-        keyGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = keyGrad;
-        ctx.fillRect(0, 0, w, h);
-
-        // 4. Subtle, Low-Contrast Star Clouds & Clustered Pinpoints
-        let seed = 101;
+        // 4. Seamless Stars (Rendered across borders so stars overlapping x=0 also appear at x=w)
+        let seed = 142;
         const random = () => {
             seed = (seed * 9301 + 49297) % 233280;
             return seed / 233280;
         };
 
-        // Render fine cosmic stardust (concentrated naturally along the galactic equator)
-        for (let s = 0; s < 320; s++) {
-            const sx = random() * w;
-            // Bias slightly toward the mid-plane
-            const yDist = (random() - 0.5);
-            const sy = (h / 2) + yDist * h * (0.65 + random() * 0.35);
-            const sr = 0.4 + random() * 0.8; // fine micro-pinpoints
-            const sAlpha = starAlphaBase * (0.35 + random() * 0.65);
-
-            ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha})`;
+        const drawStar = (sx, sy, sr, sAlpha) => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha.toFixed(3)})`;
             ctx.beginPath();
             ctx.arc(sx, sy, sr, 0, Math.PI * 2);
             ctx.fill();
+
+            // Seamless boundary wrap: if near left edge, replicate on right edge (and vice-versa)
+            if (sx < 20) {
+                ctx.beginPath();
+                ctx.arc(sx + w, sy, sr, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (sx > w - 20) {
+                ctx.beginPath();
+                ctx.arc(sx - w, sy, sr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        };
+
+        const numStars = 320;
+        for (let s = 0; s < numStars; s++) {
+            const theta = random() * Math.PI * 2;
+            const sx = (theta / (Math.PI * 2)) * w;
+
+            // Cluster stars closer to the seamless sinusoidal galactic spine
+            const spineY = (h * 0.50) + Math.sin(theta) * (h * 0.18);
+            const offset = (random() - 0.5) * h * 0.70;
+            const sy = Math.max(30, Math.min(h - 30, spineY + offset));
+
+            const sr = 0.4 + random() * 0.75;
+            const sAlpha = 0.08 + random() * 0.18; // Very subtle low-contrast pinpoints
+            drawStar(sx, sy, sr, sAlpha);
         }
 
-        // 5. Very Faint, Low-Contrast Celestial Coordinates (whisper-soft astronomical lines)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)'; // extremely low contrast
+        // 5. Perfectly continuous equatorial & cardinal astronomical guide lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
         ctx.lineWidth = 0.7;
 
-        // Faint equatorial parallel
+        // Equator (horizontal line, exactly seamless)
         ctx.beginPath();
         ctx.moveTo(0, h * 0.50);
         ctx.lineTo(w, h * 0.50);
         ctx.stroke();
 
-        // Faint cardinal meridians (only 4 quadrants)
-        for (let m = 0; m < 4; m++) {
+        // Cardinal meridians (exactly at 0, w/4, w/2, 3w/4, w)
+        for (let m = 0; m <= 4; m++) {
             const mx = (m / 4) * w;
             ctx.beginPath();
             ctx.moveTo(mx, 0);
