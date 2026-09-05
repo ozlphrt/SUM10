@@ -860,6 +860,28 @@ export class TowerRenderer {
     }
 
     /**
+     * Clears selection, elevation, and emissive glow from all blocks in the tower.
+     */
+    clearAllHighlights() {
+        this.hideExitBeam();
+        for (const [id, item] of this.blockMeshes.entries()) {
+            if (item._elevAnimFrame) {
+                cancelAnimationFrame(item._elevAnimFrame);
+                item._elevAnimFrame = null;
+            }
+            if (item.restingPosition) {
+                item.group.position.copy(item.restingPosition);
+            }
+            if (item.materials) {
+                item.materials.forEach((mat) => {
+                    mat.emissive.set(0x000000);
+                    mat.emissiveIntensity = 0.0;
+                });
+            }
+        }
+    }
+
+    /**
      * Triggers rapid jam/error shake along the block's long slide axis.
      * @param {string|number} blockId 
      */
@@ -1086,6 +1108,21 @@ export class TowerRenderer {
             );
 
             const angularVelocity = new THREE.Vector3(0, 0, 0);
+
+            if (item._elevAnimFrame) {
+                cancelAnimationFrame(item._elevAnimFrame);
+                item._elevAnimFrame = null;
+            }
+            if (item._shakeAnimFrame) {
+                cancelAnimationFrame(item._shakeAnimFrame);
+                item._shakeAnimFrame = null;
+            }
+            if (item.materials) {
+                item.materials.forEach((mat) => {
+                    mat.emissive.set(0x000000);
+                    mat.emissiveIntensity = 0.0;
+                });
+            }
 
             this.flyingBlocks.push({
                 group: item.group,

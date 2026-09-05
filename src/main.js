@@ -466,25 +466,29 @@ class Sum10Game {
                 this.topology.removeBlock(first.id);
                 this.topology.removeBlock(second.id);
 
-                this.score += pointsEarned;
+                // Instantly clear selections, equation pill, and any residual block highlights
                 this.selectedBlock = null;
                 this._updateSelectionUI(null, null);
+                this.renderer.clearAllHighlights();
+
+                // Enable new selections right away so player is never locked out
+                this.isProcessingMatch = false;
+
+                this.score += pointsEarned;
                 this.updateStats();
 
-                // Rapid Downward Gravity Fall
+                // Downward Gravity Fall
                 setTimeout(() => {
                     const fallen = this.topology.settleGravity();
                     if (fallen.length > 0) {
                         this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
                             sound.playLandThud(fallen[0]?.block?.length || 1);
-                            this.isProcessingMatch = false;
                             this._checkDeadlock();
                             if (this.topology.blocks.size > 0) {
                                 this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
                             }
                         });
                     } else {
-                        this.isProcessingMatch = false;
                         this._checkDeadlock();
                         if (this.topology.blocks.size > 0) {
                             this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
