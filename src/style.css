@@ -102,48 +102,67 @@ body, html {
 }
 
 /* Top Consolidated Bar */
+/* Top Ultra-Minimalist Floating Bar */
 .hud-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    justify-content: center;
+    gap: 12px;
     width: 100%;
-    max-width: 1100px;
+    max-width: 680px;
     margin: 0 auto;
     pointer-events: auto;
 }
 
-.brand-group {
+.zen-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
 }
 
-.brand-badge {
+.zen-btn-level {
     background: var(--card-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--card-border);
     border-radius: 14px;
-    padding: 8px 14px;
+    padding: 7px 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.zen-btn-level:hover {
+    transform: scale(1.05);
+    border-color: rgba(110, 231, 183, 0.6);
+}
+
+.zen-lvl-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #6ee7b7;
+}
+
+.zen-lvl-num {
+    font-size: 15px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.zen-lvl-arrow {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.zen-controls {
     display: flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-}
-
-.brand-icon {
-    font-size: 18px;
-    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4));
-}
-
-.brand-name {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
 .btn-icon {
@@ -232,54 +251,7 @@ body, html {
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
-/* Stats Group */
-.stats-group {
-    display: flex;
-    gap: 6px;
-}
 
-.stat-pill {
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 6px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 52px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-}
-
-.clickable-pill {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.clickable-pill:hover {
-    border-color: var(--accent-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.25);
-}
-
-.clickable-pill:active {
-    transform: translateY(0);
-}
-
-.stat-label {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    letter-spacing: 0.5px;
-}
-
-.stat-value {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-top: 1px;
-}
 
 /* Dynamic Notification Toast (Pinned unobtrusively below header, never over the tower) */
 .toast-wrapper {

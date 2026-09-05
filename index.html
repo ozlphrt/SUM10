@@ -13,25 +13,16 @@
     <div id="canvas-container"></div>
 
     <div class="hud-overlay">
-        <!-- Top Consolidated Bar -->
-        <header class="hud-top">
-            <div class="brand-group">
-                <div class="brand-badge">
-                    <span class="brand-icon">⚡</span>
-                    <span class="brand-name">SUM10</span>
-                </div>
-                <button id="btn-sound" class="btn-icon" type="button" title="Toggle Sound">
-                    <span id="icon-sound">🔊</span>
-                </button>
-                <button id="btn-theme" class="btn-icon" type="button" title="Toggle Day/Night Mode">
-                    <span id="icon-theme">🌙</span>
-                </button>
-                <button id="btn-retry" class="btn-icon" type="button" title="Restart Level">
-                    <span>↺</span>
-                </button>
-            </div>
+        <!-- Ultra-Minimalist Floating Top Bar -->
+        <header class="hud-top zen-bar">
+            <!-- Level Selector -->
+            <button id="pill-level" class="zen-btn-level" type="button" title="Select Level">
+                <span class="zen-lvl-label">LVL</span>
+                <span id="val-level" class="zen-lvl-num">1</span>
+                <span class="zen-lvl-arrow">▾</span>
+            </button>
 
-            <!-- Match Display in Top Bar -->
+            <!-- Center Match Display -->
             <div class="selection-card">
                 <div id="slot-1" class="selection-slot">?</div>
                 <div class="selection-plus">+</div>
@@ -40,23 +31,17 @@
                 <div class="target-badge">10</div>
             </div>
 
-            <div class="stats-group">
-                <div id="pill-level" class="stat-pill clickable-pill" title="Tap to select level">
-                    <span class="stat-label">LVL ▾</span>
-                    <span id="val-level" class="stat-value">1</span>
-                </div>
-                <div class="stat-pill">
-                    <span class="stat-label">PTS</span>
-                    <span id="val-score" class="stat-value">0</span>
-                </div>
-                <div class="stat-pill">
-                    <span class="stat-label">MOVES</span>
-                    <span id="val-moves" class="stat-value">0</span>
-                </div>
-                <div class="stat-pill">
-                    <span class="stat-label">LEFT</span>
-                    <span id="val-remaining" class="stat-value">0</span>
-                </div>
+            <!-- Discrete Controls -->
+            <div class="zen-controls">
+                <button id="btn-retry" class="btn-icon" type="button" title="Restart Level">
+                    <span>↺</span>
+                </button>
+                <button id="btn-sound" class="btn-icon" type="button" title="Toggle Sound">
+                    <span id="icon-sound">🔊</span>
+                </button>
+                <button id="btn-theme" class="btn-icon" type="button" title="Toggle Day/Night Mode">
+                    <span id="icon-theme">🌙</span>
+                </button>
             </div>
         </header>
 

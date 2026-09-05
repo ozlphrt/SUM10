@@ -312,11 +312,12 @@ class Sum10Game {
 
     handleBackgroundClick() {
         if (this.selectedBlock && !this.isProcessingMatch) {
+            const blockLen = this.selectedBlock.length;
             this.renderer.setBlockSelected(this.selectedBlock.id, false);
             this.renderer.hideExitBeam();
             this.selectedBlock = null;
             this._updateSelectionUI(null, null);
-            sound.playSelect(this.selectedBlock.length);
+            sound.playSelect(blockLen);
         }
     }
 
