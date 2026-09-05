@@ -235,11 +235,21 @@ export class TowerRenderer {
         let pointerDownTime = 0;
         let pointerDownX = 0;
         let pointerDownY = 0;
+        this._isPointerDown = false;
 
         this.renderer.domElement.addEventListener('pointerdown', (e) => {
+            this._isPointerDown = true;
             pointerDownTime = performance.now();
             pointerDownX = e.clientX;
             pointerDownY = e.clientY;
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            this._isPointerDown = false;
+        });
+
+        window.addEventListener('pointercancel', () => {
+            this._isPointerDown = false;
         });
 
         this.renderer.domElement.addEventListener('pointerup', (e) => {
@@ -379,6 +389,7 @@ export class TowerRenderer {
 
     /**
      * Adjusts the camera zoom and target to frame all blocks tightly in the viewport.
+     * Smoothly interpolates both camera position and orbital target to keep remaining blocks centered.
      * @param {Object} [options]
      * @param {boolean} [options.animate=false]
      * @param {number} [options.duration=650]
@@ -386,9 +397,9 @@ export class TowerRenderer {
      */
     fitCameraToBlocks({ animate = false, duration = 650, onComplete = null } = {}) {
         if (!this.camera || !this.controls) return;
+        if (this._isPointerDown) return; // Don't interrupt active manual orbit dragging
 
         const fit = this._calculateOptimalCameraFit();
-        this.controls.target.set(fit.center.x, fit.center.y, fit.center.z);
         this.controls.minDistance = Math.max(3.0, fit.optimalDist * 0.4);
         this.controls.maxDistance = fit.optimalDist * 2.8;
 
@@ -403,6 +414,7 @@ export class TowerRenderer {
         }
 
         if (!animate) {
+            this.controls.target.copy(fit.center);
             this.camera.position.copy(targetPos);
             this.controls.update();
             if (onComplete) onComplete();
@@ -411,14 +423,22 @@ export class TowerRenderer {
 
         this._isCameraAnimating = true;
         const startPos = this.camera.position.clone();
+        const startTarget = this.controls.target.clone();
+        const destTarget = fit.center.clone();
         const startTime = performance.now();
 
         const animateFit = () => {
+            if (this._isPointerDown) {
+                this._isCameraAnimating = false;
+                return;
+            }
+
             const elapsed = performance.now() - startTime;
             const progress = Math.min(1.0, elapsed / duration);
             const easeOut = 1 - Math.pow(1 - progress, 3);
 
             this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+            this.controls.target.lerpVectors(startTarget, destTarget, easeOut);
             this.controls.update();
 
             if (progress < 1.0) {

@@ -470,10 +470,16 @@ class Sum10Game {
                             sound.playLandThud(fallen[0]?.block?.length || 1);
                             this.isProcessingMatch = false;
                             this._checkDeadlock();
+                            if (this.topology.blocks.size > 0) {
+                                this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
+                            }
                         });
                     } else {
                         this.isProcessingMatch = false;
                         this._checkDeadlock();
+                        if (this.topology.blocks.size > 0) {
+                            this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
+                        }
                     }
                 }, 40);
 
@@ -591,10 +597,16 @@ class Sum10Game {
                     sound.playLandThud();
                     this.isProcessingMatch = false;
                     this._checkDeadlock();
+                    if (this.topology.blocks.size > 0) {
+                        this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
+                    }
                 });
             } else {
                 this.isProcessingMatch = false;
                 this._checkDeadlock();
+                if (this.topology.blocks.size > 0) {
+                    this.renderer.fitCameraToBlocks({ animate: true, duration: 650 });
+                }
             }
         }, 60);
 
