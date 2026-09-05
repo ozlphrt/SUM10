@@ -5,9 +5,25 @@
 class SoundEffects {
     constructor() {
         this.ctx = null;
+        this.enabled = (function() {
+            try {
+                return localStorage.getItem('sum10_audio') !== 'false';
+            } catch (_) {
+                return true;
+            }
+        })();
+    }
+
+    toggle() {
+        this.enabled = !this.enabled;
+        try {
+            localStorage.setItem('sum10_audio', String(this.enabled));
+        } catch (_) {}
+        return this.enabled;
     }
 
     _ensureAudio() {
+        if (!this.enabled) return;
         if (!this.ctx) {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if (AudioCtx) {
@@ -20,6 +36,7 @@ class SoundEffects {
     }
 
     playSelect() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -67,6 +84,7 @@ class SoundEffects {
     }
 
     playMismatch() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -88,6 +106,7 @@ class SoundEffects {
     }
 
     playWhoosh() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -109,6 +128,7 @@ class SoundEffects {
     }
 
     playLandThud() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -130,6 +150,7 @@ class SoundEffects {
     }
 
     playExplosion() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -162,6 +183,7 @@ class SoundEffects {
     }
 
     playWildChime() {
+        if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;

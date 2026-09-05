@@ -15,6 +15,21 @@ class Sum10Game {
         this.toastElem = document.getElementById('toast-msg');
         this.btnNewGame = document.getElementById('btn-new-game');
         this.btnShuffle = document.getElementById('btn-shuffle');
+        this.btnSound = document.getElementById('btn-sound');
+        this.iconSound = document.getElementById('icon-sound');
+
+        if (this.iconSound) {
+            this.iconSound.textContent = sound.enabled ? '🔊' : '🔇';
+        }
+        if (this.btnSound) {
+            this.btnSound.addEventListener('click', () => {
+                const isEnabled = sound.toggle();
+                if (this.iconSound) {
+                    this.iconSound.textContent = isEnabled ? '🔊' : '🔇';
+                }
+                this.showToast(isEnabled ? '🔊 Sound effects ON' : '🔇 Sound effects OFF', 1200);
+            });
+        }
 
         // Progress & High Score state loaded from localStorage
         const saved = this._loadProgress();

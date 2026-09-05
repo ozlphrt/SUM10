@@ -91,6 +91,33 @@ body, html {
     -webkit-text-fill-color: transparent;
 }
 
+.btn-icon {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    transform: scale(1.06);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
 /* Selection & Match Target Card (Sleek, Pinned to Top) */
 .selection-card {
     background: var(--card-bg);
