@@ -38,7 +38,7 @@ export const NUMBER_COLORS = {
  */
 export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal', isTopFace = false) {
     const dirKey = `${direction.x}_${direction.y}_${direction.z}`;
-    const key = `${type}_${value}_${cellsW}x${cellsH}_${orientation}_${dirKey}`;
+    const key = `${type}_${value}_${cellsW}x${cellsH}_${orientation}_${dirKey}_${isTopFace ? 'top' : 'side'}`;
     if (textureCache.has(key)) return textureCache.get(key);
 
     const canvas = document.createElement('canvas');
@@ -105,12 +105,6 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
     }
 
     ctx.save();
-    if (isTopFace) {
-        // Orient numeral & markings right-side up when viewed from player camera (+Z looking towards -Z)
-        ctx.translate(width / 2, height / 2);
-        ctx.rotate(Math.PI);
-        ctx.translate(-width / 2, -height / 2);
-    }
 
     if (type === 'bomb') {
         // SPECIAL DOMINO BOMB TILE (Charcoal & Metallic Crimson)
