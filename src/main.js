@@ -76,16 +76,9 @@ class Sum10Game {
             onBlockClick: (block) => this.handleBlockClick(block)
         });
 
-        this.btnNewGame.addEventListener('click', () => {
-            if (confirm('Start a new game from Level 1? Your high score will be kept.')) {
-                this.currentLevel = 1;
-                this.score = 0;
-                this._saveProgress();
-                this.startLevel(this.currentLevel);
-            }
-        });
-
-        this.btnShuffle.addEventListener('click', () => this.handleShuffle());
+        if (this.btnShuffle) {
+            this.btnShuffle.addEventListener('click', () => this.handleShuffle());
+        }
 
         this.startLevel(this.currentLevel);
     }
