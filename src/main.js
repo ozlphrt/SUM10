@@ -121,7 +121,8 @@ class Sum10Game {
         this.COMBO_WINDOW_MS = 4000;
 
         this.renderer = new TowerRenderer(this.container, {
-            onBlockClick: (block) => this.handleBlockClick(block)
+            onBlockClick: (block) => this.handleBlockClick(block),
+            onBackgroundClick: () => this.handleBackgroundClick()
         });
 
         if (this.btnShuffle) {
@@ -245,6 +246,15 @@ class Sum10Game {
         if (this.slot2Elem) {
             this.slot2Elem.textContent = val2 !== null ? val2 : '?';
             this.slot2Elem.classList.toggle('filled', val2 !== null);
+        }
+    }
+
+    handleBackgroundClick() {
+        if (this.selectedBlock && !this.isProcessingMatch) {
+            this.renderer.setBlockSelected(this.selectedBlock.id, false);
+            this.selectedBlock = null;
+            this._updateSelectionUI(null, null);
+            sound.playSelect();
         }
     }
 

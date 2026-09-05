@@ -46,6 +46,7 @@ export class TowerRenderer {
     constructor(container, options = {}) {
         this.container = container;
         this.onBlockClick = options.onBlockClick || (() => {});
+        this.onBackgroundClick = options.onBackgroundClick || (() => {});
 
         this.scene = null;
         this.camera = null;
@@ -360,6 +361,8 @@ export class TowerRenderer {
             if (blockId && this.blockMeshes.has(blockId)) {
                 this.onBlockClick(this.blockMeshes.get(blockId).model);
             }
+        } else {
+            this.onBackgroundClick();
         }
     }
 
