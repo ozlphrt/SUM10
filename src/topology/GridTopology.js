@@ -169,19 +169,27 @@ export class GridTopology {
     /**
      * Determines whether two blocks can be paired:
      * 1. Physically adjacent in 3D, OR
-     * 2. Only 2 blocks remain on the entire board, OR
-     * 3. Either block has no remaining adjacent neighbors on the board (isolated blocks).
+     * 2. Separated anywhere on the board as long as both can freely slide out of the tower, OR
+     * 3. Either block is an isolated cluster without neighbors, OR
+     * 4. Endgame (<= 2 blocks left).
      * @param {BlockModel} blockA 
      * @param {BlockModel} blockB 
      * @returns {boolean}
      */
     canBlocksBePaired(blockA, blockB) {
         if (!blockA || !blockB || blockA.id === blockB.id) return false;
+        // Always allowed if physically adjacent
         if (this.areBlocksAdjacent(blockA, blockB)) return true;
+        // Allowed in endgame
         if (this.blocks.size <= 2) return true;
+        // Allowed if either block has no touching neighbors (isolated)
         const neighborsA = this.getNeighborBlocks(blockA.id);
         const neighborsB = this.getNeighborBlocks(blockB.id);
         if (neighborsA.size === 0 || neighborsB.size === 0) return true;
+        // Allowed across space if both blocks have a clear sliding exit route out of the tower!
+        const exitA = this.canBlockSlideOut(blockA, blockB);
+        const exitB = this.canBlockSlideOut(blockB, blockA);
+        if (exitA.canExit && exitB.canExit) return true;
         return false;
     }
 
