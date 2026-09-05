@@ -373,12 +373,17 @@ class Sum10Game {
         const first = this.selectedBlock;
         const second = block;
 
-        // Check physical 3D adjacency: blocks must touch each other along X, Y, or Z
+        // If player taps a block that is not adjacent to the first selection,
+        // seamlessly switch selection to the newly clicked block as the new active block!
         const isAdjacent = this.topology.areBlocksAdjacent(first, second);
         if (!isAdjacent) {
-            sound.playMismatch();
-            this.showToast('⚠️ Must be adjacent blocks', 1800);
-            this.renderer.shakeBlock(second.id);
+            this.renderer.setBlockSelected(first.id, false);
+            this.topology.canBlockSlideOut(second);
+            this.selectedBlock = second;
+            this.renderer.setBlockSelected(second.id, true);
+            const displayVal = second.type === 'wild' ? '★' : second.value;
+            this._updateSelectionUI(displayVal, null);
+            sound.playSelect(second.length);
             return;
         }
 

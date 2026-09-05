@@ -795,9 +795,15 @@ export class TowerRenderer {
         const item = this.blockMeshes.get(blockId);
         if (!item) return;
 
-        // Ensure resting position is recorded
+        // Ensure permanent resting position is recorded
         if (!item.restingPosition) {
             item.restingPosition = item.group.position.clone();
+        }
+
+        // Cancel any existing elevation animation
+        if (item._elevAnimFrame) {
+            cancelAnimationFrame(item._elevAnimFrame);
+            item._elevAnimFrame = null;
         }
 
         const dir = item.model.direction || { x: 0, y: 0, z: 0 };
@@ -821,10 +827,13 @@ export class TowerRenderer {
             item.group.position.lerpVectors(startPos, targetPos, easeOut);
 
             if (progress < 1.0) {
-                requestAnimationFrame(animateElevation);
+                item._elevAnimFrame = requestAnimationFrame(animateElevation);
+            } else {
+                item._elevAnimFrame = null;
+                item.group.position.copy(targetPos);
             }
         };
-        requestAnimationFrame(animateElevation);
+        item._elevAnimFrame = requestAnimationFrame(animateElevation);
 
         // Subtle, elegant emissive tint on selection
         item.materials.forEach((mat) => {
@@ -849,7 +858,17 @@ export class TowerRenderer {
             return;
         }
 
-        const resting = item.restingPosition ? item.restingPosition.clone() : item.group.position.clone();
+        if (!item.restingPosition) {
+            item.restingPosition = item.group.position.clone();
+        }
+
+        // Cancel previous shake if running
+        if (item._shakeAnimFrame) {
+            cancelAnimationFrame(item._shakeAnimFrame);
+            item._shakeAnimFrame = null;
+        }
+
+        const basePos = item.group.position.clone();
         const dir = item.model.direction || { x: 1, y: 0, z: 0 };
         const startTime = performance.now();
         const duration = 260;
@@ -860,17 +879,18 @@ export class TowerRenderer {
                 const decay = 1 - elapsed / duration;
                 const offset = Math.sin(elapsed * 0.09) * 0.14 * decay;
                 item.group.position.set(
-                    resting.x + dir.x * offset,
-                    resting.y,
-                    resting.z + dir.z * offset
+                    basePos.x + dir.x * offset,
+                    basePos.y,
+                    basePos.z + dir.z * offset
                 );
-                requestAnimationFrame(animateShake);
+                item._shakeAnimFrame = requestAnimationFrame(animateShake);
             } else {
-                item.group.position.copy(resting);
+                item._shakeAnimFrame = null;
+                item.group.position.copy(basePos);
                 if (onComplete) onComplete();
             }
         };
-        requestAnimationFrame(animateShake);
+        item._shakeAnimFrame = requestAnimationFrame(animateShake);
     }
 
     /**
