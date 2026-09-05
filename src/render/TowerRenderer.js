@@ -732,7 +732,60 @@ export class TowerRenderer {
     }
 
     /**
-     * Animates blocks falling down due to gravity.
+     * Spawns subtle micro dust puff particles around a block's landing perimeter.
+     * @param {THREE.Vector3} landingPos 
+     * @param {number} blockLength 
+     * @param {'X'|'Z'} orientation 
+     */
+    spawnLandingDustPuff(landingPos, blockLength = 1, orientation = 'X') {
+        const puffCount = 6;
+        const color = new THREE.Color(0xf1f5f9);
+
+        for (let i = 0; i < puffCount; i++) {
+            const size = 0.04 + Math.random() * 0.04;
+            const geo = new THREE.SphereGeometry(size, 5, 5);
+            const mat = new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.60,
+                depthWrite: false
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            // Perimeter distribution
+            const angle = (i / puffCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+            const radius = 0.42;
+            const spreadX = Math.cos(angle) * radius * (orientation === 'X' ? blockLength * 0.7 : 0.7);
+            const spreadZ = Math.sin(angle) * radius * (orientation === 'Z' ? blockLength * 0.7 : 0.7);
+
+            mesh.position.set(
+                landingPos.x + spreadX,
+                landingPos.y - 0.45,
+                landingPos.z + spreadZ
+            );
+
+            // Subtle radial drift and quick dissipation
+            const velocity = new THREE.Vector3(
+                Math.cos(angle) * (0.7 + Math.random() * 1.0),
+                0.12 + Math.random() * 0.2,
+                Math.sin(angle) * (0.7 + Math.random() * 1.0)
+            );
+
+            const maxLife = 0.26 + Math.random() * 0.14;
+            this.scene.add(mesh);
+            this.particles.push({
+                mesh,
+                mat,
+                geo,
+                velocity,
+                life: maxLife,
+                maxLife
+            });
+        }
+    }
+
+    /**
+     * Animates blocks falling down due to gravity with a crisp micro-bounce and dust puff.
      * @param {Array<{ block: any, oldGridY: number, newGridY: number, dropLayers: number }>} fallenList 
      * @param {number} cellSize 
      * @param {Function} [onComplete] 
@@ -750,13 +803,17 @@ export class TowerRenderer {
 
             const startY = item.group.position.y;
             const targetY = startY - (oldGridY - newGridY) * cellSize;
-            const duration = Math.min(450, 180 + (oldGridY - newGridY) * 90); // duration scales with distance
+            const duration = Math.min(380, 160 + (oldGridY - newGridY) * 75);
 
             animations.push({
                 group: item.group,
+                mesh: item.mesh,
+                block,
                 startY,
                 targetY,
+                dropLayers: oldGridY - newGridY,
                 duration,
+                hasPuffed: false,
                 startTime: performance.now()
             });
         });
@@ -767,15 +824,41 @@ export class TowerRenderer {
 
             animations.forEach((anim) => {
                 const elapsed = now - anim.startTime;
-                const progress = Math.min(1.0, elapsed / anim.duration);
+                const totalProgress = Math.min(1.0, elapsed / anim.duration);
 
-                // Quadratic ease-in (gravity acceleration) with small bounce at end
-                if (progress < 1.0) {
+                if (totalProgress < 1.0) {
                     allDone = false;
-                    const easeIn = progress * progress;
-                    anim.group.position.y = anim.startY + (anim.targetY - anim.startY) * easeIn;
+
+                    // Fall phase under acceleration (0.0 -> 0.82)
+                    if (totalProgress <= 0.82) {
+                        const fallT = totalProgress / 0.82;
+                        const easeIn = fallT * fallT;
+                        anim.group.position.y = anim.startY + (anim.targetY - anim.startY) * easeIn;
+                    } else {
+                        // Crisp micro-bounce & landing dust puff phase (0.82 -> 1.0)
+                        if (!anim.hasPuffed) {
+                            anim.hasPuffed = true;
+                            this.spawnLandingDustPuff(
+                                new THREE.Vector3(anim.group.position.x, anim.targetY, anim.group.position.z),
+                                anim.block.length,
+                                anim.block.orientation
+                            );
+                        }
+                        const bounceT = (totalProgress - 0.82) / 0.18;
+                        const bounceHeight = Math.sin(bounceT * Math.PI) * (0.055 * Math.min(2.0, anim.dropLayers));
+                        anim.group.position.y = anim.targetY + bounceHeight;
+
+                        // Subtle tactile squash & stretch
+                        if (anim.mesh) {
+                            const squash = Math.sin(bounceT * Math.PI) * 0.045;
+                            anim.mesh.scale.set(1.0 + squash, 1.0 - squash * 1.4, 1.0 + squash);
+                        }
+                    }
                 } else {
                     anim.group.position.y = anim.targetY;
+                    if (anim.mesh) {
+                        anim.mesh.scale.set(1.0, 1.0, 1.0);
+                    }
                     const item = this.blockMeshes.get(anim.group.children[0]?.userData?.blockId);
                     if (item) {
                         item.restingPosition = anim.group.position.clone();
