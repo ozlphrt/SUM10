@@ -107,7 +107,7 @@ export class TowerRenderer {
         const width = this.container.clientWidth || window.innerWidth;
         const height = this.container.clientHeight || window.innerHeight;
 
-        this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 3000);
         this.camera.position.set(12, 14, 18);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -160,8 +160,13 @@ export class TowerRenderer {
      * BackSide-rendered with high-resolution lighting gradients aligned with Key & Rim lights,
      * delicate astronomical graticules, soft equator ring, and subtle stardust.
      */
+    /**
+     * Creates a massive (5X larger) celestial globe dome surrounding the scene.
+     * BackSide-rendered with a subtle, low-contrast Milky Way cosmic nebula band,
+     * delicate interstellar dust lanes, warm sunshine key bounce, and gentle stardust.
+     */
     _initGlobeDome() {
-        const radius = 135;
+        const radius = 650; // 5X larger scale
         const globeGeo = new THREE.SphereGeometry(radius, 64, 48);
         const globeTex = this._createGlobeTexture(this.currentLevel || 1);
 
@@ -187,137 +192,133 @@ export class TowerRenderer {
         const themeIdx = (level - 1) % LEVEL_THEMES.length;
         const theme = LEVEL_THEMES[themeIdx];
 
-        // Base atmospheric palette harmonized with the active level theme
-        let topColor, horizonColor, nadirColor, keyGlowColor, rimGlowColor, gridLineColor, starColor;
+        // Harmonious low-contrast atmospheric palette
+        let topColor, horizonColor, nadirColor, milkyGlow1, milkyGlow2, dustLaneColor, starAlphaBase;
 
         if (this.isDarkTheme) {
-            topColor = '#030a07';
-            horizonColor = '#061a12';
-            nadirColor = '#010503';
-            keyGlowColor = 'rgba(253, 230, 138, 0.045)'; // very subtle warm golden key bounce
-            rimGlowColor = 'rgba(110, 231, 183, 0.040)'; // ethereal emerald rim highlight
-            gridLineColor = 'rgba(110, 231, 183, 0.065)';
-            starColor = 'rgba(255, 255, 255, 0.28)';
+            topColor = '#030a08';
+            horizonColor = '#061611';
+            nadirColor = '#020605';
+            milkyGlow1 = 'rgba(110, 231, 183, 0.038)'; // Whisper of ethereal emerald nebula
+            milkyGlow2 = 'rgba(254, 240, 138, 0.024)'; // Gentle champagne dust cloud
+            dustLaneColor = 'rgba(2, 8, 6, 0.40)';
+            starAlphaBase = 0.22;
         } else {
-            // Light themes: delicate gradient from rich deep felt hue up to subtle ethereal atmosphere
             const hex = theme.bg.toString(16).padStart(6, '0');
             const r = parseInt(hex.slice(0, 2), 16);
             const g = parseInt(hex.slice(2, 4), 16);
             const b = parseInt(hex.slice(4, 6), 16);
 
-            topColor = `rgb(${Math.max(4, Math.round(r * 0.75))}, ${Math.max(6, Math.round(g * 0.75))}, ${Math.max(8, Math.round(b * 0.75))})`;
+            // Very subtle low-contrast gradient so the dome feels like a velvety endless cosmos
+            topColor = `rgb(${Math.max(4, Math.round(r * 0.72))}, ${Math.max(6, Math.round(g * 0.72))}, ${Math.max(8, Math.round(b * 0.72))})`;
             horizonColor = `rgb(${r}, ${g}, ${b})`;
-            nadirColor = `rgb(${Math.max(2, Math.round(r * 0.50))}, ${Math.max(3, Math.round(g * 0.50))}, ${Math.max(4, Math.round(b * 0.50))})`;
-            keyGlowColor = 'rgba(254, 240, 138, 0.055)'; // subtle warm sunshine key illumination
-            rimGlowColor = 'rgba(147, 197, 253, 0.045)'; // cool skylight bounce
-            gridLineColor = 'rgba(255, 255, 255, 0.075)';
-            starColor = 'rgba(255, 255, 255, 0.35)';
+            nadirColor = `rgb(${Math.max(3, Math.round(r * 0.60))}, ${Math.max(4, Math.round(g * 0.60))}, ${Math.max(5, Math.round(b * 0.60))})`;
+            milkyGlow1 = 'rgba(240, 249, 255, 0.040)'; // Ethereal starlight haze
+            milkyGlow2 = 'rgba(254, 243, 199, 0.028)'; // Warm golden galactic core shimmer
+            dustLaneColor = 'rgba(10, 25, 20, 0.35)';
+            starAlphaBase = 0.25;
         }
 
-        // 1. Smooth vertical ambient gradient (zenith to horizon to nadir)
+        // 1. Soft, low-contrast celestial backdrop
         const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
         bgGrad.addColorStop(0.0, topColor);
-        bgGrad.addColorStop(0.42, horizonColor);
+        bgGrad.addColorStop(0.38, horizonColor);
         bgGrad.addColorStop(0.50, horizonColor);
-        bgGrad.addColorStop(0.58, horizonColor);
+        bgGrad.addColorStop(0.62, horizonColor);
         bgGrad.addColorStop(1.0, nadirColor);
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Directional Key Light Volumetric Glow (aligned with dirLight: +X, +Y, +Z at x=w*0.125, y=h*0.35)
-        // Light comes from (+16, +26, +16), mapping to roughly 45° azimuth
+        // 2. Sweeping Diagonal Milky Way Nebula Band
+        // Tilted across the spherical canvas with soft curved clouds
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(-0.38); // Classic galactic plane tilt angle
+        ctx.translate(-w / 2, -h / 2);
+
+        // Broad diffuse galactic disc glow
+        const milkyMainGrad = ctx.createLinearGradient(0, h * 0.30, 0, h * 0.70);
+        milkyMainGrad.addColorStop(0.0, 'rgba(255, 255, 255, 0.0)');
+        milkyMainGrad.addColorStop(0.32, milkyGlow1);
+        milkyMainGrad.addColorStop(0.50, milkyGlow2);
+        milkyMainGrad.addColorStop(0.68, milkyGlow1);
+        milkyMainGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = milkyMainGrad;
+        ctx.fillRect(-w * 0.5, h * 0.20, w * 2.0, h * 0.60);
+
+        // Galactic Core Concentric Luminous Shimmer
+        const coreX = w * 0.42;
+        const coreY = h * 0.50;
+        const coreGrad = ctx.createRadialGradient(coreX, coreY, 20, coreX, coreY, w * 0.32);
+        coreGrad.addColorStop(0.0, milkyGlow2.replace(/[\d.]+\)$/, '0.055)'));
+        coreGrad.addColorStop(0.45, milkyGlow1.replace(/[\d.]+\)$/, '0.022)'));
+        coreGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = coreGrad;
+        ctx.fillRect(-w * 0.5, 0, w * 2.0, h);
+
+        // Subtle Interstellar Dark Dust Rift (Great Rift of the Milky Way)
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.2, coreY - 12);
+        ctx.bezierCurveTo(w * 0.2, coreY + 18, w * 0.4, coreY - 22, w * 0.6, coreY + 14);
+        ctx.bezierCurveTo(w * 0.8, coreY - 10, w * 1.0, coreY + 8, w * 1.2, coreY - 15);
+        ctx.lineWidth = 32;
+        ctx.strokeStyle = dustLaneColor;
+        ctx.filter = 'blur(16px)';
+        ctx.stroke();
+        ctx.filter = 'none';
+
+        ctx.restore();
+
+        // 3. Low-Contrast Key Light Volumetric Warmth (aligned with Key Light: +X, +Y, +Z)
         const keyCenterX = w * 0.125;
         const keyCenterY = h * 0.32;
-        const keyGrad = ctx.createRadialGradient(
-            keyCenterX, keyCenterY, 30,
-            keyCenterX, keyCenterY, w * 0.42
-        );
-        keyGrad.addColorStop(0.0, keyGlowColor);
-        keyGrad.addColorStop(0.45, keyGlowColor.replace(/[\d.]+\)$/, '0.02)'));
+        const keyGrad = ctx.createRadialGradient(keyCenterX, keyCenterY, 20, keyCenterX, keyCenterY, w * 0.45);
+        keyGrad.addColorStop(0.0, 'rgba(254, 240, 138, 0.032)');
+        keyGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.010)');
         keyGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = keyGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // 3. Cool Secondary Rim Light Ambient Glow (aligned with rimLight: -X, +Y, -Z at x=w*0.625, y=h*0.40)
-        const rimCenterX = w * 0.625;
-        const rimCenterY = h * 0.40;
-        const rimGrad = ctx.createRadialGradient(
-            rimCenterX, rimCenterY, 30,
-            rimCenterX, rimCenterY, w * 0.38
-        );
-        rimGrad.addColorStop(0.0, rimGlowColor);
-        rimGrad.addColorStop(0.4, rimGlowColor.replace(/[\d.]+\)$/, '0.015)'));
-        rimGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = rimGrad;
-        ctx.fillRect(0, 0, w, h);
-
-        // 4. Subtle, Delicate Astronomical Globe Graticules
-        // Parallels of Latitude (horizontal rings)
-        const latSteps = 18;
-        for (let i = 1; i < latSteps; i++) {
-            const y = (i / latSteps) * h;
-            const isEquator = i === latSteps / 2;
-            ctx.strokeStyle = isEquator ? 'rgba(254, 240, 138, 0.16)' : gridLineColor;
-            ctx.lineWidth = isEquator ? 1.6 : 0.8;
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(w, y);
-            ctx.stroke();
-        }
-
-        // Meridians of Longitude (vertical lines)
-        const lonSteps = 32;
-        for (let j = 0; j < lonSteps; j++) {
-            const x = (j / lonSteps) * w;
-            const isCardinal = j % 8 === 0;
-            ctx.strokeStyle = isCardinal ? 'rgba(254, 240, 138, 0.12)' : gridLineColor;
-            ctx.lineWidth = isCardinal ? 1.4 : 0.7;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, h);
-            ctx.stroke();
-        }
-
-        // 5. Delicate Armillary Polar Rings (zenith & nadir caps)
-        const drawPolarArmillary = (cy, isNorth) => {
-            ctx.save();
-            ctx.strokeStyle = gridLineColor;
-            ctx.lineWidth = 1.0;
-            [0.18, 0.36, 0.58].forEach(scale => {
-                ctx.beginPath();
-                ctx.ellipse(w / 2, cy, w * scale * 0.38, 48 * scale, 0, 0, Math.PI * 2);
-                ctx.stroke();
-            });
-            ctx.restore();
-        };
-        drawPolarArmillary(64, true);
-        drawPolarArmillary(h - 64, false);
-
-        // 6. Subtle Micro-Stars / Distant Stardust
-        let seed = 77;
+        // 4. Subtle, Low-Contrast Star Clouds & Clustered Pinpoints
+        let seed = 101;
         const random = () => {
             seed = (seed * 9301 + 49297) % 233280;
             return seed / 233280;
         };
 
-        for (let s = 0; s < 220; s++) {
+        // Render fine cosmic stardust (concentrated naturally along the galactic equator)
+        for (let s = 0; s < 320; s++) {
             const sx = random() * w;
-            const sy = random() * h;
-            const sr = 0.5 + random() * 1.1; // small pinpoint stars
-            const sAlpha = 0.12 + random() * 0.38;
-            ctx.fillStyle = starColor.replace(/[\d.]+\)$/, `${sAlpha})`);
+            // Bias slightly toward the mid-plane
+            const yDist = (random() - 0.5);
+            const sy = (h / 2) + yDist * h * (0.65 + random() * 0.35);
+            const sr = 0.4 + random() * 0.8; // fine micro-pinpoints
+            const sAlpha = starAlphaBase * (0.35 + random() * 0.65);
+
+            ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha})`;
             ctx.beginPath();
             ctx.arc(sx, sy, sr, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // 7. Whisper-soft Equatorial Horizon Atmosphere Aura
-        const equatorGrad = ctx.createLinearGradient(0, h * 0.44, 0, h * 0.56);
-        equatorGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-        equatorGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.035)');
-        equatorGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
-        ctx.fillStyle = equatorGrad;
-        ctx.fillRect(0, h * 0.44, w, h * 0.12);
+        // 5. Very Faint, Low-Contrast Celestial Coordinates (whisper-soft astronomical lines)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)'; // extremely low contrast
+        ctx.lineWidth = 0.7;
+
+        // Faint equatorial parallel
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.50);
+        ctx.lineTo(w, h * 0.50);
+        ctx.stroke();
+
+        // Faint cardinal meridians (only 4 quadrants)
+        for (let m = 0; m < 4; m++) {
+            const mx = (m / 4) * w;
+            ctx.beginPath();
+            ctx.moveTo(mx, 0);
+            ctx.lineTo(mx, h);
+            ctx.stroke();
+        }
 
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
