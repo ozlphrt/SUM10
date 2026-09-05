@@ -559,20 +559,24 @@ export class GridTopology {
             }
         }
 
-        // 3. Fallback: If still not paired, pair any clear block with an adjacent neighbor
+        // 3. Fallback: If still not paired, pair a clear block with another unblocked or distant block
         if (!paired && clearBlocks.length > 0) {
-            for (const b1 of clearBlocks) {
-                const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
-                if (neighbors.length > 0) {
-                    const b2 = neighbors[0];
-                    const [v1, v2] = this._generatePair();
-                    b1.value = v1;
-                    b2.value = v2;
-                    pairedIds.add(b1.id);
-                    pairedIds.add(b2.id);
-                    paired = true;
-                    break;
-                }
+            const b1 = clearBlocks[0];
+            const preferSpaced = (this.mode === 'shapes' || this.mode === 'alphabet');
+            let candidates = active.filter(b => b.id !== b1.id);
+            if (preferSpaced) {
+                const neighbors = this.getNeighborBlocks(b1.id);
+                const nonNeighbors = candidates.filter(b => !neighbors.has(b));
+                if (nonNeighbors.length > 0) candidates = nonNeighbors;
+            }
+            if (candidates.length > 0) {
+                const b2 = candidates[0];
+                const [v1, v2] = this._generatePair();
+                b1.value = v1;
+                b2.value = v2;
+                pairedIds.add(b1.id);
+                pairedIds.add(b2.id);
+                paired = true;
             }
         }
 
@@ -589,11 +593,23 @@ export class GridTopology {
         }
 
         // 5. Shuffle values of remaining active blocks in pairs matching current mode rules
+        // For shapes/alphabet mode, sort remaining blocks by distance to disperse identical shapes across the tower
         const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
-        for (let i = 0; i < remainingNormal.length - 1; i += 2) {
-            const [v1, v2] = this._generatePair();
-            remainingNormal[i].value = v1;
-            remainingNormal[i + 1].value = v2;
+        if (this.mode === 'shapes' || this.mode === 'alphabet') {
+            // Sort to interleave layers and avoid adjacent blocks getting identical symbols
+            remainingNormal.sort((a, b) => (a.gridY - b.gridY) || (a.gridX - b.gridX));
+            const half = Math.floor(remainingNormal.length / 2);
+            for (let i = 0; i < half; i++) {
+                const [v1, v2] = this._generatePair();
+                remainingNormal[i].value = v1;
+                remainingNormal[i + half].value = v2;
+            }
+        } else {
+            for (let i = 0; i < remainingNormal.length - 1; i += 2) {
+                const [v1, v2] = this._generatePair();
+                remainingNormal[i].value = v1;
+                remainingNormal[i + 1].value = v2;
+            }
         }
         // If an odd block remains, make it a wildcard so every normal block is 100% paired
         if (remainingNormal.length % 2 === 1) {

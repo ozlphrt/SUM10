@@ -424,37 +424,81 @@ export class TopologyGenerator {
         }
 
         const pairedIds = new Set();
-
         const mode = topology.mode || 'sum10';
 
-        // 1. First Pass: Pair touching adjacent neighbors (greedy maximal matching)
-        for (const block of normalBlocks) {
-            if (pairedIds.has(block.id)) continue;
+        // In 'shapes' (and 'alphabet') mode, players want to explore the tower and find matching symbols
+        // across different layers or sides, rather than having identical shapes clustered directly touching.
+        const preferSpacedPairs = (mode === 'shapes' || mode === 'alphabet');
 
-            const neighbors = Array.from(topology.getNeighborBlocks(block.id))
-                .filter((n) => n.type === 'normal' && !pairedIds.has(n.id));
+        if (preferSpacedPairs) {
+            // SPATIALLY DISPERSED PAIRING:
+            // Find pairs that are separated in space (distance >= 2 cells) or on opposite faces/layers
+            for (let i = 0; i < normalBlocks.length; i++) {
+                const b1 = normalBlocks[i];
+                if (pairedIds.has(b1.id)) continue;
 
-            if (neighbors.length > 0) {
-                const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
-                const [v1, v2] = this._generatePairForMode(mode);
-                block.value = v1;
-                partner.value = v2;
-                pairedIds.add(block.id);
-                pairedIds.add(partner.id);
+                // Look for candidates that are NOT directly touching
+                const neighbors = topology.getNeighborBlocks(b1.id);
+                const candidates = normalBlocks.filter(b2 => 
+                    b2.id !== b1.id && 
+                    !pairedIds.has(b2.id) && 
+                    !neighbors.has(b2)
+                );
+
+                let partner = null;
+                if (candidates.length > 0) {
+                    // Sort candidates by Euclidean distance descending to pick far-apart blocks
+                    candidates.sort((a, b) => {
+                        const distA = Math.hypot(a.gridX - b1.gridX, a.gridY - b1.gridY, a.gridZ - b1.gridZ);
+                        const distB = Math.hypot(b.gridX - b1.gridX, b.gridY - b1.gridY, b.gridZ - b1.gridZ);
+                        return distB - distA;
+                    });
+                    // Pick from the upper half of farthest blocks with some randomness
+                    const pickPool = candidates.slice(0, Math.max(1, Math.floor(candidates.length * 0.6)));
+                    partner = pickPool[Math.floor(Math.random() * pickPool.length)];
+                } else {
+                    // Fallback to any remaining block if only touching blocks are left
+                    partner = normalBlocks.find(b2 => b2.id !== b1.id && !pairedIds.has(b2.id));
+                }
+
+                if (partner) {
+                    const [v1, v2] = this._generatePairForMode(mode);
+                    b1.value = v1;
+                    partner.value = v2;
+                    pairedIds.add(b1.id);
+                    pairedIds.add(partner.id);
+                }
             }
-        }
+        } else {
+            // Classic SUM10 / SUM20: Mix of adjacent and distant pairs
+            // 1. First Pass: Pair touching adjacent neighbors (greedy maximal matching)
+            for (const block of normalBlocks) {
+                if (pairedIds.has(block.id)) continue;
 
-        // 2. Second Pass: Strictly pair up any remaining unpaired blocks mutually in disjoint pairs of 2!
-        // Never reuse already paired blocks and never leave any block unpaired!
-        const unpaired = normalBlocks.filter((b) => !pairedIds.has(b.id));
-        for (let i = 0; i < unpaired.length - 1; i += 2) {
-            const b1 = unpaired[i];
-            const b2 = unpaired[i + 1];
-            const [v1, v2] = this._generatePairForMode(mode);
-            b1.value = v1;
-            b2.value = v2;
-            pairedIds.add(b1.id);
-            pairedIds.add(b2.id);
+                const neighbors = Array.from(topology.getNeighborBlocks(block.id))
+                    .filter((n) => n.type === 'normal' && !pairedIds.has(n.id));
+
+                if (neighbors.length > 0) {
+                    const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    const [v1, v2] = this._generatePairForMode(mode);
+                    block.value = v1;
+                    partner.value = v2;
+                    pairedIds.add(block.id);
+                    pairedIds.add(partner.id);
+                }
+            }
+
+            // 2. Second Pass: Strictly pair up any remaining unpaired blocks mutually in disjoint pairs of 2!
+            const unpaired = normalBlocks.filter((b) => !pairedIds.has(b.id));
+            for (let i = 0; i < unpaired.length - 1; i += 2) {
+                const b1 = unpaired[i];
+                const b2 = unpaired[i + 1];
+                const [v1, v2] = this._generatePairForMode(mode);
+                b1.value = v1;
+                b2.value = v2;
+                pairedIds.add(b1.id);
+                pairedIds.add(b2.id);
+            }
         }
 
         // Guarantee at least one valid move is immediately open from the start
