@@ -258,33 +258,157 @@ export class TowerRenderer {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
-        this._adjustCameraForAspect();
-    }
-
-    _adjustCameraForAspect() {
-        if (!this.camera) return;
-        const aspect = this.camera.aspect;
-        // In portrait mode (aspect < 1), zoom out proportionately so tower is never cropped
-        const distMult = aspect < 1 ? Math.max(1.35, 1.0 / aspect * 0.88) : 1.0;
-        const basePos = new THREE.Vector3(15, 16, 15).multiplyScalar(distMult);
-        this.camera.position.copy(basePos);
+        this.fitCameraToBlocks({ animate: false });
     }
 
     /**
-     * Smoothly glides the camera from a cinematic wider orbit into the optimal 45° isometric corner view.
+     * Calculates the bounding box of all active blocks and computes the optimal
+     * camera distance and center to zoom in as much as possible while keeping all
+     * blocks inside the viewport with comfortable padding margins.
+     */
+    _calculateOptimalCameraFit() {
+        const box = new THREE.Box3();
+        if (this.blockMeshes && this.blockMeshes.size > 0) {
+            for (const item of this.blockMeshes.values()) {
+                box.expandByObject(item.group);
+            }
+        } else if (this.currentTopology) {
+            const halfGrid = (this.currentGridSize * this.currentCellSize) / 2;
+            const height = this.currentTopology.maxLayers * this.currentCellSize;
+            box.min.set(-halfGrid, 0, -halfGrid);
+            box.max.set(halfGrid, height, halfGrid);
+        } else {
+            box.min.set(-2.5, 0, -2.5);
+            box.max.set(2.5, 6, 2.5);
+        }
+
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        const aspect = (this.camera && this.camera.aspect) ? this.camera.aspect : 1.0;
+        const vFovRad = ((this.camera ? this.camera.fov : 45) * Math.PI) / 180;
+        const halfVFov = vFovRad / 2;
+        const tanHalfV = Math.tan(halfVFov);
+        const tanHalfH = tanHalfV * aspect;
+
+        const halfX = Math.max(size.x / 2, 0.5);
+        const halfZ = Math.max(size.z / 2, 0.5);
+        const halfY = Math.max(size.y / 2, 0.5);
+        // Radius of bounding cylinder around Y axis (guarantees clearance at any horizontal rotation)
+        const radiusXZ = Math.hypot(halfX, halfZ);
+
+        // Standard comfortable downward isometric viewing pitch (~34 degrees)
+        const pitch = 34 * (Math.PI / 180);
+        const sinPitch = Math.sin(pitch);
+        const cosPitch = Math.cos(pitch);
+
+        // View direction unit vector: pristine 45° isometric corner view
+        const viewDir = new THREE.Vector3(
+            Math.SQRT1_2 * cosPitch,
+            sinPitch,
+            Math.SQRT1_2 * cosPitch
+        ).normalize();
+
+        // Screen padding factors: 0.82 vertical, 0.86 horizontal to give comfortable breathing room around HUD
+        const marginV = 0.82;
+        const marginH = 0.86;
+
+        // Projected extents on camera plane
+        const yCamMax = halfY * cosPitch + radiusXZ * sinPitch;
+        const xCamMax = radiusXZ;
+        const zOffsetMax = halfY * sinPitch + radiusXZ * cosPitch;
+
+        const distV = yCamMax / (tanHalfV * marginV);
+        const distH = xCamMax / (tanHalfH * marginH);
+
+        const optimalDist = zOffsetMax + Math.max(distV, distH);
+        const position = center.clone().add(viewDir.clone().multiplyScalar(optimalDist));
+
+        return {
+            center,
+            distance: optimalDist,
+            optimalDist,
+            position,
+            viewDir
+        };
+    }
+
+    /**
+     * Adjusts the camera zoom and target to frame all blocks tightly in the viewport.
+     * @param {Object} [options]
+     * @param {boolean} [options.animate=false]
+     * @param {number} [options.duration=650]
+     * @param {Function} [options.onComplete]
+     */
+    fitCameraToBlocks({ animate = false, duration = 650, onComplete = null } = {}) {
+        if (!this.camera || !this.controls) return;
+
+        const fit = this._calculateOptimalCameraFit();
+        this.controls.target.set(fit.center.x, fit.center.y, fit.center.z);
+        this.controls.minDistance = Math.max(3.0, fit.optimalDist * 0.4);
+        this.controls.maxDistance = fit.optimalDist * 2.8;
+
+        // Preserve player's current orbit angle if camera was already rotated
+        const relCam = this.camera.position.clone().sub(this.controls.target);
+        let targetPos;
+        if (relCam.lengthSq() > 1.0) {
+            const currentDir = relCam.normalize();
+            targetPos = fit.center.clone().add(currentDir.multiplyScalar(fit.optimalDist));
+        } else {
+            targetPos = fit.position;
+        }
+
+        if (!animate) {
+            this.camera.position.copy(targetPos);
+            this.controls.update();
+            if (onComplete) onComplete();
+            return;
+        }
+
+        this._isCameraAnimating = true;
+        const startPos = this.camera.position.clone();
+        const startTime = performance.now();
+
+        const animateFit = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+
+            this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+            this.controls.update();
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animateFit);
+            } else {
+                this._isCameraAnimating = false;
+                if (onComplete) onComplete();
+            }
+        };
+
+        requestAnimationFrame(animateFit);
+    }
+
+    /**
+     * Smoothly glides the camera from a cinematic wider orbit into the optimal tight zoom.
      * @param {Function} [onComplete]
      */
     playLevelEntrance(onComplete) {
         if (!this.camera || !this.controls) return;
         this._isCameraAnimating = true;
 
-        const aspect = this.camera.aspect;
-        const distMult = aspect < 1 ? Math.max(1.35, 1.0 / aspect * 0.88) : 1.0;
+        const fit = this._calculateOptimalCameraFit();
+        this.controls.target.set(fit.center.x, fit.center.y, fit.center.z);
+        this.controls.minDistance = Math.max(3.0, fit.optimalDist * 0.4);
+        this.controls.maxDistance = fit.optimalDist * 2.8;
 
-        // Target: pristine 45° isometric corner view
-        const destPos = new THREE.Vector3(15, 16, 15).multiplyScalar(distMult);
-        // Start: wider, rotated, and elevated cinematic entrance angle
-        const startPos = new THREE.Vector3(26 * distMult, 24 * distMult, 6 * distMult);
+        const destPos = fit.position;
+        // Start: slightly wider orbit angle (1.40x optimal distance)
+        const entranceDist = fit.optimalDist * 1.40;
+        const startPos = fit.center.clone().add(
+            new THREE.Vector3(entranceDist * 0.9, entranceDist * 0.8, entranceDist * 0.3)
+        );
 
         this.camera.position.copy(startPos);
         this.controls.update();
@@ -295,7 +419,6 @@ export class TowerRenderer {
         const animateEntrance = () => {
             const elapsed = performance.now() - startTime;
             const progress = Math.min(1.0, elapsed / duration);
-            // Smooth cubic ease-out
             const easeOut = 1 - Math.pow(1 - progress, 3);
 
             this.camera.position.lerpVectors(startPos, destPos, easeOut);
@@ -490,14 +613,15 @@ export class TowerRenderer {
         this.contactShadow.position.set(0, -0.405, 0);
         this.scene.add(this.contactShadow);
 
-        // Adjust camera target to center of tower height
-        this.controls.target.set(0, (topology.maxLayers * topology.cellSize) / 4, 0);
-        this.playLevelEntrance();
+        this.currentTopology = topology;
 
-        // Create 3D meshes for every block
+        // Create 3D meshes for every block first so bounds are known
         for (const block of topology.blocks.values()) {
             this._createBlockMesh(block, topology.gridSize, topology.cellSize);
         }
+
+        // Auto-adjust camera zoom factor to zoom in as much as possible while keeping all blocks in viewport
+        this.playLevelEntrance();
     }
 
     _createBlockMesh(block, gridSize, cellSize) {
