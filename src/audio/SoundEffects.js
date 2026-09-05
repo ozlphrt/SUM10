@@ -81,46 +81,58 @@ class SoundEffects {
     }
 
     /**
-     * Block selection: crisp, subtle mechanical switch click (like a camera dial notch or Box switch).
+     * Block selection: crisp tactile switch click with pitch scaled to physical block length.
+     * 1-cell: light crisp micro-tick, 2-cell: balanced click, 3-cell: deep solid clack.
+     * @param {number} [length=1]
      */
-    playSelect() {
+    playSelect(length = 1) {
         if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        this._createClick(now, 2600, 0.015, 0.32);
+        const freq = 2900 - (Math.min(3, Math.max(1, length)) - 1) * 550;
+        this._createClick(now, freq, 0.015, 0.32);
     }
 
     /**
-     * Pair match: satisfying tactile double-tile snap (like two Scrabble / Mahjong tiles snapping together).
+     * Pair match: satisfying tactile double-tile snap scaled to block physical weights.
+     * @param {number} [combo=1]
+     * @param {number} [len1=1]
+     * @param {number} [len2=1]
      */
-    playMatch(combo = 1) {
+    playMatch(combo = 1, len1 = 1, len2 = 1) {
         if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
 
-        // Subtle tightness escalation with combo streak
-        const baseFreq = 2100 + Math.min(700, (combo - 1) * 140);
+        const comboBonus = Math.min(350, (combo - 1) * 70);
+        const freq1 = 2550 - (Math.min(3, Math.max(1, len1)) - 1) * 450 + comboBonus;
+        const freq2 = 2900 - (Math.min(3, Math.max(1, len2)) - 1) * 450 + comboBonus;
 
         // First tile strike
-        this._createClick(now, baseFreq, 0.018, 0.38);
+        this._createClick(now, freq1, 0.018, 0.38);
         // Second tile lock snap (25ms later)
-        this._createClick(now + 0.024, baseFreq * 1.25, 0.016, 0.44);
+        this._createClick(now + 0.024, freq2, 0.016, 0.44);
     }
 
     /**
      * Finger flick impulse: sharp physical snap pop + fast dry air whoosh.
+     * @param {number} [length=1]
      */
-    playFlick() {
+    playFlick(length = 1) {
         if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
 
+        const len = Math.min(3, Math.max(1, length));
+        const snapFreq = 3400 - (len - 1) * 450;
+        const bodyFreq = 2000 - (len - 1) * 350;
+
         // Sharp physical finger-snap impulse
-        this._createClick(now, 3200, 0.022, 0.52);
-        this._createClick(now + 0.010, 1900, 0.018, 0.36);
+        this._createClick(now, snapFreq, 0.022, 0.52);
+        this._createClick(now + 0.010, bodyFreq, 0.018, 0.36);
 
         // Fast dry air whoosh
         const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
@@ -145,8 +157,8 @@ class SoundEffects {
         noise.start(now);
     }
 
-    playWhoosh() {
-        this.playFlick();
+    playWhoosh(length = 1) {
+        this.playFlick(length);
     }
 
     /**
@@ -165,22 +177,27 @@ class SoundEffects {
 
     /**
      * Gravity landing: dry solid ceramic tile tap settling flat on shelf.
+     * @param {number} [length=1]
      */
-    playLandThud() {
+    playLandThud(length = 1) {
         if (!this.enabled) return;
         this._ensureAudio();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
 
+        const len = Math.min(3, Math.max(1, length));
+        const contactFreq = 1600 - (len - 1) * 300;
+        const bodyFreq = 250 - (len - 1) * 45;
+
         // Sharp surface contact tick
-        this._createClick(now, 1450, 0.016, 0.32);
+        this._createClick(now, contactFreq, 0.016, 0.32);
 
         // Low solid shelf body tap
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(230, now);
-        osc.frequency.exponentialRampToValueAtTime(80, now + 0.032);
+        osc.frequency.setValueAtTime(bodyFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.032);
         gain.gain.setValueAtTime(0.26, now);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.032);
         osc.connect(gain);

@@ -279,7 +279,7 @@ class Sum10Game {
             this.renderer.hideExitBeam();
             this.selectedBlock = null;
             this._updateSelectionUI(null, null);
-            sound.playSelect();
+            sound.playSelect(this.selectedBlock.length);
         }
     }
 
@@ -299,7 +299,7 @@ class Sum10Game {
             this.renderer.hideExitBeam();
             this.selectedBlock = null;
             this._updateSelectionUI(null, null);
-            sound.playSelect();
+            sound.playSelect(block.length);
             return;
         }
 
@@ -312,7 +312,7 @@ class Sum10Game {
             this.renderer.showExitBeam(block, exit);
             const displayVal = block.type === 'wild' ? '★' : block.value;
             this._updateSelectionUI(displayVal, null);
-            sound.playSelect();
+            sound.playSelect(block.length);
             if (block.type === 'wild') {
                 this.showToast('🌟 Wildcard selected! Tap ANY block to match!');
             } else {
@@ -384,7 +384,7 @@ class Sum10Game {
             if (isWildMatch) {
                 sound.playWildChime();
             } else {
-                sound.playMatch(this.comboCount);
+                sound.playMatch(this.comboCount, first.length, second.length);
             }
 
             if (this.comboCount > 1) {
@@ -394,7 +394,7 @@ class Sum10Game {
             }
 
             setTimeout(() => {
-                sound.playFlick();
+                sound.playFlick(Math.max(first.length, second.length));
                 this.renderer.flyOutBlocks([first.id, second.id]);
                 this.topology.removeBlock(first.id);
                 this.topology.removeBlock(second.id);
@@ -409,7 +409,7 @@ class Sum10Game {
                     const fallen = this.topology.settleGravity();
                     if (fallen.length > 0) {
                         this.renderer.animateFallingBlocks(fallen, this.topology.cellSize, () => {
-                            sound.playLandThud();
+                            sound.playLandThud(fallen[0]?.block?.length || 1);
                             this.isProcessingMatch = false;
                             this._checkDeadlock();
                         });
