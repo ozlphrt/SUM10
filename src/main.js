@@ -445,7 +445,7 @@ class Sum10Game {
                 this._updateSelectionUI(null, null);
                 this.updateStats();
 
-                // Downward Gravity Fall (Jarrows style)
+                // Rapid Downward Gravity Fall
                 setTimeout(() => {
                     const fallen = this.topology.settleGravity();
                     if (fallen.length > 0) {
@@ -458,7 +458,7 @@ class Sum10Game {
                         this.isProcessingMatch = false;
                         this._checkDeadlock();
                     }
-                }, 100);
+                }, 40);
 
                 this.levelMatchesCount++;
                 this.levelMaxCombo = Math.max(this.levelMaxCombo, this.comboCount);
@@ -466,7 +466,7 @@ class Sum10Game {
                 if (this.topology.blocks.size === 0) {
                     this._showLevelCompleteModal();
                 }
-            }, 120);
+            }, 40);
         } else {
             // MISMATCH
             sound.playMismatch();
@@ -579,7 +579,7 @@ class Sum10Game {
                 this.isProcessingMatch = false;
                 this._checkDeadlock();
             }
-        }, 200);
+        }, 60);
 
         if (this.topology.blocks.size === 0) {
             this._showLevelCompleteModal();

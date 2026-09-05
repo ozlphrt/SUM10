@@ -965,7 +965,7 @@ export class TowerRenderer {
 
             const startY = item.group.position.y;
             const targetY = startY - (oldGridY - newGridY) * cellSize;
-            const duration = Math.min(380, 160 + (oldGridY - newGridY) * 75);
+            const duration = Math.min(140, 60 + (oldGridY - newGridY) * 30);
 
             animations.push({
                 group: item.group,
