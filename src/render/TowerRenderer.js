@@ -117,27 +117,33 @@ export class TowerRenderer {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
 
-        // Ambient & Directional Lighting
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        // 1. Natural Studio Hemisphere Fill Light (sky bounce + ground reflection)
+        this.hemiLight = new THREE.HemisphereLight(0xf8fafc, 0xe2e8f0, 0.65);
+        this.scene.add(this.hemiLight);
+
+        // 2. Subtle Warm Ambient Fill
+        this.ambientLight = new THREE.AmbientLight(0xfffbf5, 0.35);
         this.scene.add(this.ambientLight);
 
-        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        this.dirLight.position.set(15, 25, 15);
+        // 3. Warm Directional Key Light with Soft PCF Shadows
+        this.dirLight = new THREE.DirectionalLight(0xfff7ed, 1.30);
+        this.dirLight.position.set(16, 26, 16);
         this.dirLight.castShadow = true;
         this.dirLight.shadow.mapSize.width = 2048;
         this.dirLight.shadow.mapSize.height = 2048;
         this.dirLight.shadow.camera.near = 0.5;
-        this.dirLight.shadow.camera.far = 60;
-        this.dirLight.shadow.camera.left = -15;
-        this.dirLight.shadow.camera.right = 15;
-        this.dirLight.shadow.camera.top = 15;
-        this.dirLight.shadow.camera.bottom = -15;
-        this.dirLight.shadow.bias = -0.0005;
+        this.dirLight.shadow.camera.far = 65;
+        this.dirLight.shadow.camera.left = -16;
+        this.dirLight.shadow.camera.right = 16;
+        this.dirLight.shadow.camera.top = 16;
+        this.dirLight.shadow.camera.bottom = -16;
+        this.dirLight.shadow.bias = -0.0002;
+        this.dirLight.shadow.radius = 2.4; // Soft PCF shadow edges
         this.scene.add(this.dirLight);
 
-        // Secondary soft rim light
-        this.rimLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
-        this.rimLight.position.set(-15, 10, -15);
+        // 4. Secondary Cool Rim Light for Chamfer Definition
+        this.rimLight = new THREE.DirectionalLight(0x93c5fd, 0.55);
+        this.rimLight.position.set(-16, 14, -16);
         this.scene.add(this.rimLight);
     }
 
@@ -153,17 +159,22 @@ export class TowerRenderer {
             if (this.scene && this.scene.background) {
                 this.scene.background.set(0x090d16);
             }
+            if (this.hemiLight) {
+                this.hemiLight.color.set(0x334155);
+                this.hemiLight.groundColor.set(0x0f172a);
+                this.hemiLight.intensity = 0.55;
+            }
             if (this.ambientLight) {
-                this.ambientLight.color.set(0x94a3b8);
-                this.ambientLight.intensity = 0.65;
+                this.ambientLight.color.set(0x1e293b);
+                this.ambientLight.intensity = 0.35;
             }
             if (this.dirLight) {
                 this.dirLight.color.set(0xf8fafc);
-                this.dirLight.intensity = 1.05;
+                this.dirLight.intensity = 1.15;
             }
             if (this.rimLight) {
                 this.rimLight.color.set(0x38bdf8);
-                this.rimLight.intensity = 0.70;
+                this.rimLight.intensity = 0.65;
             }
             if (this.basePlate && this.basePlate.material) {
                 this.basePlate.material.color.set(0x1e293b);
@@ -177,17 +188,22 @@ export class TowerRenderer {
         if (this.scene && this.scene.background) {
             this.scene.background.set(theme.bg);
         }
+        if (this.hemiLight) {
+            this.hemiLight.color.set(0xf8fafc);
+            this.hemiLight.groundColor.set(theme.plate || 0xe2e8f0);
+            this.hemiLight.intensity = 0.65;
+        }
         if (this.ambientLight) {
-            this.ambientLight.color.set(theme.ambient);
-            this.ambientLight.intensity = theme.ambientInt;
+            this.ambientLight.color.set(0xfffbf5);
+            this.ambientLight.intensity = 0.35;
         }
         if (this.dirLight) {
-            this.dirLight.color.set(0xffffff);
-            this.dirLight.intensity = 1.2;
+            this.dirLight.color.set(0xfff7ed);
+            this.dirLight.intensity = 1.30;
         }
         if (this.rimLight) {
-            this.rimLight.color.set(theme.rim);
-            this.rimLight.intensity = 0.6;
+            this.rimLight.color.set(theme.rim || 0x93c5fd);
+            this.rimLight.intensity = 0.55;
         }
         if (this.basePlate && this.basePlate.material) {
             this.basePlate.material.color.set(theme.plate);
@@ -519,10 +535,10 @@ export class TowerRenderer {
         const createMat = (map) => new THREE.MeshStandardMaterial({
             map,
             color: 0xffffff,
-            roughness: 0.82, // Tactile matte ceramic / clay texture
-            metalness: 0.04,
+            roughness: 0.88, // Tactile unglazed matte ceramic / clay texture
+            metalness: 0.02, // Pure non-metallic organic ceramic
             emissive: new THREE.Color(palette.bg),
-            emissiveIntensity: 0.02
+            emissiveIntensity: 0.015
         });
 
         const materials = [

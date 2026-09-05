@@ -195,8 +195,37 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
     ctx.fill();
     ctx.restore();
 
+    // Tactile Matte Ceramic Surface Finish (Ambient Crevice Vignette & Micro-Grain)
+    _applyCeramicSurfaceFinish(ctx, width, height);
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     textureCache.set(key, texture);
     return texture;
+}
+
+/**
+ * Applies subtle crevice contact shading and tactile micro-grain
+ * to give blocks the tactile physical feel of unglazed matte porcelain tiles.
+ */
+function _applyCeramicSurfaceFinish(ctx, width, height) {
+    // 1. Soft perimeter ambient crevice shading
+    ctx.save();
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
+    ctx.strokeRect(5, 5, width - 10, height - 10);
+    ctx.restore();
+
+    // 2. Tactile micro-grain overlay (subtle porcelain surface roughness)
+    try {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 16) {
+            const noise = (Math.random() - 0.5) * 7;
+            data[i] = Math.min(255, Math.max(0, data[i] + noise));
+            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+        }
+        ctx.putImageData(imgData, 0, 0);
+    } catch (_) {}
 }
