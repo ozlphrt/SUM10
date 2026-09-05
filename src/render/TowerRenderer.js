@@ -5,36 +5,36 @@ import { getBlockTexture, NUMBER_COLORS } from './TextureGenerator.js';
 
 const LEVEL_THEMES = [
     {
-        // Level 1: Nordic Pearl
-        bg: 0xf1f5f9,
+        // Level 1: Sleek Slate Blue Tabletop
+        bg: 0xe2e8f0,
         ambient: 0xffffff,
         ambientInt: 0.85,
         rim: 0x93c5fd,
-        plate: 0xe2e8f0
+        plate: 0x334155
     },
     {
-        // Level 2: Soft Rose Quartz
-        bg: 0xfdf2f8,
+        // Level 2: Deep Indigo
+        bg: 0xf1f5f9,
         ambient: 0xffffff,
         ambientInt: 0.85,
-        rim: 0xf472b6,
-        plate: 0xfce7f3
+        rim: 0x818cf8,
+        plate: 0x1e293b
     },
     {
-        // Level 3: Warm Linen Sand
+        // Level 3: Warm Walnut Table
         bg: 0xfaf5ef,
         ambient: 0xfffbeb,
         ambientInt: 0.85,
         rim: 0xfbbf24,
-        plate: 0xfef3c7
+        plate: 0x3b2219
     },
     {
-        // Level 4: Sage Mist
+        // Level 4: Emerald Green Felt Table
         bg: 0xf0fdf4,
         ambient: 0xffffff,
         ambientInt: 0.85,
         rim: 0x34d399,
-        plate: 0xdcfce7
+        plate: 0x064e3b
     }
 ];
 
@@ -532,13 +532,15 @@ export class TowerRenderer {
         const zCellsH = 1;
         const texZ = getBlockTexture(block.value, zCellsW, zCellsH, block.orientation, block.direction, block.type || 'normal');
 
-        const createMat = (map) => new THREE.MeshStandardMaterial({
+        const createMat = (map) => new THREE.MeshPhysicalMaterial({
             map,
             color: 0xffffff,
-            roughness: 0.88, // Tactile unglazed matte ceramic / clay texture
-            metalness: 0.02, // Pure non-metallic organic ceramic
-            emissive: new THREE.Color(palette.bg),
-            emissiveIntensity: 0.015
+            roughness: 0.12,          // Highly polished shiny domino plastic
+            metalness: 0.0,           // Non-metallic melamine resin
+            clearcoat: 0.95,          // Glossy protective clearcoat layer
+            clearcoatRoughness: 0.06, // Mirror specular sheen
+            ior: 1.54,                // High refractive index of resin/plastic
+            reflectivity: 0.70
         });
 
         const materials = [
@@ -601,15 +603,14 @@ export class TowerRenderer {
         };
         requestAnimationFrame(animateElevation);
 
-        // Visual emissive glow
+        // Visual emissive glow on selection
         item.materials.forEach((mat) => {
             if (isSelected) {
-                mat.emissive.set(0xf59e0b); // Tactile warm amber highlight
-                mat.emissiveIntensity = 0.45;
+                mat.emissive.set(0x0284c7); // Sleek electric cyan / sapphire selection highlight
+                mat.emissiveIntensity = 0.40;
             } else {
-                const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
-                mat.emissive.set(palette.bg);
-                mat.emissiveIntensity = 0.02;
+                mat.emissive.set(0x000000);
+                mat.emissiveIntensity = 0.0;
             }
         });
     }
@@ -674,10 +675,9 @@ export class TowerRenderer {
             item.materials[4].map = texZ; item.materials[4].needsUpdate = true;
             item.materials[5].map = texZ; item.materials[5].needsUpdate = true;
 
-            const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
             item.materials.forEach((m) => {
-                m.emissive.set(palette.bg);
-                m.emissiveIntensity = 0.02;
+                m.emissive.set(0x000000);
+                m.emissiveIntensity = 0.0;
             });
         }
     }

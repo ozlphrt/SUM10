@@ -3,22 +3,30 @@ import * as THREE from 'three';
 // Cache generated textures by value and dimensions to avoid duplicate canvas creation
 const textureCache = new Map();
 
-// Curated Scandinavian Tactile Pastel palette for numbers 1 to 9
+// Pure Minimal White Shiny Plastic Domino Palette
+export const DOMINO_THEME = {
+    tileBase: '#ffffff',
+    tileEdge: '#f4f4f5',
+    tileBorder: '#e4e4e7',
+    text: '#0f172a',
+    groove: '#cbd5e1'
+};
+
 export const NUMBER_COLORS = {
-    1: { bg: '#a7f3d0', border: '#6ee7b7', text: '#065f46' }, // Soft Mint
-    2: { bg: '#fecdd3', border: '#fda4af', text: '#9f1239' }, // Gentle Rose
-    3: { bg: '#fef08a', border: '#fde047', text: '#854d0e' }, // Warm Buttercup
-    4: { bg: '#bae6fd', border: '#7dd3fc', text: '#0369a1' }, // Powder Blue
-    5: { bg: '#e9d5ff', border: '#d8b4fe', text: '#6b21a8' }, // Soft Lilac
-    6: { bg: '#fed7aa', border: '#fdba74', text: '#9a3412' }, // Pale Apricot
-    7: { bg: '#99f6e4', border: '#5eead4', text: '#115e59' }, // Seafoam
-    8: { bg: '#fbcfe8', border: '#f472b6', text: '#831843' }, // Soft Orchid
-    9: { bg: '#c7d2fe', border: '#a5b4fc', text: '#3730a3' }  // Periwinkle
+    1: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    2: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    3: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    4: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    5: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    6: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    7: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    8: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' },
+    9: { bg: '#ffffff', border: '#e4e4e7', text: '#0f172a' }
 };
 
 /**
- * Creates or retrieves a procedural tactile pastel canvas texture with a single centered number
- * across the entire block face, plus subtle dashed cell segmentation dividers.
+ * Creates or retrieves a procedural shiny domino plastic canvas texture
+ * with molded divider grooves, debossed charcoal numerals, and specular highlight.
  * Supports special types: 'bomb' and 'wild'.
  * @param {number} value - Number from 1 to 9
  * @param {number} [cellsW=1] - Face width in cells (1, 2, or 3)
@@ -40,192 +48,161 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
     canvas.height = height;
     const ctx = canvas.getContext('2d');
 
+    // 1. Glossy White Domino Plastic Tile Body
+    const bgGrad = ctx.createRadialGradient(
+        width * 0.45, height * 0.45, Math.min(width, height) * 0.15,
+        width * 0.5, height * 0.5, Math.max(width, height) * 0.75
+    );
+    bgGrad.addColorStop(0, '#ffffff');
+    bgGrad.addColorStop(0.7, '#fafafa');
+    bgGrad.addColorStop(1, '#f1f1f4');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Molded Domino Outer Border Inset
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#e4e4e7';
+    ctx.strokeRect(4, 4, width - 8, height - 8);
+
+    // 3. Molded Domino Cell Divider Grooves (for 2-cell and 3-cell blocks)
+    if (cellsW > 1) {
+        for (let i = 1; i < cellsW; i++) {
+            const x = i * 256;
+            // Recessed dark groove
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x - 1, 8);
+            ctx.lineTo(x - 1, height - 8);
+            ctx.stroke();
+            // Reflected highlight lip
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + 1, 8);
+            ctx.lineTo(x + 1, height - 8);
+            ctx.stroke();
+        }
+    }
+    if (cellsH > 1) {
+        for (let i = 1; i < cellsH; i++) {
+            const y = i * 256;
+            // Recessed dark groove
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(8, y - 1);
+            ctx.lineTo(width - 8, y - 1);
+            ctx.stroke();
+            // Reflected highlight lip
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(8, y + 1);
+            ctx.lineTo(width - 8, y + 1);
+            ctx.stroke();
+        }
+    }
+
     if (type === 'bomb') {
-        // TACTILE MUTED TERRACOTTA BOMB
-        ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(0, 0, width, height);
-
-        // Soft matte border
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = '#f87171';
-        ctx.strokeRect(7, 7, width - 14, height - 14);
-
-        // Inset soft disc
+        // SPECIAL DOMINO BOMB TILE (Charcoal & Metallic Crimson)
         ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 68, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+        ctx.fillStyle = '#fee2e2';
         ctx.fill();
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#f87171';
+        ctx.strokeStyle = '#ef4444';
         ctx.stroke();
 
-        ctx.font = '72px "Segoe UI Emoji", sans-serif';
+        ctx.font = '76px "Segoe UI Emoji", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('💣', width / 2, height / 2 + 4);
     } else if (type === 'wild') {
-        // TACTILE CREAM & GOLDEN CHAMPAGNE WILDCARD
-        const grad = ctx.createLinearGradient(0, 0, width, height);
-        grad.addColorStop(0, '#fef9c3');
-        grad.addColorStop(1, '#fde047');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = '#facc15';
-        ctx.strokeRect(7, 7, width - 14, height - 14);
-
-        // Central soft inset star badge
+        // SPECIAL DOMINO WILDCARD TILE (Metallic Champagne Gold)
         ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 68, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+        ctx.fillStyle = '#fef9c3';
         ctx.fill();
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#eab308';
         ctx.stroke();
 
         ctx.fillStyle = '#ca8a04';
-        ctx.font = 'bold 88px "Outfit", sans-serif';
+        ctx.font = 'bold 92px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
     } else {
-        // TACTILE PASTEL MINIMAL 1-9 BLOCK (Single Centered Number)
-        const palette = NUMBER_COLORS[value] || NUMBER_COLORS[1];
-
-        // Base pastel matte fill across entire block
-        ctx.fillStyle = palette.bg;
-        ctx.fillRect(0, 0, width, height);
-
-        // Soft outer perimeter bevel border
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = palette.border;
-        ctx.strokeRect(7, 7, width - 14, height - 14);
-
-        // Subtle dashed unit cell divider lines
-        if (cellsW > 1) {
-            ctx.strokeStyle = palette.border;
-            ctx.lineWidth = 3;
-            for (let i = 1; i < cellsW; i++) {
-                const x = i * 256;
-                ctx.setLineDash([8, 8]);
-                ctx.beginPath();
-                ctx.moveTo(x, 14);
-                ctx.lineTo(x, height - 14);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-        }
-        if (cellsH > 1) {
-            ctx.strokeStyle = palette.border;
-            ctx.lineWidth = 3;
-            for (let i = 1; i < cellsH; i++) {
-                const y = i * 256;
-                ctx.setLineDash([8, 8]);
-                ctx.beginPath();
-                ctx.moveTo(14, y);
-                ctx.lineTo(width - 14, y);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-        }
-
-        // Single centered debossed circular badge
+        // PURE MINIMAL WHITE DOMINO (Debossed Dark Charcoal Numeral)
+        // Subtle central debossed circular dish (classic domino spinner / pip well)
         ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 72, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.arc(width / 2, height / 2, 74, 0, Math.PI * 2);
+        ctx.fillStyle = '#f8fafc';
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#e2e8f0';
         ctx.stroke();
 
-        // Single centered large number
-        ctx.fillStyle = palette.text;
-        ctx.font = '800 106px "Outfit", "Inter", -apple-system, sans-serif';
+        // High-contrast engraved dark charcoal numeral
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '900 114px "Outfit", "Inter", -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+        ctx.shadowBlur = 1;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1;
+        ctx.shadowOffsetY = 1.5;
         ctx.fillText(String(value), width / 2, height / 2 - 4);
         ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0;
     }
 
-    // Single centered bidirectional double-headed arrow icon
+    // Bidirectional molded indicator arrow
     ctx.save();
     let arrowX = width / 2;
     let arrowY = height - 34;
     let angle = 0;
 
     if (cellsH > cellsW) {
-        // Vertical face along Z
         angle = Math.PI / 2;
         arrowX = width / 2;
         arrowY = height / 2 + 104;
     } else {
-        // Horizontal face along X or square
         angle = (orientation === 'Z' && cellsW === 1 && cellsH === 1) ? Math.PI / 2 : 0;
     }
 
     ctx.translate(arrowX, arrowY);
     ctx.rotate(angle);
 
-    const arrowColor = (type === 'normal' && NUMBER_COLORS[value]) ? NUMBER_COLORS[value].text : '#475569';
-    ctx.fillStyle = arrowColor;
-    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#64748b';
+    ctx.globalAlpha = 0.50;
 
     ctx.beginPath();
-    // Right arrowhead (+ direction)
     ctx.moveTo(16, 0);
     ctx.lineTo(9, -6);
     ctx.lineTo(9, -2.5);
-    // Shaft connecting arrows
     ctx.lineTo(-9, -2.5);
-    // Left arrowhead (- direction)
     ctx.lineTo(-9, -6);
     ctx.lineTo(-16, 0);
     ctx.lineTo(-9, 6);
     ctx.lineTo(-9, 2.5);
-    // Shaft return
     ctx.lineTo(9, 2.5);
-    // Right arrowhead return
     ctx.lineTo(9, 6);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
-    // Tactile Matte Ceramic Surface Finish (Ambient Crevice Vignette & Micro-Grain)
-    _applyCeramicSurfaceFinish(ctx, width, height);
+    // 4. Polished Plastic Clearcoat Specular Sheen (simulated glossy light reflection across tile)
+    const glossGrad = ctx.createLinearGradient(0, 0, width * 0.75, height * 0.75);
+    glossGrad.addColorStop(0, 'rgba(255, 255, 255, 0.50)');
+    glossGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.12)');
+    glossGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = glossGrad;
+    ctx.fillRect(0, 0, width, height);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     textureCache.set(key, texture);
     return texture;
-}
-
-/**
- * Applies subtle crevice contact shading and tactile micro-grain
- * to give blocks the tactile physical feel of unglazed matte porcelain tiles.
- */
-function _applyCeramicSurfaceFinish(ctx, width, height) {
-    // 1. Soft perimeter ambient crevice shading
-    ctx.save();
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
-    ctx.strokeRect(5, 5, width - 10, height - 10);
-    ctx.restore();
-
-    // 2. Tactile micro-grain overlay (subtle porcelain surface roughness)
-    try {
-        const imgData = ctx.getImageData(0, 0, width, height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 16) {
-            const noise = (Math.random() - 0.5) * 7;
-            data[i] = Math.min(255, Math.max(0, data[i] + noise));
-            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
-            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
-        }
-        ctx.putImageData(imgData, 0, 0);
-    } catch (_) {}
 }
