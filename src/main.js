@@ -300,13 +300,24 @@ class Sum10Game {
     }
 
     _updateSelectionUI(val1 = null, val2 = null) {
-        if (this.slot1Elem) {
-            this.slot1Elem.textContent = val1 !== null ? val1 : '?';
-            this.slot1Elem.classList.toggle('filled', val1 !== null);
-        }
-        if (this.slot2Elem) {
-            this.slot2Elem.textContent = val2 !== null ? val2 : '?';
-            this.slot2Elem.classList.toggle('filled', val2 !== null);
+        const eqPill = document.getElementById('zen-equation');
+        if (val1 === null) {
+            if (eqPill) eqPill.classList.remove('active');
+            if (this.slot1Elem) this.slot1Elem.textContent = '?';
+            if (this.slot2Elem) this.slot2Elem.textContent = '?';
+        } else {
+            if (eqPill) eqPill.classList.add('active');
+            if (this.slot1Elem) this.slot1Elem.textContent = val1;
+            if (this.slot2Elem) {
+                if (val2 !== null) {
+                    this.slot2Elem.textContent = val2;
+                } else if (typeof val1 === 'number') {
+                    // Show complement needed (e.g. 7 needs 3)
+                    this.slot2Elem.textContent = 10 - val1;
+                } else {
+                    this.slot2Elem.textContent = '?';
+                }
+            }
         }
     }
 

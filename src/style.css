@@ -101,164 +101,179 @@ body, html {
     padding: 16px;
 }
 
-/* Floating Bottom Action Dock */
-.hud-dock {
+/* Ultra-Minimal Zen Top Bar */
+.zen-topbar {
     position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 16px;
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 30;
+}
+
+.zen-btn-pill {
+    pointer-events: auto;
+    background: rgba(11, 41, 32, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(110, 231, 183, 0.28);
+    border-radius: 20px;
+    padding: 7px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-btn-pill:hover {
+    background: rgba(16, 60, 48, 0.9);
+    border-color: rgba(110, 231, 183, 0.6);
+    transform: translateY(-1px);
+}
+
+.zen-btn-pill:active {
+    transform: scale(0.96);
+}
+
+.zen-pill-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #6ee7b7;
+}
+
+.zen-pill-val {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.zen-pill-arrow {
+    font-size: 10px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+/* Dynamic Floating Equation (Zero clutter: invisible until a tile is selected) */
+.zen-equation-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px;
+    background: rgba(11, 41, 32, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 16px rgba(245, 158, 11, 0.15);
+    opacity: 0;
+    transform: translateY(-8px) scale(0.94);
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-equation-pill.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.eq-val {
+    font-size: 17px;
+    font-weight: 800;
+    min-width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 6px 14px;
-    background: rgba(11, 41, 32, 0.78);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(110, 231, 183, 0.28);
-    border-radius: 24px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.eq-val.active-val {
+    color: #0f172a;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.eq-val.target-val {
+    color: #fde047;
+    background: rgba(245, 158, 11, 0.16);
+    border: 1.5px dashed rgba(245, 158, 11, 0.55);
+}
+
+.eq-op {
+    font-size: 16px;
+    font-weight: 700;
+    color: #a7f3d0;
+}
+
+.eq-target {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    padding: 3px 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(234, 88, 12, 0.4);
+}
+
+/* Discreet Action Controls */
+.zen-actions {
     pointer-events: auto;
-    z-index: 20;
-    max-width: calc(100vw - 32px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zen-icon-btn {
+    background: rgba(11, 41, 32, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(110, 231, 183, 0.28);
+    border-radius: 14px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zen-icon-btn:hover {
+    background: rgba(16, 60, 48, 0.9);
+    border-color: rgba(110, 231, 183, 0.6);
+    transform: translateY(-1px) scale(1.06);
+}
+
+.zen-icon-btn:active {
+    transform: scale(0.94);
 }
 
 .shuffle-wrapper {
     position: absolute;
-    bottom: 84px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     pointer-events: auto;
     z-index: 25;
 }
 
-.zen-btn-level {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    padding: 6px 12px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.zen-btn-level:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(110, 231, 183, 0.6);
-    transform: scale(1.04);
-}
-
-.zen-lvl-label {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    color: #6ee7b7;
-}
-
-.zen-lvl-num {
-    font-size: 15px;
-    font-weight: 800;
-    color: #f8fafc;
-}
-
-.zen-lvl-arrow {
-    font-size: 10px;
-    color: var(--text-secondary);
-}
-
-.zen-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.btn-icon {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    color: var(--text-primary);
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-}
-
-.btn-icon:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: scale(1.08);
-    border-color: rgba(110, 231, 183, 0.6);
-}
-
-.btn-icon:active {
-    transform: scale(0.95);
-}
-
-/* Match Target inside Dock */
-.selection-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 4px;
-}
-
-.selection-slot {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    border: 2px dashed rgba(167, 243, 208, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--text-secondary);
-    background: rgba(8, 30, 23, 0.75);
-    transition: all 0.25s ease;
-}
-
-.selection-slot.filled {
-    border: 2px solid var(--accent-gold);
-    color: #0f172a;
-    background: #ffffff;
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
-    transform: scale(1.08);
-}
-
-.selection-plus {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-secondary);
-}
-
-.selection-equals {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--accent-gold);
-}
-
-.target-badge {
-    background: linear-gradient(135deg, #f59e0b, #ea580c);
-    border-radius: 10px;
-    padding: 6px 10px;
-    font-weight: 800;
-    font-size: 15px;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-
-
-/* Dynamic Notification Toast (Pinned unobtrusively at top, never over the tower) */
+/* Dynamic Notification Toast */
 .toast-wrapper {
     position: absolute;
-    top: 24px;
+    top: 72px;
     left: 0;
     right: 0;
     display: flex;

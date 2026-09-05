@@ -13,49 +13,46 @@
     <div id="canvas-container"></div>
 
     <div class="hud-overlay">
-        <!-- Dynamic Toast Notification (Top) -->
+        <!-- Ultra-Minimal Zen Top Bar -->
+        <header class="zen-topbar">
+            <!-- Left: Level Pill -->
+            <button id="pill-level" class="zen-btn-pill" type="button" title="Select Level">
+                <span class="zen-pill-label">LVL</span>
+                <span id="val-level" class="zen-pill-val">1</span>
+                <span class="zen-pill-arrow">▾</span>
+            </button>
+
+            <!-- Center: Dynamic Floating Equation (Visible only when block is selected) -->
+            <div id="zen-equation" class="zen-equation-pill">
+                <span id="slot-1" class="eq-val active-val">?</span>
+                <span class="eq-op">+</span>
+                <span id="slot-2" class="eq-val target-val">?</span>
+                <span class="eq-op">=</span>
+                <span class="eq-target">10</span>
+            </div>
+
+            <!-- Right: Discreet Action Controls -->
+            <div class="zen-actions">
+                <button id="btn-retry" class="zen-icon-btn" type="button" title="Restart Level">
+                    <span>↺</span>
+                </button>
+                <button id="btn-sound" class="zen-icon-btn" type="button" title="Toggle Audio (Crisp / Muted / Silent)">
+                    <span id="icon-sound">🔊</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Toast Notification (Below top bar) -->
         <div class="toast-wrapper">
             <div id="toast-msg" class="toast-msg">Select a block</div>
         </div>
 
-        <!-- Deadlock Shuffle Button (Floats right above action dock) -->
+        <!-- Deadlock Shuffle Button (Bottom center, appears only when needed) -->
         <div class="shuffle-wrapper">
             <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
                 <span>🌋 Shuffle Blocks</span>
             </button>
         </div>
-
-        <!-- Floating Bottom Action Dock -->
-        <nav class="hud-dock">
-            <!-- Level Selector -->
-            <button id="pill-level" class="zen-btn-level" type="button" title="Select Level">
-                <span class="zen-lvl-label">LVL</span>
-                <span id="val-level" class="zen-lvl-num">1</span>
-                <span class="zen-lvl-arrow">▾</span>
-            </button>
-
-            <!-- Center Match Display -->
-            <div class="selection-card">
-                <div id="slot-1" class="selection-slot">?</div>
-                <div class="selection-plus">+</div>
-                <div id="slot-2" class="selection-slot">?</div>
-                <div class="selection-equals">=</div>
-                <div class="target-badge">10</div>
-            </div>
-
-            <!-- Discrete Controls -->
-            <div class="zen-controls">
-                <button id="btn-retry" class="btn-icon" type="button" title="Restart Level">
-                    <span>↺</span>
-                </button>
-                <button id="btn-sound" class="btn-icon" type="button" title="Toggle Sound">
-                    <span id="icon-sound">🔊</span>
-                </button>
-                <button id="btn-theme" class="btn-icon" type="button" title="Toggle Day/Night Mode">
-                    <span id="icon-theme">🌙</span>
-                </button>
-            </div>
-        </nav>
     </div>
 
     <!-- Level Select Modal -->
