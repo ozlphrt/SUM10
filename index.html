@@ -15,7 +15,7 @@
     <div class="hud-overlay">
         <!-- Top Consolidated Bar -->
         <header class="hud-top">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="brand-group">
                 <div class="brand-badge">
                     <span class="brand-icon">⚡</span>
                     <span class="brand-name">SUM10</span>
@@ -25,6 +25,9 @@
                 </button>
                 <button id="btn-theme" class="btn-icon" type="button" title="Toggle Day/Night Mode">
                     <span id="icon-theme">🌙</span>
+                </button>
+                <button id="btn-retry" class="btn-icon" type="button" title="Restart Level">
+                    <span>↺</span>
                 </button>
             </div>
 
@@ -62,33 +65,11 @@
             <div id="toast-msg" class="toast-msg">Select a block</div>
         </div>
 
-        <!-- Bottom Controls -->
+        <!-- Bottom Controls (Clean, minimal, deadlock shuffle only) -->
         <footer class="hud-footer">
-            <div class="hint-chip">
-                <span>💡 Rotate • Zoom • Tap pairs summing to 10</span>
-            </div>
-
-            <!-- Camera View Controls -->
-            <div class="camera-controls-group">
-                <button id="btn-cam-left" class="btn-icon-subtle" type="button" title="Rotate Left 90°">
-                    <span>⟲</span>
-                </button>
-                <button id="btn-cam-align" class="btn-subtle" type="button" title="Snap to nearest face/corner">
-                    <span>🎯 Align</span>
-                </button>
-                <button id="btn-cam-right" class="btn-icon-subtle" type="button" title="Rotate Right 90°">
-                    <span>⟳</span>
-                </button>
-            </div>
-
-            <div class="actions-group">
-                <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
-                    <span>🌋 Shuffle</span>
-                </button>
-                <button id="btn-retry" class="btn-primary" type="button" title="Restart current level">
-                    <span>↺ Retry Level</span>
-                </button>
-            </div>
+            <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
+                <span>🌋 Shuffle</span>
+            </button>
         </footer>
     </div>
 
