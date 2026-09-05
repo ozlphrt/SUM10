@@ -25,11 +25,13 @@ class Sum10Game {
         // Level Complete Overlay elements
         this.modalComplete = document.getElementById('modal-level-complete');
         this.completeTitle = document.getElementById('complete-title');
+        this.completeSubtitle = document.getElementById('complete-subtitle');
         this.completeValMatches = document.getElementById('complete-val-matches');
         this.completeValCombo = document.getElementById('complete-val-combo');
         this.completeValScore = document.getElementById('complete-val-score');
         this.btnCompleteNext = document.getElementById('btn-complete-next');
         this.btnCompleteReplay = document.getElementById('btn-complete-replay');
+        this.currentShapeName = 'Nordic Monolith';
 
         if (this.btnCompleteNext) {
             this.btnCompleteNext.addEventListener('click', () => {
@@ -201,11 +203,12 @@ class Sum10Game {
         const generator = new TopologyGenerator(config);
 
         this.topology = generator.generate();
+        this.currentShapeName = config.shapeName;
         this.renderer.setTopology(this.topology);
         this.renderer.applyLevelTheme(level);
 
         this.updateStats();
-        this.showToast(`🏰 Level ${level} — Find pairs summing to 10!`, 2200);
+        this.showToast(`🏰 Level ${level}: ${config.shapeName} — Find pairs summing to 10!`, 2500);
         this._checkDeadlock();
     }
 
@@ -278,6 +281,8 @@ class Sum10Game {
 
         // First block selected
         if (!this.selectedBlock) {
+            // Evaluate clear escape direction along long axis so drawer nudge matches available exit
+            this.topology.canBlockSlideOut(block);
             this.selectedBlock = block;
             this.renderer.setBlockSelected(block.id, true);
             const displayVal = block.type === 'wild' ? '★' : block.value;
@@ -418,6 +423,9 @@ class Sum10Game {
 
         if (this.completeTitle) {
             this.completeTitle.textContent = `Level ${this.currentLevel} Cleared!`;
+        }
+        if (this.completeSubtitle) {
+            this.completeSubtitle.textContent = `Magnificent! You dismantled the ${this.currentShapeName}!`;
         }
         if (this.completeValMatches) {
             this.completeValMatches.textContent = String(this.levelMatchesCount);

@@ -12,11 +12,24 @@ export class TopologyGenerator {
      * @param {number} level 
      */
     static getLevelConfig(level = 1) {
+        const SHAPES = [
+            { id: 'monolith', name: 'Nordic Monolith' },
+            { id: 'pyramid', name: 'Stepped Ziggurat' },
+            { id: 'courtyard', name: 'Fortress Atrium' },
+            { id: 'stepped', name: 'Terraced Spire' }
+        ];
+
+        const shapeInfo = SHAPES[(level - 1) % SHAPES.length];
         const pairCount = Math.min(45, 10 + (level - 1) * 3); // 20, 26, 32, 38...
         const totalBlocks = pairCount * 2;
         const avgVol = 1.8;
         const estimatedVolume = totalBlocks * avgVol;
-        const gridSize = Math.max(5, Math.min(8, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3))));
+
+        const baseGridSize = Math.max(5, Math.min(8, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3))));
+        // For pyramid and courtyard shapes, expand base grid slightly so tiers/atrium are well-proportioned
+        const gridSize = (shapeInfo.id === 'pyramid' || shapeInfo.id === 'courtyard')
+            ? Math.min(8, baseGridSize + 1)
+            : baseGridSize;
 
         // Scale block length distribution: more doubles & triples on higher levels
         const length1Ratio = Math.max(0.20, 0.50 - (level - 1) * 0.05);
@@ -25,6 +38,8 @@ export class TopologyGenerator {
 
         return {
             level,
+            shape: shapeInfo.id,
+            shapeName: shapeInfo.name,
             targetPairCount: pairCount,
             gridSize,
             length1Ratio,
@@ -37,13 +52,17 @@ export class TopologyGenerator {
      * @param {Object} [config]
      * @param {number} [config.targetPairCount=10] - Number of pairs (total blocks = pairs * 2)
      * @param {number} [config.gridSize=5] - 3D base grid width/depth
+     * @param {string} [config.shape='monolith'] - Architectural tower shape ('monolith', 'pyramid', 'courtyard', 'stepped')
+     * @param {string} [config.shapeName='Nordic Monolith']
      * @param {number} [config.length1Ratio=0.40] - Ratio of single-cell blocks (1x1x1)
-     * @param {number} [config.length2Ratio=0.40] - Ratio of double-cell blocks (2x1x1 or 1x2x1)
-     * @param {number} [config.length3Ratio=0.20] - Ratio of triple-cell blocks (3x1x1 or 1x3x1)
+     * @param {number} [config.length2Ratio=0.40] - Ratio of double-cell blocks (2x1x1)
+     * @param {number} [config.length3Ratio=0.20] - Ratio of triple-cell blocks (3x1x1)
      */
     constructor(config = {}) {
         this.targetPairCount = config.targetPairCount || 10;
         this.gridSize = config.gridSize || 5;
+        this.shape = config.shape || 'monolith';
+        this.shapeName = config.shapeName || 'Nordic Monolith';
         this.length1Ratio = config.length1Ratio ?? 0.40;
         this.length2Ratio = config.length2Ratio ?? 0.40;
         this.length3Ratio = config.length3Ratio ?? 0.20;
@@ -79,6 +98,57 @@ export class TopologyGenerator {
     }
 
     /**
+     * Checks if a candidate block's voxels fit within the architectural shape boundaries.
+     * @param {BlockModel} candidate
+     * @param {number} gridSize
+     * @param {string} shape
+     * @returns {boolean}
+     */
+    _isBlockAllowedByShape(candidate, gridSize, shape) {
+        if (!shape || shape === 'monolith') return true;
+
+        const voxels = candidate.getOccupiedVoxels();
+
+        if (shape === 'pyramid') {
+            // Stepped Ziggurat: insets inward every 2 layers
+            for (const v of voxels) {
+                const margin = Math.min(Math.floor(gridSize / 2) - 1, Math.floor(v.y / 2));
+                if (v.x < margin || v.x >= gridSize - margin || v.z < margin || v.z >= gridSize - margin) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (shape === 'courtyard') {
+            // Fortress Atrium: central open-air vertical courtyard
+            const holeSize = Math.max(2, Math.floor(gridSize * 0.35));
+            const holeStart = Math.floor((gridSize - holeSize) / 2);
+            const holeEnd = holeStart + holeSize - 1;
+
+            for (const v of voxels) {
+                if (v.x >= holeStart && v.x <= holeEnd && v.z >= holeStart && v.z <= holeEnd) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (shape === 'stepped') {
+            // Terraced Spire: descending cascading platforms
+            for (const v of voxels) {
+                const maxAllowedLayer = Math.floor(2 + ((v.x + v.z) / (2 * (gridSize - 1))) * 7);
+                if (v.y > maxAllowedLayer) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return true;
+    }
+
+    /**
      * Determines outward escape direction pointing strictly along the block's long axis
      * towards the nearest perimeter edge.
      * @param {number} gridX 
@@ -110,15 +180,20 @@ export class TopologyGenerator {
     generate(overrideConfig = {}) {
         const pairCount = overrideConfig.targetPairCount || this.targetPairCount;
         const totalBlocks = pairCount * 2;
+        const shape = overrideConfig.shape || this.shape || 'monolith';
 
         // Dynamic grid size formula from Jarrows: Volume = 1.5 * W^3
         const avgVolumePerBlock = 1.8;
         const estimatedVolume = totalBlocks * avgVolumePerBlock;
         const dynamicGridSize = Math.max(
             5,
-            Math.min(10, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3)))
+            Math.min(8, Math.ceil(Math.pow(estimatedVolume / 1.5, 1 / 3)))
         );
-        const gridSize = overrideConfig.gridSize || dynamicGridSize;
+        const baseGridSize = overrideConfig.gridSize || this.gridSize || dynamicGridSize;
+        const gridSize = (shape === 'pyramid' || shape === 'courtyard')
+            ? Math.min(8, baseGridSize + 1)
+            : baseGridSize;
+
         const maxLayers = Math.max(10, Math.ceil(gridSize * 1.8));
 
         const topology = new GridTopology({ gridSize, maxLayers });
@@ -164,13 +239,13 @@ export class TopologyGenerator {
             [blockSpecs[i], blockSpecs[j]] = [blockSpecs[j], blockSpecs[i]];
         }
 
-        // 2. Procedurally place blocks layer by layer (all blocks horizontal along X or Z)
+        // 2. Procedurally place blocks layer by layer according to architectural shape
         const orientations = ['X', 'Z'];
 
         for (const spec of blockSpecs) {
             let placed = false;
             let attempts = 0;
-            const maxAttempts = 200;
+            const maxAttempts = 220;
 
             while (!placed && attempts < maxAttempts) {
                 attempts++;
@@ -206,16 +281,55 @@ export class TopologyGenerator {
                     type: spec.type || 'normal'
                 });
 
-                // Check collision and support
-                if (topology.canPlace(candidate) && topology.hasSupport(candidate)) {
+                // Check architectural shape constraint, collision, and support
+                if (this._isBlockAllowedByShape(candidate, gridSize, shape) &&
+                    topology.canPlace(candidate) &&
+                    topology.hasSupport(candidate)) {
                     topology.addBlock(candidate);
                     placed = true;
                 }
             }
 
-            // Fallback: If placement failed after maxAttempts, scan deterministically for first valid slot
+            // Fallback 1: Scan deterministically respecting shape
             if (!placed) {
-                outerLoop:
+                outerLoop1:
+                for (let y = 0; y < maxLayers; y++) {
+                    for (const orient of orientations) {
+                        const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
+                        const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
+                        if (maxX < 0 || maxZ < 0) continue;
+
+                        for (let gx = 0; gx <= maxX; gx++) {
+                            for (let gz = 0; gz <= maxZ; gz++) {
+                                const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
+                                const fallbackBlock = new BlockModel({
+                                    id: spec.id,
+                                    value: spec.value,
+                                    length: spec.length,
+                                    orientation: orient,
+                                    gridX: gx,
+                                    gridY: y,
+                                    gridZ: gz,
+                                    direction: dir,
+                                    type: spec.type || 'normal'
+                                });
+
+                                if (this._isBlockAllowedByShape(fallbackBlock, gridSize, shape) &&
+                                    topology.canPlace(fallbackBlock) &&
+                                    topology.hasSupport(fallbackBlock)) {
+                                    topology.addBlock(fallbackBlock);
+                                    placed = true;
+                                    break outerLoop1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fallback 2: If strictly required, relax shape constraint to guarantee 100% placement
+            if (!placed) {
+                outerLoop2:
                 for (let y = 0; y < maxLayers; y++) {
                     for (const orient of orientations) {
                         const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
@@ -240,7 +354,7 @@ export class TopologyGenerator {
                                 if (topology.canPlace(fallbackBlock) && topology.hasSupport(fallbackBlock)) {
                                     topology.addBlock(fallbackBlock);
                                     placed = true;
-                                    break outerLoop;
+                                    break outerLoop2;
                                 }
                             }
                         }
