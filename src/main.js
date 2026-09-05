@@ -323,17 +323,21 @@ class Sum10Game {
 
     handleBackgroundClick() {
         if (this.selectedBlock && !this.isProcessingMatch) {
-            const blockLen = this.selectedBlock.length;
-            this.renderer.setBlockSelected(this.selectedBlock.id, false);
-            this.renderer.hideExitBeam();
+            const block = this.selectedBlock;
+            const blockId = block?.id;
+            const blockLen = block?.length || 1;
             this.selectedBlock = null;
+            if (blockId) {
+                this.renderer.setBlockSelected(blockId, false);
+            }
+            this.renderer.hideExitBeam();
             this._updateSelectionUI(null, null);
             sound.playSelect(blockLen);
         }
     }
 
     handleBlockClick(block) {
-        if (this.isProcessingMatch || block.isRemoved) return;
+        if (this.isProcessingMatch || !block || block.isRemoved) return;
 
         // SPECIAL: If clicking a BOMB block, offer instant detonation!
         if (block.type === 'bomb') {
@@ -344,11 +348,13 @@ class Sum10Game {
 
         // Clicking the already selected block deselects it
         if (this.selectedBlock && this.selectedBlock.id === block.id) {
-            this.renderer.setBlockSelected(block.id, false);
-            this.renderer.hideExitBeam();
+            const blockId = block.id;
+            const blockLen = block.length || 1;
             this.selectedBlock = null;
+            this.renderer.setBlockSelected(blockId, false);
+            this.renderer.hideExitBeam();
             this._updateSelectionUI(null, null);
-            sound.playSelect(block.length);
+            sound.playSelect(blockLen);
             return;
         }
 
