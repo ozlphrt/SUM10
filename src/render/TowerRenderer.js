@@ -180,8 +180,8 @@ export class TowerRenderer {
         this.renderer.domElement.addEventListener('pointerup', (e) => {
             const duration = performance.now() - pointerDownTime;
             const dist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
-            // Ignore drags / orbit interactions
-            if (duration < 300 && dist < 5) {
+            // Pure Tap-to-Match: crisp tap threshold that gracefully ignores camera orbit drags
+            if (duration < 350 && dist < 9) {
                 this._handleClick(e);
             }
         });
