@@ -5,36 +5,36 @@ import { getBlockTexture, NUMBER_COLORS } from './TextureGenerator.js';
 
 const LEVEL_THEMES = [
     {
-        // Level 1: Cool Midnight
-        bg: 0x090d16,
+        // Level 1: Nordic Pearl
+        bg: 0xf1f5f9,
         ambient: 0xffffff,
-        ambientInt: 0.7,
-        rim: 0x38bdf8,
-        plate: 0x1e293b
+        ambientInt: 0.85,
+        rim: 0x93c5fd,
+        plate: 0xe2e8f0
     },
     {
-        // Level 2: Neon Twilight
-        bg: 0x110d1e,
-        ambient: 0xf3e8ff,
-        ambientInt: 0.75,
-        rim: 0xa855f7,
-        plate: 0x2e1065
+        // Level 2: Soft Rose Quartz
+        bg: 0xfdf2f8,
+        ambient: 0xffffff,
+        ambientInt: 0.85,
+        rim: 0xf472b6,
+        plate: 0xfce7f3
     },
     {
-        // Level 3: Ember Sunset
-        bg: 0x180b0b,
-        ambient: 0xffedd5,
-        ambientInt: 0.75,
-        rim: 0xf97316,
-        plate: 0x451a03
+        // Level 3: Warm Linen Sand
+        bg: 0xfaf5ef,
+        ambient: 0xfffbeb,
+        ambientInt: 0.85,
+        rim: 0xfbbf24,
+        plate: 0xfef3c7
     },
     {
-        // Level 4: Emerald Aurora
-        bg: 0x061a14,
-        ambient: 0xecfdf5,
-        ambientInt: 0.75,
-        rim: 0x10b981,
-        plate: 0x064e3b
+        // Level 4: Sage Mist
+        bg: 0xf0fdf4,
+        ambient: 0xffffff,
+        ambientInt: 0.85,
+        rim: 0x34d399,
+        plate: 0xdcfce7
     }
 ];
 
@@ -396,10 +396,10 @@ export class TowerRenderer {
             return new THREE.MeshStandardMaterial({
                 map: faceTex,
                 color: 0xffffff,
-                roughness: 0.35,
-                metalness: 0.15,
+                roughness: 0.82, // Tactile matte ceramic / clay texture
+                metalness: 0.04,
                 emissive: new THREE.Color(palette.bg),
-                emissiveIntensity: 0.05
+                emissiveIntensity: 0.02
             });
         };
 
@@ -467,12 +467,12 @@ export class TowerRenderer {
         // Visual emissive glow
         item.materials.forEach((mat) => {
             if (isSelected) {
-                mat.emissive.set(0xfacc15); // Golden aura
-                mat.emissiveIntensity = 0.6;
+                mat.emissive.set(0xf59e0b); // Tactile warm amber highlight
+                mat.emissiveIntensity = 0.45;
             } else {
                 const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
                 mat.emissive.set(palette.bg);
-                mat.emissiveIntensity = 0.05;
+                mat.emissiveIntensity = 0.02;
             }
         });
     }

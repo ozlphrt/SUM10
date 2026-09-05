@@ -3,21 +3,21 @@ import * as THREE from 'three';
 // Cache generated textures by value and dimensions to avoid duplicate canvas creation
 const textureCache = new Map();
 
-// Curated palette of harmonious block colors for numbers 1 to 9
+// Curated Scandinavian Tactile Pastel palette for numbers 1 to 9
 export const NUMBER_COLORS = {
-    1: { bg: '#2563eb', border: '#3b82f6', text: '#ffffff' }, // Deep Blue
-    2: { bg: '#059669', border: '#10b981', text: '#ffffff' }, // Emerald Green
-    3: { bg: '#d97706', border: '#f59e0b', text: '#ffffff' }, // Amber Orange
-    4: { bg: '#dc2626', border: '#ef4444', text: '#ffffff' }, // Ruby Red
-    5: { bg: '#7c3aed', border: '#8b5cf6', text: '#ffffff' }, // Royal Violet
-    6: { bg: '#0891b2', border: '#06b6d4', text: '#ffffff' }, // Cyan Teal
-    7: { bg: '#db2777', border: '#ec4899', text: '#ffffff' }, // Magenta Rose
-    8: { bg: '#4f46e5', border: '#6366f1', text: '#ffffff' }, // Indigo
-    9: { bg: '#ea580c', border: '#f97316', text: '#ffffff' }  // Vivid Tangerine
+    1: { bg: '#a7f3d0', border: '#6ee7b7', text: '#065f46' }, // Soft Mint
+    2: { bg: '#fecdd3', border: '#fda4af', text: '#9f1239' }, // Gentle Rose
+    3: { bg: '#fef08a', border: '#fde047', text: '#854d0e' }, // Warm Buttercup
+    4: { bg: '#bae6fd', border: '#7dd3fc', text: '#0369a1' }, // Powder Blue
+    5: { bg: '#e9d5ff', border: '#d8b4fe', text: '#6b21a8' }, // Soft Lilac
+    6: { bg: '#fed7aa', border: '#fdba74', text: '#9a3412' }, // Pale Apricot
+    7: { bg: '#99f6e4', border: '#5eead4', text: '#115e59' }, // Seafoam
+    8: { bg: '#fbcfe8', border: '#f472b6', text: '#831843' }, // Soft Orchid
+    9: { bg: '#c7d2fe', border: '#a5b4fc', text: '#3730a3' }  // Periwinkle
 };
 
 /**
- * Creates or retrieves a procedural high-contrast canvas texture with the block's number and exit direction.
+ * Creates or retrieves a procedural tactile pastel canvas texture with the block's number and exit direction.
  * Supports special types: 'bomb' and 'wild'.
  * @param {number} value - Number from 1 to 9
  * @param {number} length - Block length (1, 2, or 3 cells)
@@ -39,28 +39,22 @@ export function getBlockTexture(value, length = 1, orientation = 'X', direction 
     const ctx = canvas.getContext('2d');
 
     if (type === 'bomb') {
-        // HAZARD YELLOW / BLACK STRIPES
-        ctx.fillStyle = '#facc15';
+        // TACTILE MUTED TERRACOTTA BOMB
+        ctx.fillStyle = '#fca5a5';
         ctx.fillRect(0, 0, width, height);
 
-        ctx.fillStyle = '#111827';
-        const stripeW = 32;
-        for (let i = -width; i < width * 2; i += stripeW * 2) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0);
-            ctx.lineTo(i + width, height);
-            ctx.lineTo(i + width + stripeW, height);
-            ctx.lineTo(i + stripeW, 0);
-            ctx.fill();
-        }
+        // Soft matte border
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = '#f87171';
+        ctx.strokeRect(7, 7, width - 14, height - 14);
 
-        // Central bomb badge
+        // Inset soft disc
         ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
-        ctx.fillStyle = '#dc2626';
+        ctx.arc(width / 2, height / 2, 68, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.fill();
-        ctx.lineWidth = 6;
-        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#f87171';
         ctx.stroke();
 
         ctx.font = '72px "Segoe UI Emoji", sans-serif';
@@ -68,99 +62,93 @@ export function getBlockTexture(value, length = 1, orientation = 'X', direction 
         ctx.textBaseline = 'middle';
         ctx.fillText('💣', width / 2, height / 2 + 4);
     } else if (type === 'wild') {
-        // PRISMATIC COSMIC GRADIENT
+        // TACTILE CREAM & GOLDEN CHAMPAGNE WILDCARD
         const grad = ctx.createLinearGradient(0, 0, width, height);
-        grad.addColorStop(0, '#ec4899');
-        grad.addColorStop(0.5, '#8b5cf6');
-        grad.addColorStop(1, '#06b6d4');
+        grad.addColorStop(0, '#fef9c3');
+        grad.addColorStop(1, '#fde047');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, width, height);
 
-        // Inner bevel
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = '#ffffff';
-        ctx.strokeRect(5, 5, width - 10, height - 10);
-
-        // Central star badge
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-        ctx.fill();
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 14;
         ctx.strokeStyle = '#facc15';
+        ctx.strokeRect(7, 7, width - 14, height - 14);
+
+        // Central soft inset star badge
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 68, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#eab308';
         ctx.stroke();
 
-        ctx.fillStyle = '#facc15';
+        ctx.fillStyle = '#ca8a04';
         ctx.font = 'bold 88px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = '#facc15';
-        ctx.shadowBlur = 12;
         ctx.fillText('★', width / 2, height / 2 + 2);
-        ctx.shadowBlur = 0;
     } else {
-        // STANDARD NUMBER 1-9 BLOCK
+        // TACTILE PASTEL MINIMAL 1-9 BLOCK
         const palette = NUMBER_COLORS[value] || NUMBER_COLORS[1];
 
+        // Base pastel matte fill
         ctx.fillStyle = palette.bg;
         ctx.fillRect(0, 0, width, height);
 
-        ctx.lineWidth = 12;
+        // Soft outer bevel border
+        ctx.lineWidth = 14;
         ctx.strokeStyle = palette.border;
-        ctx.strokeRect(6, 6, width - 12, height - 12);
+        ctx.strokeRect(7, 7, width - 14, height - 14);
 
-        const grad = ctx.createRadialGradient(width / 2, height / 2, 20, width / 2, height / 2, width / 1.5);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(12, 12, width - 24, height - 24);
-
+        // Debossed central circular inset with subtle tactile drop shadow
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
         ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 96px "Outfit", "Inter", -apple-system, sans-serif';
+        // High-contrast, elegant typography
+        ctx.fillStyle = palette.text;
+        ctx.font = '800 100px "Outfit", "Inter", -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 4;
-        ctx.fillText(String(value), width / 2, height / 2 - 6);
+        ctx.shadowOffsetY = 1; // Subtle letterpress emboss effect
+        ctx.fillText(String(value), width / 2, height / 2 - 4);
+        ctx.shadowOffsetY = 0;
     }
 
     // Bidirectional double-headed arrow icon indicating sliding along long axis
     ctx.save();
-    ctx.translate(width / 2, height - 36);
+    ctx.translate(width / 2, height - 34);
 
     const angle = (orientation === 'Z') ? Math.PI / 2 : 0;
     ctx.rotate(angle);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 4;
+    const arrowColor = (type === 'normal' && NUMBER_COLORS[value]) ? NUMBER_COLORS[value].text : '#475569';
+    ctx.fillStyle = arrowColor;
+    ctx.globalAlpha = 0.55;
 
     ctx.beginPath();
     // Right arrowhead (+ direction)
-    ctx.moveTo(18, 0);
-    ctx.lineTo(10, -7);
-    ctx.lineTo(10, -3);
+    ctx.moveTo(16, 0);
+    ctx.lineTo(9, -6);
+    ctx.lineTo(9, -2.5);
     // Shaft connecting arrows
-    ctx.lineTo(-10, -3);
+    ctx.lineTo(-9, -2.5);
     // Left arrowhead (- direction)
-    ctx.lineTo(-10, -7);
-    ctx.lineTo(-18, 0);
-    ctx.lineTo(-10, 7);
-    ctx.lineTo(-10, 3);
+    ctx.lineTo(-9, -6);
+    ctx.lineTo(-16, 0);
+    ctx.lineTo(-9, 6);
+    ctx.lineTo(-9, 2.5);
     // Shaft return
-    ctx.lineTo(10, 3);
+    ctx.lineTo(9, 2.5);
     // Right arrowhead return
-    ctx.lineTo(10, 7);
+    ctx.lineTo(9, 6);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
