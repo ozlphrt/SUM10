@@ -179,6 +179,10 @@ export class TowerRenderer {
             if (this.basePlate && this.basePlate.material) {
                 this.basePlate.material.color.set(0x140d08);
             }
+            if (this.baseGrid && this.baseGrid.material) {
+                this.baseGrid.material.color.set(0x334155);
+                this.baseGrid.material.opacity = 0.75;
+            }
             return;
         }
 
@@ -207,6 +211,10 @@ export class TowerRenderer {
         }
         if (this.basePlate && this.basePlate.material) {
             this.basePlate.material.color.set(theme.plate);
+        }
+        if (this.baseGrid && this.baseGrid.material) {
+            this.baseGrid.material.color.set(0xcbd5e1);
+            this.baseGrid.material.opacity = 0.65;
         }
     }
 
@@ -681,6 +689,14 @@ export class TowerRenderer {
         // Update / create base plate
         if (this.basePlate) {
             this.scene.remove(this.basePlate);
+            if (this.basePlate.geometry) this.basePlate.geometry.dispose();
+            if (this.basePlate.material) this.basePlate.material.dispose();
+        }
+        if (this.baseGrid) {
+            this.scene.remove(this.baseGrid);
+            if (this.baseGrid.geometry) this.baseGrid.geometry.dispose();
+            if (this.baseGrid.material) this.baseGrid.material.dispose();
+            this.baseGrid = null;
         }
 
         const plateSize = topology.gridSize * topology.cellSize + 2;
@@ -694,6 +710,33 @@ export class TowerRenderer {
         this.basePlate.position.set(0, -0.2, 0);
         this.basePlate.receiveShadow = true;
         this.scene.add(this.basePlate);
+
+        // Tactile gridlines engraved onto base plate matching cell positions
+        const totalGridSpan = topology.gridSize * topology.cellSize;
+        const gridLinesGeo = new THREE.BufferGeometry();
+        const gridPoints = [];
+        const halfSpan = totalGridSpan / 2;
+
+        for (let i = 0; i <= topology.gridSize; i++) {
+            const coord = -halfSpan + i * topology.cellSize;
+            // Lines parallel to Z (varying X)
+            gridPoints.push(coord, 0.005, -halfSpan);
+            gridPoints.push(coord, 0.005, halfSpan);
+            // Lines parallel to X (varying Z)
+            gridPoints.push(-halfSpan, 0.005, coord);
+            gridPoints.push(halfSpan, 0.005, coord);
+        }
+
+        gridLinesGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
+        const gridLinesMat = new THREE.LineBasicMaterial({
+            color: this.isDarkTheme ? 0x334155 : 0xcbd5e1,
+            transparent: true,
+            opacity: this.isDarkTheme ? 0.75 : 0.65,
+            depthWrite: false
+        });
+        this.baseGrid = new THREE.LineSegments(gridLinesGeo, gridLinesMat);
+        this.baseGrid.renderOrder = 1;
+        this.scene.add(this.baseGrid);
 
         // Ambient contact shadow disc beneath plinth
         if (this.contactShadow) {
