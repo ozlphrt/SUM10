@@ -36,7 +36,7 @@ export const NUMBER_COLORS = {
  * @param {'normal'|'bomb'|'wild'} [type='normal']
  * @returns {THREE.CanvasTexture}
  */
-export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal') {
+export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }, type = 'normal', isTopFace = false) {
     const dirKey = `${direction.x}_${direction.y}_${direction.z}`;
     const key = `${type}_${value}_${cellsW}x${cellsH}_${orientation}_${dirKey}`;
     if (textureCache.has(key)) return textureCache.get(key);
@@ -102,6 +102,14 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
             ctx.lineTo(width - 8, y + 1);
             ctx.stroke();
         }
+    }
+
+    ctx.save();
+    if (isTopFace) {
+        // Orient numeral & markings right-side up when viewed from player camera (+Z looking towards -Z)
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate(Math.PI);
+        ctx.translate(-width / 2, -height / 2);
     }
 
     if (type === 'bomb') {
@@ -236,6 +244,8 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.fill();
         ctx.restore();
     }
+
+    ctx.restore();
 
     // 4. Polished Plastic Clearcoat Specular Sheen (simulated glossy light reflection across tile)
     const glossGrad = ctx.createLinearGradient(0, 0, width * 0.75, height * 0.75);

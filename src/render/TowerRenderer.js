@@ -758,7 +758,7 @@ export class TowerRenderer {
         // +Y / -Y (top/bottom): width along X (length if X, else 1), height along Z (length if Z, else 1)
         const yCellsW = block.orientation === 'X' ? block.length : 1;
         const yCellsH = block.orientation === 'Z' ? block.length : 1;
-        const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal');
+        const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal', true);
 
         // +Z / -Z (front/back): width along X (length if X, else 1), height along Y (always 1)
         const zCellsW = block.orientation === 'X' ? block.length : 1;
@@ -943,7 +943,7 @@ export class TowerRenderer {
 
             const yCellsW = block.orientation === 'X' ? block.length : 1;
             const yCellsH = block.orientation === 'Z' ? block.length : 1;
-            const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal');
+            const texY = getBlockTexture(block.value, yCellsW, yCellsH, block.orientation, block.direction, block.type || 'normal', true);
 
             const zCellsW = block.orientation === 'X' ? block.length : 1;
             const zCellsH = 1;
