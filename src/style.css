@@ -264,11 +264,11 @@ body, html {
 
 .shuffle-wrapper {
     position: absolute;
-    bottom: 30px;
+    bottom: 36px;
     left: 50%;
     transform: translateX(-50%);
     pointer-events: auto;
-    z-index: 25;
+    z-index: 100;
 }
 
 /* Dynamic Notification Toast */
@@ -338,33 +338,38 @@ body, html {
 
 .btn-secondary {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    border: none;
-    border-radius: 12px;
-    padding: 10px 16px;
+    border: 1.5px solid rgba(254, 240, 138, 0.5);
+    border-radius: 999px;
+    padding: 13px 28px;
     font-family: var(--font-family);
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
     color: #ffffff;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
-    transition: all 0.2s ease;
+    box-shadow: 0 12px 32px rgba(217, 119, 6, 0.55), 0 0 20px rgba(245, 158, 11, 0.4);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     animation: pulseGlow 1.5s infinite alternate;
 }
 
 .btn-secondary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(245, 158, 11, 0.55);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 16px 36px rgba(217, 119, 6, 0.7), 0 0 28px rgba(245, 158, 11, 0.6);
+}
+
+.btn-secondary:active {
+    transform: scale(0.96);
 }
 
 @keyframes pulseGlow {
     from {
-        box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        box-shadow: 0 8px 24px rgba(217, 119, 6, 0.4), 0 0 12px rgba(245, 158, 11, 0.3);
     }
     to {
-        box-shadow: 0 0 20px rgba(245, 158, 11, 0.8);
+        box-shadow: 0 14px 36px rgba(217, 119, 6, 0.75), 0 0 28px rgba(245, 158, 11, 0.7);
     }
 }
 
