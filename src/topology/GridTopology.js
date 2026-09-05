@@ -413,17 +413,21 @@ export class GridTopology {
         const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
         if (active.length < 2) return;
 
-        // Find clear exit blocks
+        // Find clear exit blocks that can slide out right now
         const clearBlocks = Array.from(this.blocks.values()).filter((b) => this.canBlockSlideOut(b).canExit && b.type === 'normal');
 
-        // Look for an adjacent pair among clear blocks
+        const pairedIds = new Set();
         let paired = false;
+
+        // 1. First priority: look for two unblocked blocks that are physically adjacent
         for (let i = 0; i < clearBlocks.length; i++) {
             for (let j = i + 1; j < clearBlocks.length; j++) {
                 if (this.areBlocksAdjacent(clearBlocks[i], clearBlocks[j])) {
                     const v1 = Math.floor(Math.random() * 9) + 1;
                     clearBlocks[i].value = v1;
                     clearBlocks[j].value = 10 - v1;
+                    pairedIds.add(clearBlocks[i].id);
+                    pairedIds.add(clearBlocks[j].id);
                     paired = true;
                     break;
                 }
@@ -431,20 +435,25 @@ export class GridTopology {
             if (paired) break;
         }
 
-        // If no two clear blocks are currently adjacent, link a clear block with its adjacent neighbor
+        // 2. If no two clear blocks are mutually adjacent, pair an unblocked block with its adjacent neighbor
         if (!paired && clearBlocks.length > 0) {
-            const b1 = clearBlocks[0];
-            const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
-            if (neighbors.length > 0) {
-                const b2 = neighbors[0];
-                const v1 = Math.floor(Math.random() * 9) + 1;
-                b1.value = v1;
-                b2.value = 10 - v1;
+            for (const b1 of clearBlocks) {
+                const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
+                if (neighbors.length > 0) {
+                    const b2 = neighbors[0];
+                    const v1 = Math.floor(Math.random() * 9) + 1;
+                    b1.value = v1;
+                    b2.value = 10 - v1;
+                    pairedIds.add(b1.id);
+                    pairedIds.add(b2.id);
+                    paired = true;
+                    break;
+                }
             }
         }
 
-        // Shuffle values of remaining active blocks in adjacent pairs
-        const remainingNormal = active.filter((b) => !clearBlocks.slice(0, 2).includes(b));
+        // 3. Shuffle values of remaining active blocks in adjacent pairs, strictly excluding already paired blocks
+        const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
         for (let i = 0; i < remainingNormal.length - 1; i += 2) {
             const v1 = Math.floor(Math.random() * 9) + 1;
             const v2 = 10 - v1;
