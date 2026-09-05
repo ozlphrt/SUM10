@@ -389,7 +389,7 @@ class Sum10Game {
             }
 
             setTimeout(() => {
-                sound.playWhoosh();
+                sound.playFlick();
                 this.renderer.flyOutBlocks([first.id, second.id]);
                 this.topology.removeBlock(first.id);
                 this.topology.removeBlock(second.id);
@@ -412,7 +412,7 @@ class Sum10Game {
                         this.isProcessingMatch = false;
                         this._checkDeadlock();
                     }
-                }, 150);
+                }, 100);
 
                 this.levelMatchesCount++;
                 this.levelMaxCombo = Math.max(this.levelMaxCombo, this.comboCount);
@@ -420,7 +420,7 @@ class Sum10Game {
                 if (this.topology.blocks.size === 0) {
                     this._showLevelCompleteModal();
                 }
-            }, 300);
+            }, 120);
         } else {
             // MISMATCH
             sound.playMismatch();

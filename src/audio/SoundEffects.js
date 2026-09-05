@@ -169,6 +169,64 @@ class SoundEffects {
         noise.start(now);
     }
 
+    /**
+     * Tactile finger-flick audio effect: snappy physical impulse pop + high-velocity air burst.
+     */
+    playFlick() {
+        if (!this.enabled) return;
+        this._ensureAudio();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // 1. Sharp physical finger snap impulse
+        const oscSnap = this.ctx.createOscillator();
+        const gainSnap = this.ctx.createGain();
+        oscSnap.type = 'triangle';
+        oscSnap.frequency.setValueAtTime(1400, now);
+        oscSnap.frequency.exponentialRampToValueAtTime(160, now + 0.032);
+        gainSnap.gain.setValueAtTime(0.48, now);
+        gainSnap.gain.exponentialRampToValueAtTime(0.001, now + 0.032);
+        oscSnap.connect(gainSnap);
+        gainSnap.connect(this.ctx.destination);
+        oscSnap.start(now);
+        oscSnap.stop(now + 0.032);
+
+        // 2. Resonant wood/ceramic flick body
+        const oscBody = this.ctx.createOscillator();
+        const gainBody = this.ctx.createGain();
+        oscBody.type = 'sine';
+        oscBody.frequency.setValueAtTime(420, now);
+        oscBody.frequency.exponentialRampToValueAtTime(120, now + 0.065);
+        gainBody.gain.setValueAtTime(0.38, now);
+        gainBody.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        oscBody.connect(gainBody);
+        gainBody.connect(this.ctx.destination);
+        oscBody.start(now);
+        oscBody.stop(now + 0.065);
+
+        // 3. Fast crisp air whoosh burst
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.16);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.035));
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1050, now);
+        filter.frequency.exponentialRampToValueAtTime(260, now + 0.16);
+        filter.Q.setValueAtTime(2.2, now);
+        const gainNoise = this.ctx.createGain();
+        gainNoise.gain.setValueAtTime(0.38, now);
+        gainNoise.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        noise.connect(filter);
+        filter.connect(gainNoise);
+        gainNoise.connect(this.ctx.destination);
+        noise.start(now);
+    }
+
     playLandThud() {
         if (!this.enabled) return;
         this._ensureAudio();

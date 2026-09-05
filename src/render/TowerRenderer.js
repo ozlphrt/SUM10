@@ -583,11 +583,11 @@ export class TowerRenderer {
                 startPos.z + spreadZ
             );
 
-            const driftSpeed = 1.2 + Math.random() * 2.2;
+            const driftSpeed = 3.5 + Math.random() * 4.5;
             const velocity = new THREE.Vector3(
-                dir.x * driftSpeed + (Math.random() - 0.5) * 0.6,
-                0.3 + Math.random() * 0.6,
-                dir.z * driftSpeed + (Math.random() - 0.5) * 0.6
+                dir.x * driftSpeed + (Math.random() - 0.5) * 0.8,
+                0.3 + Math.random() * 0.7,
+                dir.z * driftSpeed + (Math.random() - 0.5) * 0.8
             );
 
             const maxLife = 0.45 + Math.random() * 0.35;
@@ -604,7 +604,7 @@ export class TowerRenderer {
     }
 
     /**
-     * Animates blocks flying smoothly and horizontally out of the tower along their long axis.
+     * Animates blocks leaving the tower with a snappy, high-velocity physical flick along their long axis.
      * @param {Array<string|number>} blockIds 
      */
     flyOutBlocks(blockIds) {
@@ -613,27 +613,35 @@ export class TowerRenderer {
             if (!item) return;
 
             const dir = item.model.direction;
-            const flySpeed = 18.0;
+            // High-velocity flick impulse: shoots out swiftly along the long axis
+            const flySpeed = 46.0;
 
-            // Spawn soft pastel shimmer particles along exit vector
+            // Spawn soft pastel shimmer particles shooting along exit vector
             const palette = NUMBER_COLORS[item.model.value] || NUMBER_COLORS[1];
             const particleColor = item.model.type === 'wild' ? '#facc15' : (item.model.type === 'bomb' ? '#f87171' : palette.border);
             this.spawnSlideShimmer(item.group.position, dir, particleColor);
 
-            // Strictly horizontal velocity along the long axis (no vertical Y lift or tumble)
+            // Strictly horizontal velocity along the long axis
             const velocity = new THREE.Vector3(
                 dir.x * flySpeed,
                 0,
                 dir.z * flySpeed
             );
 
-            // Keep rotation stable along slide axis
+            // Outward flick acceleration giving explosive snap momentum
+            const acceleration = new THREE.Vector3(
+                dir.x * 24.0,
+                0,
+                dir.z * 24.0
+            );
+
             const angularVelocity = new THREE.Vector3(0, 0, 0);
 
             this.flyingBlocks.push({
                 group: item.group,
                 materials: item.materials,
                 velocity,
+                acceleration,
                 angularVelocity,
                 opacity: 1.0
             });
@@ -731,17 +739,20 @@ export class TowerRenderer {
             }
         }
 
-        // Update flying blocks physics
+        // Update flying blocks physics (crisp flicked launch)
         const dt = 0.016;
         for (let i = this.flyingBlocks.length - 1; i >= 0; i--) {
             const fb = this.flyingBlocks[i];
+            if (fb.acceleration) {
+                fb.velocity.addScaledVector(fb.acceleration, dt);
+            }
             fb.group.position.addScaledVector(fb.velocity, dt);
             fb.group.rotation.x += fb.angularVelocity.x * dt;
             fb.group.rotation.y += fb.angularVelocity.y * dt;
             fb.group.rotation.z += fb.angularVelocity.z * dt;
 
-            // Fade out
-            fb.opacity -= dt * 0.8;
+            // Fade out cleanly as it shoots off-screen
+            fb.opacity -= dt * 1.6;
             fb.materials.forEach((m) => {
                 m.transparent = true;
                 m.opacity = Math.max(0, fb.opacity);
