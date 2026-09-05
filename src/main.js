@@ -559,9 +559,14 @@ class Sum10Game {
                 } else if (this.gameMode === 'letters' && firstBlock && this.topology?.sentenceData) {
                     // Show target consecutive partner letter from quote if available
                     const sData = this.topology.sentenceData;
-                    const pair = sData.pairs.find(p => p.pairId === firstBlock.pairId);
+                    const matchedSet = sData.matchedPairIds || new Set();
+                    let pair = sData.pairs.find(p => p.pairId === firstBlock.pairId && !matchedSet.has(p.pairId));
+                    if (!pair) {
+                        const c = String(firstBlock.value).toUpperCase();
+                        pair = sData.pairs.find(p => !matchedSet.has(p.pairId) && (p.char1 === c || p.char2 === c));
+                    }
                     if (pair) {
-                        const targetChar = (firstBlock.value === pair.char1) ? pair.char2 : pair.char1;
+                        const targetChar = (String(firstBlock.value).toUpperCase() === pair.char1) ? pair.char2 : pair.char1;
                         this.slot2Elem.textContent = targetChar;
                     } else {
                         this.slot2Elem.textContent = '?';
@@ -746,9 +751,31 @@ class Sum10Game {
 
             // In letters mode, reveal the matched letters in the paragraph ribbon
             if (this.gameMode === 'letters') {
-                const pId = first.pairId !== undefined ? first.pairId : second.pairId;
-                if (pId !== undefined && pId !== null) {
-                    this.revealQuotePair(pId);
+                let resolvedPairId = null;
+                const c1 = String(first.value).toUpperCase();
+                const c2 = String(second.value).toUpperCase();
+
+                if (first.pairId && second.pairId && first.pairId === second.pairId) {
+                    resolvedPairId = first.pairId;
+                } else if (this.topology?.sentenceData?.pairs) {
+                    const matchedSet = this.topology.sentenceData.matchedPairIds || new Set();
+                    const pair = this.topology.sentenceData.pairs.find(p =>
+                        !matchedSet.has(p.pairId) &&
+                        ((p.char1 === c1 && p.char2 === c2) || (p.char1 === c2 && p.char2 === c1))
+                    );
+                    if (pair) {
+                        resolvedPairId = pair.pairId;
+                    } else if (first.pairId !== undefined) {
+                        resolvedPairId = first.pairId;
+                    } else if (second.pairId !== undefined) {
+                        resolvedPairId = second.pairId;
+                    }
+                } else {
+                    resolvedPairId = first.pairId !== undefined ? first.pairId : second.pairId;
+                }
+
+                if (resolvedPairId !== undefined && resolvedPairId !== null) {
+                    this.revealQuotePair(resolvedPairId);
                 }
             }
 

@@ -436,14 +436,16 @@ export class GridTopology {
         }
 
         if (mode === 'letters' || mode === 'alphabet') {
-            // Check if blocks have assigned pairId from sentence
-            if (b1.pairId !== undefined && b2.pairId !== undefined) {
-                return b1.pairId === b2.pairId;
+            const c1 = String(b1.value).toUpperCase();
+            const c2 = String(b2.value).toUpperCase();
+
+            // 1. If both blocks share the same pairId, they are the designated matching pair
+            if (b1.pairId !== undefined && b2.pairId !== undefined && b1.pairId === b2.pairId) {
+                return true;
             }
-            // Fallback: check against available unmatched consecutive pairs in sentenceData
+
+            // 2. Check if (c1, c2) or (c2, c1) forms ANY available consecutive pair in the quote
             if (this.sentenceData && Array.isArray(this.sentenceData.pairs)) {
-                const c1 = String(b1.value).toUpperCase();
-                const c2 = String(b2.value).toUpperCase();
                 const matchedSet = this.sentenceData.matchedPairIds || new Set();
                 const matchFound = this.sentenceData.pairs.some((p) => {
                     if (matchedSet.has(p.pairId)) return false;
@@ -451,8 +453,9 @@ export class GridTopology {
                 });
                 if (matchFound) return true;
             }
-            // Fallback if no sentenceData
-            return String(b1.value).toUpperCase() === String(b2.value).toUpperCase();
+
+            // Fallback if no sentenceData (plain letters matching)
+            return c1 === c2;
         }
 
         // Numbers mode (SUM 10, SUM 11, SUM 12, ... dynamic targetSum)
@@ -477,6 +480,13 @@ export class GridTopology {
             const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             return [s, s];
         } else if (mode === 'letters' || mode === 'alphabet') {
+            if (this.sentenceData && Array.isArray(this.sentenceData.pairs)) {
+                const matchedSet = this.sentenceData.matchedPairIds || new Set();
+                const available = this.sentenceData.pairs.filter(p => !matchedSet.has(p.pairId));
+                const pool = available.length > 0 ? available : this.sentenceData.pairs;
+                const p = pool[Math.floor(Math.random() * pool.length)];
+                return [p.char1, p.char2];
+            }
             const idx = Math.floor(Math.random() * 26);
             const char = String.fromCharCode(65 + idx);
             return [char, char];
@@ -590,7 +600,7 @@ export class GridTopology {
         // 3. Fallback: If still not paired, pair a clear block with another unblocked or distant block
         if (!paired && clearBlocks.length > 0) {
             const b1 = clearBlocks[0];
-            const preferSpaced = (this.mode === 'shapes' || this.mode === 'alphabet');
+            const preferSpaced = (this.mode === 'shapes' || this.mode === 'alphabet' || this.mode === 'letters');
             let candidates = active.filter(b => b.id !== b1.id);
             if (preferSpaced) {
                 const neighbors = this.getNeighborBlocks(b1.id);
@@ -621,9 +631,9 @@ export class GridTopology {
         }
 
         // 5. Shuffle values of remaining active blocks in pairs matching current mode rules
-        // For shapes/alphabet mode, use balanced pool & spatial penalty to keep them well spread out
+        // For shapes/alphabet/letters mode, use balanced pool & spatial penalty to keep them well spread out
         const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
-        if (this.mode === 'shapes' || this.mode === 'alphabet') {
+        if (this.mode === 'shapes' || this.mode === 'alphabet' || this.mode === 'letters') {
             const SHAPES = [
                 'circle', 'triangle', 'square', 'diamond', 'star',
                 'hexagon', 'crescent', 'pentagon', 'cross', 'ring',
@@ -637,6 +647,13 @@ export class GridTopology {
                 for (let i = 0; i < half; i++) {
                     const s = SHAPES[i % SHAPES.length];
                     pool.push([s, s]);
+                }
+            } else if (this.sentenceData && Array.isArray(this.sentenceData.pairs)) {
+                // In letters mode, draw from sentenceData pairs
+                const pairs = this.sentenceData.pairs;
+                for (let i = 0; i < half; i++) {
+                    const qp = pairs[i % pairs.length];
+                    pool.push([qp.char1, qp.char2]);
                 }
             } else {
                 const LETTERS = [];
