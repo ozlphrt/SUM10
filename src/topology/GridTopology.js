@@ -443,7 +443,10 @@ export class GridTopology {
             const v1 = Math.floor(Math.random() * 19) + 1;
             return [v1, 20 - v1];
         } else if (mode === 'shapes') {
-            const SHAPES = ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'];
+            const SHAPES = [
+                'circle', 'triangle', 'square', 'diamond', 'star',
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+            ];
             const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             return [s, s];
         } else if (mode === 'alphabet') {

@@ -429,7 +429,18 @@ class Sum10Game {
             if (eqPill) eqPill.classList.add('active');
             const formatVal = (v) => {
                 if (typeof v === 'string') {
-                    const SHAPE_ICONS = { circle: '●', triangle: '▲', square: '■', diamond: '◆', star: '★', hexagon: '⬣' };
+                    const SHAPE_ICONS = {
+                        circle: '●',
+                        triangle: '▲',
+                        square: '■',
+                        diamond: '◆',
+                        star: '★',
+                        hexagon: '⬣',
+                        crescent: '🌙',
+                        pentagon: '⬟',
+                        cross: '✚',
+                        ring: '◎'
+                    };
                     return SHAPE_ICONS[v] || v;
                 }
                 return String(v);

@@ -135,7 +135,7 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('★', width / 2, height / 2 + 2);
-    } else if (typeof value === 'string' && ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'].includes(value)) {
+    } else if (typeof value === 'string' && ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon', 'crescent', 'pentagon', 'cross', 'ring'].includes(value)) {
         // LUXURY JEWELED RUNIC EMBLEMS (High-detail layered geometry, metallic sheen, facet depth)
         const cx = width / 2;
         const cy = height / 2;
@@ -197,6 +197,30 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
                 glow: 'rgba(244, 63, 94, 0.45)',
                 accent: '#fecdd3',
                 name: 'Ruby Crest'
+            },
+            crescent: {
+                main: ['#38bdf8', '#0284c7', '#082f49'],
+                glow: 'rgba(56, 189, 248, 0.50)',
+                accent: '#e0f2fe',
+                name: 'Lunar Crescent'
+            },
+            pentagon: {
+                main: ['#14b8a6', '#0f766e', '#134e4a'],
+                glow: 'rgba(20, 184, 166, 0.45)',
+                accent: '#99f6e4',
+                name: 'Aegis Shield'
+            },
+            cross: {
+                main: ['#ec4899', '#be185d', '#700733'],
+                glow: 'rgba(236, 72, 153, 0.45)',
+                accent: '#fbcfe8',
+                name: 'Nordic Cross'
+            },
+            ring: {
+                main: ['#eab308', '#ca8a04', '#713f12'],
+                glow: 'rgba(234, 179, 8, 0.50)',
+                accent: '#fef08a',
+                name: 'Eternity Ring'
             }
         };
 
@@ -507,6 +531,200 @@ export function getBlockTexture(value, cellsW = 1, cellsH = 1, orientation = 'X'
             ctx.arc(cx, cy, 11, 0, Math.PI * 2);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
+
+        } else if (value === 'crescent') {
+            // LUNAR CRESCENT: Dimensional glowing celestial crescent moon
+            const moonGrad = ctx.createLinearGradient(cx - 50, cy - 50, cx + 50, cy + 50);
+            moonGrad.addColorStop(0, '#7dd3fc');
+            moonGrad.addColorStop(0.5, theme.main[0]);
+            moonGrad.addColorStop(1, theme.main[2]);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx - 6, cy, 58, 0, Math.PI * 2);
+            ctx.fillStyle = moonGrad;
+            ctx.fill();
+
+            // Subtract inner sphere to form crescent
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(cx + 26, cy - 10, 48, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Metallic Edge Rim
+            ctx.beginPath();
+            ctx.arc(cx - 6, cy, 58, -Math.PI * 0.42, Math.PI * 0.48);
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.90)';
+            ctx.stroke();
+
+            // Accompanying tiny star diamond
+            ctx.beginPath();
+            const sx = cx + 22;
+            const sy = cy - 4;
+            ctx.moveTo(sx, sy - 14);
+            ctx.lineTo(sx + 10, sy);
+            ctx.lineTo(sx, sy + 14);
+            ctx.lineTo(sx - 10, sy);
+            ctx.closePath();
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'pentagon') {
+            // AEGIS SHIELD (Pentagon): 5-sided heraldic guardian prism
+            const pentR = 60;
+            const pentGrad = ctx.createLinearGradient(cx, cy - pentR, cx, cy + pentR);
+            pentGrad.addColorStop(0, '#2dd4bf');
+            pentGrad.addColorStop(0.5, theme.main[0]);
+            pentGrad.addColorStop(1, theme.main[2]);
+
+            // Outer Pentagon
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                const px = cx + pentR * Math.cos(angle);
+                const py = cy + pentR * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = pentGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // Inner Inset Pentagon
+            const inPentR = 34;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                const px = cx + inPentR * Math.cos(angle);
+                const py = cy + inPentR * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Facet ridge lines to center
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + pentR * Math.cos(angle), cy + pentR * Math.sin(angle));
+            }
+            ctx.lineWidth = 1.6;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.60)';
+            ctx.stroke();
+
+            // Center Diamond Core
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'cross') {
+            // NORDIC CROSS: 4-way heraldic knight cross with flared beveled arms
+            const armL = 58;
+            const armW = 16;
+            const flare = 26;
+
+            const crossGrad = ctx.createRadialGradient(cx, cy, 6, cx, cy, armL);
+            crossGrad.addColorStop(0, '#f472b6');
+            crossGrad.addColorStop(0.5, theme.main[0]);
+            crossGrad.addColorStop(1, theme.main[2]);
+
+            ctx.beginPath();
+            // Top arm
+            ctx.moveTo(cx - armW, cy - armW);
+            ctx.lineTo(cx - flare, cy - armL);
+            ctx.lineTo(cx + flare, cy - armL);
+            ctx.lineTo(cx + armW, cy - armW);
+            // Right arm
+            ctx.lineTo(cx + armL, cy - flare);
+            ctx.lineTo(cx + armL, cy + flare);
+            ctx.lineTo(cx + armW, cy + armW);
+            // Bottom arm
+            ctx.lineTo(cx + flare, cy + armL);
+            ctx.lineTo(cx - flare, cy + armL);
+            ctx.lineTo(cx - armW, cy + armW);
+            // Left arm
+            ctx.lineTo(cx - armL, cy + flare);
+            ctx.lineTo(cx - armL, cy - flare);
+            ctx.closePath();
+
+            ctx.fillStyle = crossGrad;
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.90)';
+            ctx.stroke();
+
+            // Inner Accent Rhombus
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 20);
+            ctx.lineTo(cx + 20, cy);
+            ctx.lineTo(cx, cy + 20);
+            ctx.lineTo(cx - 20, cy);
+            ctx.closePath();
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+        } else if (value === 'ring') {
+            // ETERNITY RING: Interlocking concentric golden hoops with bezel jewels
+            const ringR = 56;
+            const ringThick = 18;
+
+            const ringGrad = ctx.createRadialGradient(cx, cy, ringR - ringThick, cx, cy, ringR);
+            ringGrad.addColorStop(0, '#fef08a');
+            ringGrad.addColorStop(0.5, theme.main[0]);
+            ringGrad.addColorStop(1, theme.main[2]);
+
+            // Outer Donut Hoop
+            ctx.beginPath();
+            ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+            ctx.arc(cx, cy, ringR - ringThick, 0, Math.PI * 2, true);
+            ctx.fillStyle = ringGrad;
+            ctx.fill();
+
+            // Crisp Rim Lines
+            ctx.beginPath();
+            ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, ringR - ringThick, 0, Math.PI * 2);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.stroke();
+
+            // 4 Cardinal Pearl Pips on Ring
+            for (let i = 0; i < 4; i++) {
+                const angle = (Math.PI / 2) * i;
+                const dist = ringR - ringThick / 2;
+                const px = cx + dist * Math.cos(angle);
+                const py = cy + dist * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+
+            // Central Floating Core Pip
+            ctx.beginPath();
+            ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ca8a04';
+            ctx.stroke();
         }
 
         ctx.shadowBlur = 0;

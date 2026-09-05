@@ -92,8 +92,11 @@ export class TopologyGenerator {
             const v2 = 20 - v1;
             return [v1, v2];
         } else if (mode === 'shapes') {
-            // Minimalist geometric shapes: circle, triangle, square, diamond, star, hexagon
-            const SHAPES = ['circle', 'triangle', 'square', 'diamond', 'star', 'hexagon'];
+            // 10 luxury geometric rune shapes
+            const SHAPES = [
+                'circle', 'triangle', 'square', 'diamond', 'star',
+                'hexagon', 'crescent', 'pentagon', 'cross', 'ring'
+            ];
             const shape = SHAPES[this._randInt(0, SHAPES.length - 1)];
             return [shape, shape]; // Identical matching pairs
         } else if (mode === 'alphabet') {
