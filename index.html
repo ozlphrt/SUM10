@@ -33,8 +33,16 @@
 
             <!-- Right: Discreet Action Controls -->
             <div class="zen-actions">
-                <button id="btn-bar-shuffle" class="zen-icon-btn" type="button" title="Reshuffle Blocks">
-                    <span>🔀</span>
+                <button id="btn-bar-shuffle" class="zen-icon-btn btn-shake-icon" type="button" title="Shake Tower (Reshuffle Blocks • +1 Move, -150 PTS)">
+                    <svg class="shake-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Shaking block in center with vibration shockwaves -->
+                        <rect x="7" y="5" width="10" height="14" rx="2" transform="rotate(-6 12 12)" />
+                        <line x1="12" y1="9" x2="12" y2="15" />
+                        <path d="M2.5 8.5C1.8 10.2 1.8 13.8 2.5 15.5" />
+                        <path d="M21.5 8.5C22.2 10.2 22.2 13.8 21.5 15.5" />
+                        <path d="M4.8 6.5C4 8.5 4 15.5 4.8 17.5" />
+                        <path d="M19.2 6.5C20 8.5 20 15.5 19.2 17.5" />
+                    </svg>
                 </button>
                 <button id="btn-retry" class="zen-icon-btn" type="button" title="Restart Level">
                     <span>↺</span>
@@ -50,10 +58,19 @@
             <div id="toast-msg" class="toast-msg">Select a block</div>
         </div>
 
-        <!-- Deadlock Shuffle Button (Bottom center, appears only when needed) -->
+        <!-- Deadlock Shake Button (Bottom center, appears only when needed) -->
         <div class="shuffle-wrapper">
-            <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
-                <span>🌋 Shuffle Blocks</span>
+            <button id="btn-shuffle" class="btn-secondary btn-shake-cta" type="button" style="display: none;">
+                <svg class="shake-icon-svg" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="7" y="5" width="10" height="14" rx="2" transform="rotate(-6 12 12)" />
+                    <line x1="12" y1="9" x2="12" y2="15" />
+                    <path d="M2.5 8.5C1.8 10.2 1.8 13.8 2.5 15.5" />
+                    <path d="M21.5 8.5C22.2 10.2 22.2 13.8 21.5 15.5" />
+                    <path d="M4.8 6.5C4 8.5 4 15.5 4.8 17.5" />
+                    <path d="M19.2 6.5C20 8.5 20 15.5 19.2 17.5" />
+                </svg>
+                <span>Shake Tower</span>
+                <span class="shake-penalty-badge">+1 Move • -150 PTS</span>
             </button>
         </div>
     </div>

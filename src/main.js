@@ -278,7 +278,7 @@ class Sum10Game {
         const hasMove = this.topology.hasAnyValidMove();
         if (!hasMove) {
             if (this.btnShuffle) this.btnShuffle.style.display = 'flex';
-            this.showToast('⚠️ No moves left — tap Shuffle!', 3500);
+            this.showToast('⚠️ No moves left — tap Shake Tower!', 3500);
         } else {
             if (this.btnShuffle) this.btnShuffle.style.display = 'none';
         }
@@ -286,12 +286,37 @@ class Sum10Game {
 
     handleShuffle() {
         if (!this.topology || this.isProcessingMatch) return;
+
+        // Clear any half-selected block before shaking
+        if (this.selectedBlock) {
+            this.renderer.setBlockSelected(this.selectedBlock.id, false);
+            this.selectedBlock = null;
+            this.renderer.hideExitBeam();
+            this._updateSelectionUI(null, null);
+        }
+
+        // Animate clicked button
+        [this.btnBarShuffle, this.btnShuffle].forEach(btn => {
+            if (btn) {
+                btn.classList.add('btn-shaking');
+                setTimeout(() => btn.classList.remove('btn-shaking'), 450);
+            }
+        });
+
+        // Apply shake penalties (+1 move penalty, -150 PTS score deduction, reset active combo)
+        const PENALTY_SCORE = 150;
+        this.movesCount += 1;
+        this.score = Math.max(0, this.score - PENALTY_SCORE);
+        this.comboCount = 1;
+        this.updateStats();
+
         sound.playShuffle();
-        this.renderer.shakeTower(420);
+        this.renderer.shakeTower(460);
         this.topology.shuffleDeadlock();
         this.renderer.updateBlockValues(this.topology);
         if (this.btnShuffle) this.btnShuffle.style.display = 'none';
-        this.showToast('🌋 Tower Quake! Blocks reshuffled with new clear pairs!', 2500);
+
+        this.showToast('📳 Tower Shaken! -150 PTS (+1 Move Penalty)', 2600);
     }
 
     updateStats() {
