@@ -354,11 +354,10 @@ class Sum10Game {
 
         // First block selected
         if (!this.selectedBlock) {
-            // Evaluate clear escape direction along long axis so drawer nudge matches available exit
-            const exit = this.topology.canBlockSlideOut(block);
+            // Evaluate clear escape direction so drawer nudge matches available exit
+            this.topology.canBlockSlideOut(block);
             this.selectedBlock = block;
             this.renderer.setBlockSelected(block.id, true);
-            this.renderer.showExitBeam(block, exit);
             const displayVal = block.type === 'wild' ? '★' : block.value;
             this._updateSelectionUI(displayVal, null);
             sound.playSelect(block.length);

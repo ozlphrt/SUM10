@@ -725,66 +725,14 @@ export class TowerRenderer {
 
     /**
      * Shows a subtle glowing translucent corridor runway along the block's open exit path.
-     * @param {any} block 
-     * @param {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}} [exitInfo]
+     * (Removed per user request for pure minimalist view)
      */
     showExitBeam(block, exitInfo) {
-        this.hideExitBeam();
-        if (!exitInfo || !exitInfo.canExit) return;
-
-        const dir = exitInfo.direction;
-        const steps = exitInfo.stepsToExit;
-        const cellSize = this.currentCellSize || 1.0;
-        const gridSize = this.currentGridSize || 5;
-
-        const isX = Math.abs(dir.x) > 0.5;
-        // Total runway length from block edge out past the tower boundary
-        const runwayLength = (steps + 0.8) * cellSize;
-        const runwayWidth = 0.86;
-
-        const geoW = isX ? runwayLength : runwayWidth;
-        const geoH = 0.03;
-        const geoD = isX ? runwayWidth : runwayLength;
-        const geo = new RoundedBoxGeometry(geoW, geoH, geoD, 3, 0.015);
-
-        const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
-        const beamColor = block.type === 'wild' ? 0xfacc15 : (palette.border ? parseInt(palette.border.replace('#', '0x')) : 0x38bdf8);
-
-        const mat = new THREE.MeshBasicMaterial({
-            color: beamColor,
-            transparent: true,
-            opacity: 0.40,
-            depthWrite: false
-        });
-
-        this.exitGuideBeam = new THREE.Mesh(geo, mat);
-
-        const center = block.getWorldCenter(gridSize, cellSize);
-
-        // Center the beam along the exit path outside the block's current boundary
-        let posX = center.x;
-        let posZ = center.z;
-
-        if (isX) {
-            const edgeX = center.x + dir.x * (block.length * 0.5 * cellSize);
-            posX = edgeX + dir.x * (runwayLength * 0.5);
-        } else {
-            const edgeZ = center.z + dir.z * (block.length * 0.5 * cellSize);
-            posZ = edgeZ + dir.z * (runwayLength * 0.5);
-        }
-
-        // Position slightly above the layer shelf
-        this.exitGuideBeam.position.set(
-            posX,
-            center.y - 0.47 * cellSize,
-            posZ
-        );
-
-        this.scene.add(this.exitGuideBeam);
+        // Exit corridor runway removed per user request
     }
 
     /**
-     * Hides and disposes the current exit corridor guide beam.
+     * Hides and disposes the current exit corridor guide beam if any exists.
      */
     hideExitBeam() {
         if (this.exitGuideBeam) {
@@ -1109,11 +1057,7 @@ export class TowerRenderer {
             }
         }
 
-        // Subtle pulsation for exit corridor guide beam
-        if (this.exitGuideBeam && this.exitGuideBeam.material) {
-            const pulse = 0.35 + Math.sin(performance.now() * 0.007) * 0.12;
-            this.exitGuideBeam.material.opacity = pulse;
-        }
+
 
         this.renderer.render(this.scene, this.camera);
     }
