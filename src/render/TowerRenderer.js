@@ -223,53 +223,47 @@ export class TowerRenderer {
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Seamless Milky Way Nebula Clouds using exact periodic sine/cosine harmonics
-        // Any function of theta = (x / w) * 2 * PI is mathematically 100% seamless at x = 0 and x = w
-        const numSlices = 128;
-        const sliceW = w / numSlices;
+        // 2. Continuous Organic Milky Way Nebula using smooth 2D noise harmonics
+        // Uses pixel-smooth periodic 2D trigonometric noise to avoid ANY vertical lines or striping
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
 
-        for (let i = 0; i < numSlices; i++) {
-            const x0 = i * sliceW;
-            const theta = (i / numSlices) * Math.PI * 2;
+        // Precompute seamless 2D cosmic cloud density
+        for (let y = 0; y < h; y++) {
+            const ny = (y / h) - 0.5; // -0.5 to +0.5
+            const rowOffset = y * w * 4;
 
-            // Continuous sinusoidal galactic spine curve
-            const spineY = (h * 0.50) + Math.sin(theta) * (h * 0.18) + Math.sin(theta * 2 + 0.5) * (h * 0.04);
-            const bandThickness = (h * 0.26) + Math.cos(theta) * (h * 0.06);
+            for (let x = 0; x < w; x++) {
+                const nx = (x / w) * Math.PI * 2; // seamless periodic angle on X
 
-            // Periodic luminosity modulation (galactic core at theta = PI)
-            const coreWeight = 0.5 - 0.5 * Math.cos(theta); // 0 at edges, 1 at center
-            const alphaBase = 0.020 + coreWeight * 0.024;
+                // Seamless sinusoidal galactic wave across the sphere
+                const wave1 = Math.sin(nx) * 0.18 + Math.cos(nx * 2) * 0.05;
+                const distToSpine = Math.abs(ny - wave1);
 
-            const sliceGrad = ctx.createLinearGradient(0, spineY - bandThickness, 0, spineY + bandThickness);
-            sliceGrad.addColorStop(0.0, 'rgba(255, 255, 255, 0)');
-            sliceGrad.addColorStop(0.32, `rgba(${nebR}, ${nebG}, ${nebB}, ${(alphaBase * 0.65).toFixed(4)})`);
-            sliceGrad.addColorStop(0.50, `rgba(${nebR}, ${nebG}, ${nebB}, ${alphaBase.toFixed(4)})`);
-            sliceGrad.addColorStop(0.68, `rgba(${nebR}, ${nebG}, ${nebB}, ${(alphaBase * 0.65).toFixed(4)})`);
-            sliceGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+                // Organic cloud density with multiple seamless octaves
+                const oct1 = Math.sin(nx * 3 + ny * 6) * 0.5 + 0.5;
+                const oct2 = Math.cos(nx * 6 - ny * 9) * 0.5 + 0.5;
+                const oct3 = Math.sin(nx * 12 + ny * 15) * 0.5 + 0.5;
+                const turbulence = (oct1 * 0.5 + oct2 * 0.35 + oct3 * 0.15);
 
-            ctx.fillStyle = sliceGrad;
-            ctx.fillRect(x0 - 1, spineY - bandThickness, sliceW + 2, bandThickness * 2);
-        }
+                // Gaussian falloff from galactic spine
+                const falloff = Math.exp(-distToSpine * distToSpine * 24.0);
+                const density = falloff * turbulence;
 
-        // 3. Subtle Periodic Interstellar Dust Rift (dark lane running seamlessly along the galactic band)
-        ctx.beginPath();
-        for (let i = 0; i <= numSlices; i++) {
-            const x = i * sliceW;
-            const theta = (i / numSlices) * Math.PI * 2;
-            const riftY = (h * 0.50) + Math.sin(theta) * (h * 0.18) + Math.cos(theta * 3) * (h * 0.022);
-            if (i === 0) {
-                ctx.moveTo(x, riftY);
-            } else {
-                ctx.lineTo(x, riftY);
+                if (density > 0.04) {
+                    const alpha = Math.min(0.045, density * 0.06);
+                    const idx = rowOffset + x * 4;
+
+                    // Soft alpha blend onto background
+                    data[idx] = Math.min(255, data[idx] + nebR * alpha);
+                    data[idx + 1] = Math.min(255, data[idx + 1] + nebG * alpha);
+                    data[idx + 2] = Math.min(255, data[idx + 2] + nebB * alpha);
+                }
             }
         }
-        ctx.lineWidth = 18;
-        ctx.strokeStyle = this.isDarkTheme ? 'rgba(2, 6, 5, 0.22)' : 'rgba(8, 20, 16, 0.18)';
-        ctx.filter = 'blur(10px)';
-        ctx.stroke();
-        ctx.filter = 'none';
+        ctx.putImageData(imgData, 0, 0);
 
-        // 4. Seamless Stars (Rendered across borders so stars overlapping x=0 also appear at x=w)
+        // 3. Seamless Natural Cosmic Stardust (Cluster naturally along galactic spine)
         let seed = 142;
         const random = () => {
             seed = (seed * 9301 + 49297) % 233280;
@@ -282,50 +276,27 @@ export class TowerRenderer {
             ctx.arc(sx, sy, sr, 0, Math.PI * 2);
             ctx.fill();
 
-            // Seamless boundary wrap: if near left edge, replicate on right edge (and vice-versa)
-            if (sx < 20) {
+            // Seamless boundary wrap
+            if (sx < 15) {
                 ctx.beginPath();
                 ctx.arc(sx + w, sy, sr, 0, Math.PI * 2);
                 ctx.fill();
-            } else if (sx > w - 20) {
+            } else if (sx > w - 15) {
                 ctx.beginPath();
                 ctx.arc(sx - w, sy, sr, 0, Math.PI * 2);
                 ctx.fill();
             }
         };
 
-        const numStars = 320;
+        const numStars = 280;
         for (let s = 0; s < numStars; s++) {
             const theta = random() * Math.PI * 2;
             const sx = (theta / (Math.PI * 2)) * w;
-
-            // Cluster stars closer to the seamless sinusoidal galactic spine
-            const spineY = (h * 0.50) + Math.sin(theta) * (h * 0.18);
-            const offset = (random() - 0.5) * h * 0.70;
-            const sy = Math.max(30, Math.min(h - 30, spineY + offset));
-
-            const sr = 0.4 + random() * 0.75;
-            const sAlpha = 0.08 + random() * 0.18; // Very subtle low-contrast pinpoints
+            const waveY = (h * 0.50) + Math.sin(theta) * (h * 0.18);
+            const sy = Math.max(25, Math.min(h - 25, waveY + (random() - 0.5) * h * 0.55));
+            const sr = 0.35 + random() * 0.75;
+            const sAlpha = 0.06 + random() * 0.16; // Very subtle low-contrast pinpoints
             drawStar(sx, sy, sr, sAlpha);
-        }
-
-        // 5. Perfectly continuous equatorial & cardinal astronomical guide lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
-        ctx.lineWidth = 0.7;
-
-        // Equator (horizontal line, exactly seamless)
-        ctx.beginPath();
-        ctx.moveTo(0, h * 0.50);
-        ctx.lineTo(w, h * 0.50);
-        ctx.stroke();
-
-        // Cardinal meridians (exactly at 0, w/4, w/2, 3w/4, w)
-        for (let m = 0; m <= 4; m++) {
-            const mx = (m / 4) * w;
-            ctx.beginPath();
-            ctx.moveTo(mx, 0);
-            ctx.lineTo(mx, h);
-            ctx.stroke();
         }
 
         const tex = new THREE.CanvasTexture(canvas);
