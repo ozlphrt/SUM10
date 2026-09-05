@@ -199,9 +199,51 @@ export class TowerRenderer {
         if (!this.camera) return;
         const aspect = this.camera.aspect;
         // In portrait mode (aspect < 1), zoom out proportionately so tower is never cropped
-        const distMult = aspect < 1 ? Math.max(1.3, 1.0 / aspect * 0.85) : 1.0;
-        const basePos = new THREE.Vector3(12, 14, 18).multiplyScalar(distMult);
+        const distMult = aspect < 1 ? Math.max(1.35, 1.0 / aspect * 0.88) : 1.0;
+        const basePos = new THREE.Vector3(15, 16, 15).multiplyScalar(distMult);
         this.camera.position.copy(basePos);
+    }
+
+    /**
+     * Smoothly glides the camera from a cinematic wider orbit into the optimal 45° isometric corner view.
+     * @param {Function} [onComplete]
+     */
+    playLevelEntrance(onComplete) {
+        if (!this.camera || !this.controls) return;
+        this._isCameraAnimating = true;
+
+        const aspect = this.camera.aspect;
+        const distMult = aspect < 1 ? Math.max(1.35, 1.0 / aspect * 0.88) : 1.0;
+
+        // Target: pristine 45° isometric corner view
+        const destPos = new THREE.Vector3(15, 16, 15).multiplyScalar(distMult);
+        // Start: wider, rotated, and elevated cinematic entrance angle
+        const startPos = new THREE.Vector3(26 * distMult, 24 * distMult, 6 * distMult);
+
+        this.camera.position.copy(startPos);
+        this.controls.update();
+
+        const startTime = performance.now();
+        const duration = 850;
+
+        const animateEntrance = () => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+            // Smooth cubic ease-out
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+
+            this.camera.position.lerpVectors(startPos, destPos, easeOut);
+            this.controls.update();
+
+            if (progress < 1.0) {
+                requestAnimationFrame(animateEntrance);
+            } else {
+                this._isCameraAnimating = false;
+                if (onComplete) onComplete();
+            }
+        };
+
+        requestAnimationFrame(animateEntrance);
     }
 
     /**
@@ -340,9 +382,9 @@ export class TowerRenderer {
         const plateSize = topology.gridSize * topology.cellSize + 2;
         const plateGeo = new RoundedBoxGeometry(plateSize, 0.4, plateSize, 4, 0.1);
         const plateMat = new THREE.MeshStandardMaterial({
-            color: 0x1e293b,
-            roughness: 0.8,
-            metalness: 0.2
+            color: 0xe2e8f0,
+            roughness: 0.85,
+            metalness: 0.05
         });
         this.basePlate = new THREE.Mesh(plateGeo, plateMat);
         this.basePlate.position.set(0, -0.2, 0);
@@ -351,7 +393,7 @@ export class TowerRenderer {
 
         // Adjust camera target to center of tower height
         this.controls.target.set(0, (topology.maxLayers * topology.cellSize) / 4, 0);
-        this._adjustCameraForAspect();
+        this.playLevelEntrance();
 
         // Create 3D meshes for every block
         for (const block of topology.blocks.values()) {
