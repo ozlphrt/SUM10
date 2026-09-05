@@ -436,9 +436,9 @@ export class TowerRenderer {
         }
 
         const plateSize = topology.gridSize * topology.cellSize + 2;
-        const plateGeo = new RoundedBoxGeometry(plateSize, 0.4, plateSize, 4, 0.1);
+        const plateGeo = new RoundedBoxGeometry(plateSize, 0.4, plateSize, 4, 0.12);
         const plateMat = new THREE.MeshStandardMaterial({
-            color: 0xe2e8f0,
+            color: this.isDarkTheme ? 0x1e293b : 0xe2e8f0,
             roughness: 0.85,
             metalness: 0.05
         });
@@ -446,6 +446,33 @@ export class TowerRenderer {
         this.basePlate.position.set(0, -0.2, 0);
         this.basePlate.receiveShadow = true;
         this.scene.add(this.basePlate);
+
+        // Ambient contact shadow disc beneath plinth
+        if (this.contactShadow) {
+            this.scene.remove(this.contactShadow);
+            if (this.contactShadow.geometry) this.contactShadow.geometry.dispose();
+            if (this.contactShadow.material) this.contactShadow.material.dispose();
+        }
+        const shadowCanvas = document.createElement('canvas');
+        shadowCanvas.width = 128;
+        shadowCanvas.height = 128;
+        const sCtx = shadowCanvas.getContext('2d');
+        const sGrad = sCtx.createRadialGradient(64, 64, 38, 64, 64, 64);
+        sGrad.addColorStop(0, this.isDarkTheme ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.18)');
+        sGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        sCtx.fillStyle = sGrad;
+        sCtx.fillRect(0, 0, 128, 128);
+        const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+        const shadowMat = new THREE.MeshBasicMaterial({
+            map: shadowTex,
+            transparent: true,
+            depthWrite: false
+        });
+        const shadowGeo = new THREE.PlaneGeometry(plateSize * 1.35, plateSize * 1.35);
+        this.contactShadow = new THREE.Mesh(shadowGeo, shadowMat);
+        this.contactShadow.rotation.x = -Math.PI / 2;
+        this.contactShadow.position.set(0, -0.405, 0);
+        this.scene.add(this.contactShadow);
 
         // Adjust camera target to center of tower height
         this.controls.target.set(0, (topology.maxLayers * topology.cellSize) / 4, 0);
