@@ -193,7 +193,7 @@ export class TowerRenderer {
         const geometry = new RoundedBoxGeometry(w, h, d, 4, 0.08);
 
         // Get procedural number texture
-        const texture = getBlockTexture(block.value, block.length, block.orientation);
+        const texture = getBlockTexture(block.value, block.length, block.orientation, block.direction);
         const palette = NUMBER_COLORS[block.value] || NUMBER_COLORS[1];
 
         // 6-face material array: faces show the number texture

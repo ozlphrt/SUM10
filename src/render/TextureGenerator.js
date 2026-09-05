@@ -17,14 +17,16 @@ export const NUMBER_COLORS = {
 };
 
 /**
- * Creates or retrieves a procedural high-contrast canvas texture with the block's number.
+ * Creates or retrieves a procedural high-contrast canvas texture with the block's number and exit direction.
  * @param {number} value - Number from 1 to 9
  * @param {number} length - Block length (1, 2, or 3 cells)
  * @param {'X'|'Z'|'Y'} orientation
+ * @param {{x: number, y: number, z: number}} [direction]
  * @returns {THREE.CanvasTexture}
  */
-export function getBlockTexture(value, length = 1, orientation = 'X') {
-    const key = `${value}_${length}_${orientation}`;
+export function getBlockTexture(value, length = 1, orientation = 'X', direction = { x: 1, y: 0, z: 0 }) {
+    const dirKey = `${direction.x}_${direction.y}_${direction.z}`;
+    const key = `${value}_${length}_${orientation}_${dirKey}`;
     if (textureCache.has(key)) return textureCache.get(key);
 
     const canvas = document.createElement('canvas');
@@ -70,7 +72,34 @@ export function getBlockTexture(value, length = 1, orientation = 'X') {
     ctx.shadowBlur = 8;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 4;
-    ctx.fillText(String(value), width / 2, height / 2 + 2);
+    ctx.fillText(String(value), width / 2, height / 2 - 6);
+
+    // Subtle arrow icon indicating sliding direction
+    ctx.save();
+    ctx.translate(width / 2, height - 36);
+
+    let angle = 0;
+    if (orientation === 'X') {
+        angle = direction.x > 0 ? 0 : Math.PI;
+    } else if (orientation === 'Z') {
+        angle = direction.z > 0 ? Math.PI / 2 : -Math.PI / 2;
+    } else {
+        angle = direction.x > 0 ? 0 : (direction.x < 0 ? Math.PI : (direction.z > 0 ? Math.PI / 2 : -Math.PI / 2));
+    }
+    ctx.rotate(angle);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.moveTo(12, 0);
+    ctx.lineTo(-6, -8);
+    ctx.lineTo(-6, -3);
+    ctx.lineTo(-14, -3);
+    ctx.lineTo(-14, 3);
+    ctx.lineTo(-6, 3);
+    ctx.lineTo(-6, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;

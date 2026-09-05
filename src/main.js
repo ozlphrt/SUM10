@@ -102,10 +102,38 @@ class Sum10Game {
         const sum = first.value + second.value;
 
         if (sum === 10) {
-            // MATCH!
+            // Check if BOTH blocks have a clear exit path out of the tower
+            const exitFirst = this.topology.canBlockSlideOut(first);
+            const exitSecond = this.topology.canBlockSlideOut(second);
+
+            if (!exitFirst.canExit || !exitSecond.canExit) {
+                // At least one block is blocked by another block
+                sound.playMismatch();
+                if (!exitFirst.canExit && !exitSecond.canExit) {
+                    this.showToast('🚫 Both blocks are blocked! Clear their exit paths first.');
+                    this.renderer.shakeBlock(first.id);
+                    this.renderer.shakeBlock(second.id);
+                } else if (!exitFirst.canExit) {
+                    this.showToast(`🚫 Block [${first.value}] is obstructed! Clear its path first.`);
+                    this.renderer.shakeBlock(first.id);
+                } else {
+                    this.showToast(`🚫 Block [${second.value}] is obstructed! Clear its path first.`);
+                    this.renderer.shakeBlock(second.id);
+                }
+
+                setTimeout(() => {
+                    this.renderer.setBlockSelected(first.id, false);
+                    this.renderer.setBlockSelected(second.id, false);
+                    this.selectedBlock = null;
+                    this._updateSelectionUI(null, null);
+                }, 500);
+                return;
+            }
+
+            // Both have clear paths: MATCH & FLY OUT!
             this.isProcessingMatch = true;
             sound.playMatch();
-            this.showToast(`✨ ${first.value} + ${second.value} = 10! Blocks flying out!`);
+            this.showToast(`✨ ${first.value} + ${second.value} = 10! Clear path! Flying out!`);
 
             setTimeout(() => {
                 sound.playWhoosh();
