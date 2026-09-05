@@ -220,6 +220,7 @@ export class TopologyGenerator {
 
         const maxLayers = Math.max(10, Math.ceil(gridSize * 1.8));
 
+        const topology = new GridTopology({ gridSize, maxLayers });
         const mode = overrideConfig.mode || this.mode || 'sum10';
         topology.mode = mode;
 
