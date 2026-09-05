@@ -178,9 +178,9 @@ class Sum10Game {
 
         // Progress & High Score state loaded from localStorage
         const saved = this._loadProgress();
-        // Allow user to test any level up to 50
-        this.highestLevel = Math.max(50, saved.highestLevel || 1);
-        this.currentLevel = 50; // Jump directly to Level 50 for testing
+        // Allow user to test any level up to 100
+        this.highestLevel = Math.max(100, saved.highestLevel || 1);
+        this.currentLevel = 100; // Jump directly to Level 100 for testing
         this.score = saved.score || 0;
         this.highScore = saved.highScore || 0;
         this.starsByLevel = saved.starsByLevel || {};

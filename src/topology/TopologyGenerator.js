@@ -21,8 +21,21 @@ export class TopologyGenerator {
 
         const shapeInfo = SHAPES[(level - 1) % SHAPES.length];
         const tier = Math.floor((level - 1) / SHAPES.length) + 1;
-        const romanNumerals = ['', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-        const tierSuffix = tier > 1 ? ` ${romanNumerals[tier - 1] || `Tier ${tier}`}` : '';
+        const toRoman = (num) => {
+            const romanMap = [
+                [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+                [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+            ];
+            let res = '';
+            for (const [val, char] of romanMap) {
+                while (num >= val) {
+                    res += char;
+                    num -= val;
+                }
+            }
+            return res;
+        };
+        const tierSuffix = tier > 1 ? ` ${toRoman(tier)}` : '';
         const shapeName = `${shapeInfo.name}${tierSuffix}`;
 
         const pairCount = Math.min(55, 10 + (level - 1) * 3); // 10, 13, 16, 19, 22...
