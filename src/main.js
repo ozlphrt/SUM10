@@ -13,10 +13,14 @@ class Sum10Game {
         this.slot1Elem = document.getElementById('slot-1');
         this.slot2Elem = document.getElementById('slot-2');
         this.toastElem = document.getElementById('toast-msg');
-        this.btnNewGame = document.getElementById('btn-new-game');
+        this.btnRetry = document.getElementById('btn-retry');
         this.btnShuffle = document.getElementById('btn-shuffle');
         this.btnSound = document.getElementById('btn-sound');
         this.iconSound = document.getElementById('icon-sound');
+        this.pillLevel = document.getElementById('pill-level');
+        this.modalLevel = document.getElementById('modal-level-select');
+        this.btnCloseModal = document.getElementById('btn-close-modal');
+        this.levelGrid = document.getElementById('level-grid');
 
         if (this.iconSound) {
             this.iconSound.textContent = sound.enabled ? '🔊' : '🔇';
@@ -28,6 +32,27 @@ class Sum10Game {
                     this.iconSound.textContent = isEnabled ? '🔊' : '🔇';
                 }
                 this.showToast(isEnabled ? '🔊 Sound effects ON' : '🔇 Sound effects OFF', 1200);
+            });
+        }
+
+        // Retry current level (doesn't reset level progress)
+        if (this.btnRetry) {
+            this.btnRetry.addEventListener('click', () => {
+                this.startLevel(this.currentLevel);
+                this.showToast(`↺ Restarted Level ${this.currentLevel}`);
+            });
+        }
+
+        // Open/close level select modal
+        if (this.pillLevel) {
+            this.pillLevel.addEventListener('click', () => this._openLevelModal());
+        }
+        if (this.btnCloseModal) {
+            this.btnCloseModal.addEventListener('click', () => this._closeLevelModal());
+        }
+        if (this.modalLevel) {
+            this.modalLevel.addEventListener('click', (e) => {
+                if (e.target === this.modalLevel) this._closeLevelModal();
             });
         }
 
@@ -85,6 +110,29 @@ class Sum10Game {
                 highestLevel: this.highestLevel
             }));
         } catch (_) {}
+    }
+
+    _openLevelModal() {
+        if (!this.modalLevel || !this.levelGrid) return;
+        this.levelGrid.innerHTML = '';
+
+        for (let lvl = 1; lvl <= this.highestLevel; lvl++) {
+            const btn = document.createElement('button');
+            btn.className = `level-btn ${lvl === this.currentLevel ? 'current' : ''}`;
+            btn.type = 'button';
+            btn.innerHTML = `<span>Lvl ${lvl}</span>`;
+            btn.addEventListener('click', () => {
+                this.startLevel(lvl);
+                this._closeLevelModal();
+            });
+            this.levelGrid.appendChild(btn);
+        }
+
+        this.modalLevel.style.display = 'flex';
+    }
+
+    _closeLevelModal() {
+        if (this.modalLevel) this.modalLevel.style.display = 'none';
     }
 
     showToast(message, duration = 1800) {

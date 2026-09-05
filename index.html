@@ -35,8 +35,8 @@
             </div>
 
             <div class="stats-group">
-                <div class="stat-pill">
-                    <span class="stat-label">LVL</span>
+                <div id="pill-level" class="stat-pill clickable-pill" title="Tap to select level">
+                    <span class="stat-label">LVL ▾</span>
                     <span id="val-level" class="stat-value">1</span>
                 </div>
                 <div class="stat-pill">
@@ -69,11 +69,23 @@
                 <button id="btn-shuffle" class="btn-secondary" type="button" style="display: none;">
                     <span>🌋 Shuffle</span>
                 </button>
-                <button id="btn-new-game" class="btn-primary" type="button">
-                    <span>🔄 New</span>
+                <button id="btn-retry" class="btn-primary" type="button" title="Restart current level">
+                    <span>↺ Retry Level</span>
                 </button>
             </div>
         </footer>
+    </div>
+
+    <!-- Level Select Modal -->
+    <div id="modal-level-select" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Level</h2>
+                <button id="btn-close-modal" class="btn-close" type="button">✕</button>
+            </div>
+            <p class="modal-subtitle">Choose from your unlocked levels:</p>
+            <div id="level-grid" class="level-grid"></div>
+        </div>
     </div>
 
     <script type="module" src="./src/main.js"></script>
