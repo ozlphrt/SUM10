@@ -81,13 +81,8 @@ export class GridTopology {
     hasSupport(block) {
         if (block.gridY === 0) return true;
 
-        // Footprint voxels are the lowest Y slice of the block
-        const footprint = [];
-        if (block.orientation === 'Y') {
-            footprint.push({ x: block.gridX, y: block.gridY, z: block.gridZ });
-        } else {
-            footprint.push(...block.getOccupiedVoxels());
-        }
+        // Footprint voxels are all occupied voxels since blocks are horizontal (height 1)
+        const footprint = block.getOccupiedVoxels();
 
         for (const v of footprint) {
             if (v.y > 0 && this.isOccupied(v.x, v.y - 1, v.z)) {

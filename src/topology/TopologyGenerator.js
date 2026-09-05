@@ -79,32 +79,26 @@ export class TopologyGenerator {
     }
 
     /**
-     * Determines outward escape direction pointing towards the nearest perimeter edge.
-     * Matches Jarrows' outward sliding trajectory.
+     * Determines outward escape direction pointing strictly along the block's long axis
+     * towards the nearest perimeter edge.
      * @param {number} gridX 
      * @param {number} gridZ 
+     * @param {number} length 
      * @param {number} gridSize 
-     * @param {'X'|'Z'|'Y'} orientation 
+     * @param {'X'|'Z'} orientation 
+     * @returns {{x: number, y: number, z: number}}
      */
-    _determineDirection(gridX, gridZ, gridSize, orientation) {
-        const distNorth = gridZ;
-        const distSouth = gridSize - 1 - gridZ;
-        const distWest = gridX;
-        const distEast = gridSize - 1 - gridX;
-
+    _determineDirection(gridX, gridZ, length, gridSize, orientation) {
         if (orientation === 'X') {
-            // Horizontal X-aligned blocks naturally slide East or West
+            // Long axis is X: can ONLY slide West (-X) or East (+X)
+            const distWest = gridX;
+            const distEast = gridSize - (gridX + length);
             return distWest <= distEast ? { x: -1, y: 0, z: 0 } : { x: 1, y: 0, z: 0 };
-        } else if (orientation === 'Z') {
-            // Horizontal Z-aligned blocks slide North or South
-            return distNorth <= distSouth ? { x: 0, y: 0, z: -1 } : { x: 0, y: 0, z: 1 };
         } else {
-            // Vertical blocks can fly outward along the closest perimeter axis
-            const minDist = Math.min(distNorth, distSouth, distWest, distEast);
-            if (minDist === distWest) return { x: -1, y: 0, z: 0 };
-            if (minDist === distEast) return { x: 1, y: 0, z: 0 };
-            if (minDist === distNorth) return { x: 0, y: 0, z: -1 };
-            return { x: 0, y: 0, z: 1 };
+            // Long axis is Z: can ONLY slide North (-Z) or South (+Z)
+            const distNorth = gridZ;
+            const distSouth = gridSize - (gridZ + length);
+            return distNorth <= distSouth ? { x: 0, y: 0, z: -1 } : { x: 0, y: 0, z: 1 };
         }
     }
 
@@ -170,8 +164,8 @@ export class TopologyGenerator {
             [blockSpecs[i], blockSpecs[j]] = [blockSpecs[j], blockSpecs[i]];
         }
 
-        // 2. Procedurally place blocks layer by layer
-        const orientations = ['X', 'Z', 'Y'];
+        // 2. Procedurally place blocks layer by layer (all blocks horizontal along X or Z)
+        const orientations = ['X', 'Z'];
 
         for (const spec of blockSpecs) {
             let placed = false;
@@ -183,25 +177,22 @@ export class TopologyGenerator {
 
                 // Choose layer with weighted preference for lower layers to build from base up
                 const layer = Math.min(
-                    maxLayers - spec.length,
+                    maxLayers - 1,
                     Math.floor(Math.pow(Math.random(), 1.5) * (maxLayers / 2))
                 );
 
-                const orient = (spec.length === 1)
-                    ? 'X' // Single cube orientation is isotropic, treat as X
-                    : orientations[this._randInt(0, orientations.length - 1)];
+                const orient = orientations[this._randInt(0, orientations.length - 1)];
 
                 // Choose random grid position within valid boundaries
                 const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
                 const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                const maxY = (orient === 'Y') ? maxLayers - spec.length : maxLayers - 1;
 
-                if (maxX < 0 || maxZ < 0 || layer > maxY) continue;
+                if (maxX < 0 || maxZ < 0 || layer >= maxLayers) continue;
 
                 const gx = this._randInt(0, maxX);
                 const gz = this._randInt(0, maxZ);
 
-                const dir = this._determineDirection(gx, gz, gridSize, orient);
+                const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
 
                 const candidate = new BlockModel({
                     id: spec.id,
@@ -229,11 +220,11 @@ export class TopologyGenerator {
                     for (const orient of orientations) {
                         const maxX = (orient === 'X') ? gridSize - spec.length : gridSize - 1;
                         const maxZ = (orient === 'Z') ? gridSize - spec.length : gridSize - 1;
-                        if (maxX < 0 || maxZ < 0 || (orient === 'Y' && y + spec.length > maxLayers)) continue;
+                        if (maxX < 0 || maxZ < 0) continue;
 
                         for (let gx = 0; gx <= maxX; gx++) {
                             for (let gz = 0; gz <= maxZ; gz++) {
-                                const dir = this._determineDirection(gx, gz, gridSize, orient);
+                                const dir = this._determineDirection(gx, gz, spec.length, gridSize, orient);
                                 const fallbackBlock = new BlockModel({
                                     id: spec.id,
                                     value: spec.value,

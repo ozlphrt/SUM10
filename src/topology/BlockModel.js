@@ -42,11 +42,12 @@ export class BlockModel {
     }
 
     get isVertical() {
-        return this.orientation === 'Y';
+        return false;
     }
 
     /**
      * Returns an array of discrete {x, y, z} grid coordinates occupied by this block.
+     * All blocks occupy a single horizontal layer y.
      * @returns {Array<{x: number, y: number, z: number}>}
      */
     getOccupiedVoxels() {
@@ -54,11 +55,9 @@ export class BlockModel {
         for (let i = 0; i < this.length; i++) {
             if (this.orientation === 'X') {
                 voxels.push({ x: this.gridX + i, y: this.gridY, z: this.gridZ });
-            } else if (this.orientation === 'Z') {
-                voxels.push({ x: this.gridX, y: this.gridY, z: this.gridZ + i });
             } else {
-                // Vertical ('Y')
-                voxels.push({ x: this.gridX, y: this.gridY + i, z: this.gridZ });
+                // Horizontal along Z
+                voxels.push({ x: this.gridX, y: this.gridY, z: this.gridZ + i });
             }
         }
         return voxels;
@@ -79,10 +78,8 @@ export class BlockModel {
 
         if (this.orientation === 'X') {
             cx += ((this.length - 1) / 2) * cellSize;
-        } else if (this.orientation === 'Z') {
+        } else {
             cz += ((this.length - 1) / 2) * cellSize;
-        } else if (this.orientation === 'Y') {
-            cy += ((this.length - 1) / 2) * cellSize;
         }
 
         return { x: cx, y: cy, z: cz };
@@ -90,16 +87,15 @@ export class BlockModel {
 
     /**
      * Calculates the dimensional size of the block in world units.
+     * All blocks have a height of 1 unit and extend horizontally along X or Z.
      * @param {number} cellSize 
      * @returns {{width: number, height: number, depth: number}}
      */
     getWorldDimensions(cellSize = 1.0) {
         if (this.orientation === 'X') {
             return { width: this.length * cellSize, height: cellSize, depth: cellSize };
-        } else if (this.orientation === 'Z') {
-            return { width: cellSize, height: cellSize, depth: this.length * cellSize };
         } else {
-            return { width: cellSize, height: this.length * cellSize, depth: cellSize };
+            return { width: cellSize, height: cellSize, depth: this.length * cellSize };
         }
     }
 }

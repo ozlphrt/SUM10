@@ -347,10 +347,11 @@ export class TowerRenderer {
         }
 
         const dir = item.model.direction || { x: 0, y: 0, z: 0 };
-        const liftDist = 0.16;
+        const nudgeDist = 0.22;
 
+        // Strictly horizontal nudge along the block's long axis (drawer slide effect)
         const targetPos = isSelected
-            ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * liftDist, 0.12, dir.z * liftDist))
+            ? item.restingPosition.clone().add(new THREE.Vector3(dir.x * nudgeDist, 0, dir.z * nudgeDist))
             : item.restingPosition.clone();
 
         // Smooth elevation transition
@@ -385,32 +386,38 @@ export class TowerRenderer {
     }
 
     /**
-     * Triggers rapid error shake on a block when invalid pair is chosen.
+     * Triggers rapid jam/error shake along the block's long slide axis.
      * @param {string|number} blockId 
      */
     shakeBlock(blockId) {
         const item = this.blockMeshes.get(blockId);
         if (!item) return;
 
-        const origX = item.group.position.x;
+        const resting = item.restingPosition ? item.restingPosition.clone() : item.group.position.clone();
+        const dir = item.model.direction || { x: 1, y: 0, z: 0 };
         const startTime = performance.now();
-        const duration = 240;
+        const duration = 260;
 
         const animateShake = () => {
             const elapsed = performance.now() - startTime;
             if (elapsed < duration) {
-                const offset = Math.sin(elapsed * 0.08) * 0.12 * (1 - elapsed / duration);
-                item.group.position.x = origX + offset;
+                const decay = 1 - elapsed / duration;
+                const offset = Math.sin(elapsed * 0.09) * 0.14 * decay;
+                item.group.position.set(
+                    resting.x + dir.x * offset,
+                    resting.y,
+                    resting.z + dir.z * offset
+                );
                 requestAnimationFrame(animateShake);
             } else {
-                item.group.position.x = origX;
+                item.group.position.copy(resting);
             }
         };
         requestAnimationFrame(animateShake);
     }
 
     /**
-     * Animates blocks flying out of the tower along their assigned exit trajectories.
+     * Animates blocks flying smoothly and horizontally out of the tower along their long axis.
      * @param {Array<string|number>} blockIds 
      */
     flyOutBlocks(blockIds) {
@@ -419,19 +426,17 @@ export class TowerRenderer {
             if (!item) return;
 
             const dir = item.model.direction;
-            const flySpeed = 16.0;
+            const flySpeed = 18.0;
 
+            // Strictly horizontal velocity along the long axis (no vertical Y lift or tumble)
             const velocity = new THREE.Vector3(
-                dir.x !== 0 ? dir.x * flySpeed : (Math.random() - 0.5) * 4,
-                3.0 + Math.random() * 4.0, // slight upward arc
-                dir.z !== 0 ? dir.z * flySpeed : (Math.random() - 0.5) * 4
+                dir.x * flySpeed,
+                0,
+                dir.z * flySpeed
             );
 
-            const angularVelocity = new THREE.Vector3(
-                (Math.random() - 0.5) * 10,
-                (Math.random() - 0.5) * 10,
-                (Math.random() - 0.5) * 10
-            );
+            // Keep rotation stable along slide axis
+            const angularVelocity = new THREE.Vector3(0, 0, 0);
 
             this.flyingBlocks.push({
                 group: item.group,
