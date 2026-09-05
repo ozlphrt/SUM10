@@ -491,19 +491,25 @@ class Sum10Game {
                 }
             }, 40);
         } else {
-            // MISMATCH: Shake and audio feedback, unselect the first block, and transfer active selection to the second block
+            // MISMATCH: Shake both, unselect the first block, and select the second block as the new active selection
             sound.playMismatch();
             this.showToast(`❌ ${first.value} + ${second.value} = ${sum} (Need 10)`, 1600);
-            this.renderer.shakeBlock(first.id);
-            this.renderer.shakeBlock(second.id);
 
-            // Unselect the first block
+            // Fully unselect and unhighlight the first block
             this.renderer.setBlockSelected(first.id, false);
+            this.renderer.shakeBlock(first.id);
 
-            // Transfer active selection to the second block
+            // Select and highlight the second block as the new active block
             this.topology.canBlockSlideOut(second);
             this.selectedBlock = second;
+            this.renderer.shakeBlock(second.id, () => {
+                // Ensure second block remains in its elevated selected position after shaking
+                if (this.selectedBlock && this.selectedBlock.id === second.id) {
+                    this.renderer.setBlockSelected(second.id, true);
+                }
+            });
             this.renderer.setBlockSelected(second.id, true);
+
             const secondDisplayVal = second.type === 'wild' ? '★' : second.value;
             this._updateSelectionUI(secondDisplayVal, null);
         }
