@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SUM10 — 3D Block Sliding Sum Puzzle</title>
+    <meta name="description" content="A 3D block sliding puzzle game where you pair blocks that sum to 10 to launch them out of the tower.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="hud-overlay">
+        <!-- Top HUD Header -->
+        <header class="hud-header">
+            <div class="brand-card">
+                <h1 class="brand-title">
+                    <span>⚡ SUM10</span>
+                </h1>
+                <p class="brand-subtitle">Find two blocks summing to 10 to clear the tower</p>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-chip">
+                    <span class="stat-label">Score</span>
+                    <span id="val-score" class="stat-value">0</span>
+                </div>
+                <div class="stat-chip">
+                    <span class="stat-label">Blocks</span>
+                    <span id="val-remaining" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Center Match Display -->
+        <div class="center-hud">
+            <div class="selection-card">
+                <div id="slot-1" class="selection-slot">?</div>
+                <div class="selection-plus">+</div>
+                <div id="slot-2" class="selection-slot">?</div>
+                <div class="selection-equals">=</div>
+                <div class="target-badge">10</div>
+            </div>
+            <div id="toast-msg" class="toast-msg">Select a block</div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <footer class="hud-footer">
+            <div class="hint-chip">
+                <span>💡 Drag to rotate • Pinch/scroll to zoom • Tap to select</span>
+            </div>
+
+            <button id="btn-new-game" class="btn-primary" type="button">
+                <span>🔄 New Tower</span>
+            </button>
+        </footer>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
