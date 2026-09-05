@@ -236,6 +236,7 @@ export class TowerRenderer {
         let pointerDownTime = 0;
         let pointerDownX = 0;
         let pointerDownY = 0;
+        let pointerMovedDist = 0;
         this._isPointerDown = false;
 
         this.renderer.domElement.addEventListener('pointerdown', (e) => {
@@ -243,6 +244,14 @@ export class TowerRenderer {
             pointerDownTime = performance.now();
             pointerDownX = e.clientX;
             pointerDownY = e.clientY;
+            pointerMovedDist = 0;
+        });
+
+        this.renderer.domElement.addEventListener('pointermove', (e) => {
+            if (this._isPointerDown) {
+                const d = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
+                if (d > pointerMovedDist) pointerMovedDist = d;
+            }
         });
 
         window.addEventListener('pointerup', (e) => {
@@ -256,8 +265,10 @@ export class TowerRenderer {
         this.renderer.domElement.addEventListener('pointerup', (e) => {
             const duration = performance.now() - pointerDownTime;
             const dist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
-            // Pure Tap-to-Match: crisp tap threshold that gracefully ignores camera orbit drags
-            if (duration < 350 && dist < 9) {
+            const effectiveDist = Math.max(dist, pointerMovedDist);
+            // Ultra-forgiving Tap-to-Select:
+            // Allows up to 800ms duration and up to 24px cursor jitter (touch/mouse drift)
+            if (duration < 800 && effectiveDist < 24) {
                 this._handleClick(e);
             }
         });
@@ -632,16 +643,15 @@ export class TowerRenderer {
         this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersectableMeshes = [];
+        // Direct, high-precision intersection on primary block domino meshes
+        const candidateMeshes = [];
         for (const item of this.blockMeshes.values()) {
-            item.group.traverse((child) => {
-                if (child.isMesh) {
-                    intersectableMeshes.push(child);
-                }
-            });
+            if (item.mesh) {
+                candidateMeshes.push(item.mesh);
+            }
         }
 
-        const intersects = this.raycaster.intersectObjects(intersectableMeshes, false);
+        const intersects = this.raycaster.intersectObjects(candidateMeshes, false);
         if (intersects.length > 0) {
             const hitMesh = intersects[0].object;
             const blockId = hitMesh.userData.blockId;
@@ -678,7 +688,7 @@ export class TowerRenderer {
         const plateMat = new THREE.MeshStandardMaterial({
             color: this.isDarkTheme ? 0x1e293b : 0xe2e8f0,
             roughness: 0.85,
-            metalness: 0.05
+            metalness: 0.15
         });
         this.basePlate = new THREE.Mesh(plateGeo, plateMat);
         this.basePlate.position.set(0, -0.2, 0);
@@ -807,7 +817,7 @@ export class TowerRenderer {
         }
 
         const dir = item.model.direction || { x: 0, y: 0, z: 0 };
-        const nudgeDist = 0.14;
+        const nudgeDist = 0.18;
 
         // Strictly horizontal nudge along the block's long axis (gentle drawer slide effect)
         const targetPos = isSelected
@@ -835,11 +845,11 @@ export class TowerRenderer {
         };
         item._elevAnimFrame = requestAnimationFrame(animateElevation);
 
-        // Subtle, elegant emissive tint on selection
+        // Vivid emissive tint on selection for instant visual clarity
         item.materials.forEach((mat) => {
             if (isSelected) {
-                mat.emissive.set(0x38bdf8); // Soft sky pearl tint
-                mat.emissiveIntensity = 0.10; // Unobtrusive gentle highlight
+                mat.emissive.set(0x38bdf8); // Sky blue neon highlight
+                mat.emissiveIntensity = 0.28; // Crystal-clear noticeable glow
             } else {
                 mat.emissive.set(0x000000);
                 mat.emissiveIntensity = 0.0;
