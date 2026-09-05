@@ -292,29 +292,55 @@ export class TopologyGenerator {
             const quoteObj = TopologyGenerator.QUOTES[(currentLevel - 1) % TopologyGenerator.QUOTES.length];
             const rawQuote = quoteObj.quote;
             // Extract letter characters only (A-Z)
-            const lettersOnly = [];
-            for (let i = 0; i < rawQuote.length; i++) {
-                const ch = rawQuote[i].toUpperCase();
-                if (ch >= 'A' && ch <= 'Z') {
-                    lettersOnly.push({ char: ch, rawIndex: i });
+            // Split quote into words to create natural consecutive letter pairs word-by-word
+            const words = rawQuote.split(/\s+/).filter(w => w.length > 0);
+            const quotePairs = [];
+            const leftoverSingles = [];
+
+            let rawPos = 0;
+            for (const word of words) {
+                const wordStart = rawQuote.indexOf(word, rawPos);
+                rawPos = wordStart + word.length;
+
+                const wordLetters = [];
+                for (let k = 0; k < word.length; k++) {
+                    const ch = word[k].toUpperCase();
+                    if (ch >= 'A' && ch <= 'Z') {
+                        wordLetters.push({ char: ch, rawIndex: wordStart + k });
+                    }
+                }
+
+                // Pair consecutive letters within this word
+                for (let i = 0; i < wordLetters.length - 1; i += 2) {
+                    quotePairs.push({
+                        pairId: quotePairs.length + 1,
+                        char1: wordLetters[i].char,
+                        char2: wordLetters[i + 1].char,
+                        index1: wordLetters[i].rawIndex,
+                        index2: wordLetters[i + 1].rawIndex
+                    });
+                }
+
+                // If word has odd length, keep the last letter
+                if (wordLetters.length % 2 === 1) {
+                    leftoverSingles.push(wordLetters[wordLetters.length - 1]);
                 }
             }
 
-            // Create consecutive pairs from the quote letters
-            const quotePairs = [];
-            for (let i = 0; i < lettersOnly.length - 1; i += 2) {
+            // Pair leftover odd letters from words together
+            for (let i = 0; i < leftoverSingles.length - 1; i += 2) {
                 quotePairs.push({
                     pairId: quotePairs.length + 1,
-                    char1: lettersOnly[i].char,
-                    char2: lettersOnly[i + 1].char,
-                    index1: lettersOnly[i].rawIndex,
-                    index2: lettersOnly[i + 1].rawIndex
+                    char1: leftoverSingles[i].char,
+                    char2: leftoverSingles[i + 1].char,
+                    index1: leftoverSingles[i].rawIndex,
+                    index2: leftoverSingles[i + 1].rawIndex
                 });
             }
 
-            // If odd count of letters in the quote, pad with a closing letter pair or duplicate
-            if (lettersOnly.length % 2 === 1) {
-                const last = lettersOnly[lettersOnly.length - 1];
+            // If an odd single remains overall, pair with itself
+            if (leftoverSingles.length % 2 === 1) {
+                const last = leftoverSingles[leftoverSingles.length - 1];
                 quotePairs.push({
                     pairId: quotePairs.length + 1,
                     char1: last.char,
