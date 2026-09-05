@@ -15,6 +15,7 @@ class Sum10Game {
         this.toastElem = document.getElementById('toast-msg');
         this.btnRetry = document.getElementById('btn-retry');
         this.btnShuffle = document.getElementById('btn-shuffle');
+        this.btnBarShuffle = document.getElementById('btn-bar-shuffle');
         this.btnSound = document.getElementById('btn-sound');
         this.iconSound = document.getElementById('icon-sound');
         this.btnTheme = document.getElementById('btn-theme');
@@ -164,6 +165,9 @@ class Sum10Game {
 
         if (this.btnShuffle) {
             this.btnShuffle.addEventListener('click', () => this.handleShuffle());
+        }
+        if (this.btnBarShuffle) {
+            this.btnBarShuffle.addEventListener('click', () => this.handleShuffle());
         }
 
         this.startLevel(this.currentLevel);
@@ -424,6 +428,7 @@ class Sum10Game {
                     this.renderer.setBlockSelected(second.id, false);
                     this.selectedBlock = null;
                     this._updateSelectionUI(null, null);
+                    this._checkDeadlock();
                 }, 500);
                 return;
             }

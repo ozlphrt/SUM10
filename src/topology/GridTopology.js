@@ -276,7 +276,7 @@ export class GridTopology {
      * @param {{x: number, y: number, z: number}} dir 
      * @returns {{canExit: boolean, stepsToExit: number}}
      */
-    _checkSlideInDirection(block, dir) {
+    _checkSlideInDirection(block, dir, partnerBlock = null) {
         let steps = 0;
         const maxSteps = this.gridSize * 2;
         const currentVoxels = block.getOccupiedVoxels();
@@ -294,8 +294,8 @@ export class GridTopology {
                 if (this.isInBounds(targetX, targetY, targetZ)) {
                     allExited = false;
                     const occupantId = this.voxelMap.get(GridTopology.toKey(targetX, targetY, targetZ));
-                    // Obstructed by another block
-                    if (occupantId && occupantId !== block.id) {
+                    // Obstructed by another block (excluding self and partner)
+                    if (occupantId && occupantId !== block.id && (!partnerBlock || occupantId !== partnerBlock.id)) {
                         return { canExit: false, stepsToExit: steps };
                     }
                 }
@@ -333,7 +333,7 @@ export class GridTopology {
 
         const candidateResults = axisDirs.map((dir) => ({
             dir,
-            ...this._checkSlideInDirection(block, dir)
+            ...this._checkSlideInDirection(block, dir, partnerBlock)
         }));
 
         const clearResults = candidateResults.filter((r) => r.canExit);
@@ -398,26 +398,39 @@ export class GridTopology {
      * - Any pair of unblocked blocks summing to 10
      * @returns {boolean}
      */
+    /**
+     * Checks if there is at least one playable move right now:
+     * - Any active bomb (can always be detonated)
+     * - Any unblocked Wildcard paired with any unblocked block that can slide out jointly
+     * - Any pair of blocks summing to 10 that can be paired AND can both slide out jointly
+     * @returns {boolean}
+     */
     hasAnyValidMove() {
         const active = Array.from(this.blocks.values());
         if (active.length === 0) return true; // Cleared
 
         // If a bomb exists, it's always an available tactical move
         if (active.some((b) => b.type === 'bomb')) return true;
+        if (active.length < 2) return false;
 
-        // Filter blocks that currently have clear exit paths
-        const clearBlocks = active.filter((b) => this.canBlockSlideOut(b).canExit);
-        if (clearBlocks.length < 2) return false;
+        // Check every pair of active blocks
+        for (let i = 0; i < active.length; i++) {
+            for (let j = i + 1; j < active.length; j++) {
+                const b1 = active[i];
+                const b2 = active[j];
 
-        // Check if any two clear blocks can be paired and form a valid match
-        for (let i = 0; i < clearBlocks.length; i++) {
-            for (let j = i + 1; j < clearBlocks.length; j++) {
-                const b1 = clearBlocks[i];
-                const b2 = clearBlocks[j];
-                // Both must be pairable (physically adjacent or isolated/endgame)
-                if (this.canBlocksBePaired(b1, b2)) {
-                    if (b1.type === 'wild' || b2.type === 'wild') return true;
-                    if (b1.value + b2.value === 10) return true;
+                // 1. Must be eligible for pairing (adjacent, or endgame <= 2, or isolated)
+                if (!this.canBlocksBePaired(b1, b2)) continue;
+
+                // 2. Must form a valid match (Wildcard or sum === 10)
+                const isWild = b1.type === 'wild' || b2.type === 'wild';
+                if (!isWild && b1.value + b2.value !== 10) continue;
+
+                // 3. Both blocks must have an unobstructed slide path when considering each other
+                const exit1 = this.canBlockSlideOut(b1, b2);
+                const exit2 = this.canBlockSlideOut(b2, b1);
+                if (exit1.canExit && exit2.canExit) {
+                    return true;
                 }
             }
         }
@@ -433,29 +446,60 @@ export class GridTopology {
         const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
         if (active.length < 2) return;
 
-        // Find clear exit blocks that can slide out right now
-        const clearBlocks = Array.from(this.blocks.values()).filter((b) => this.canBlockSlideOut(b).canExit && b.type === 'normal');
+        // Find blocks that have an exit path
+        const clearBlocks = active.filter((b) => this.canBlockSlideOut(b).canExit);
 
         const pairedIds = new Set();
         let paired = false;
 
-        // 1. First priority: look for two unblocked blocks that can be paired (adjacent or isolated)
+        // 1. First priority: find two unblocked blocks that can mutually pair AND both slide out jointly
         for (let i = 0; i < clearBlocks.length; i++) {
             for (let j = i + 1; j < clearBlocks.length; j++) {
-                if (this.canBlocksBePaired(clearBlocks[i], clearBlocks[j])) {
-                    const v1 = Math.floor(Math.random() * 9) + 1;
-                    clearBlocks[i].value = v1;
-                    clearBlocks[j].value = 10 - v1;
-                    pairedIds.add(clearBlocks[i].id);
-                    pairedIds.add(clearBlocks[j].id);
-                    paired = true;
-                    break;
+                const b1 = clearBlocks[i];
+                const b2 = clearBlocks[j];
+                if (this.canBlocksBePaired(b1, b2)) {
+                    const exit1 = this.canBlockSlideOut(b1, b2);
+                    const exit2 = this.canBlockSlideOut(b2, b1);
+                    if (exit1.canExit && exit2.canExit) {
+                        const v1 = Math.floor(Math.random() * 9) + 1;
+                        b1.value = v1;
+                        b2.value = 10 - v1;
+                        pairedIds.add(b1.id);
+                        pairedIds.add(b2.id);
+                        paired = true;
+                        break;
+                    }
                 }
             }
             if (paired) break;
         }
 
-        // 2. If no two clear blocks are mutually pairable, pair an unblocked block with its adjacent neighbor
+        // 2. If no pair of already-clear blocks can exit jointly, find ANY pair of blocks that can be paired
+        // and both slide out jointly
+        if (!paired) {
+            for (let i = 0; i < active.length; i++) {
+                for (let j = i + 1; j < active.length; j++) {
+                    const b1 = active[i];
+                    const b2 = active[j];
+                    if (this.canBlocksBePaired(b1, b2)) {
+                        const exit1 = this.canBlockSlideOut(b1, b2);
+                        const exit2 = this.canBlockSlideOut(b2, b1);
+                        if (exit1.canExit && exit2.canExit) {
+                            const v1 = Math.floor(Math.random() * 9) + 1;
+                            b1.value = v1;
+                            b2.value = 10 - v1;
+                            pairedIds.add(b1.id);
+                            pairedIds.add(b2.id);
+                            paired = true;
+                            break;
+                        }
+                    }
+                }
+                if (paired) break;
+            }
+        }
+
+        // 3. Fallback: If still not paired, pair any clear block with an adjacent neighbor
         if (!paired && clearBlocks.length > 0) {
             for (const b1 of clearBlocks) {
                 const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
@@ -472,10 +516,10 @@ export class GridTopology {
             }
         }
 
-        // 2b. If still not paired and at least 2 clear blocks exist, force-pair any two clear blocks to 10
-        if (!paired && clearBlocks.length >= 2) {
-            const b1 = clearBlocks[0];
-            const b2 = clearBlocks[1];
+        // 4. Force pair any two active blocks if all else fails
+        if (!paired && active.length >= 2) {
+            const b1 = active[0];
+            const b2 = active[1];
             const v1 = Math.floor(Math.random() * 9) + 1;
             b1.value = v1;
             b2.value = 10 - v1;
@@ -484,13 +528,16 @@ export class GridTopology {
             paired = true;
         }
 
-        // 3. Shuffle values of remaining active blocks in adjacent pairs, strictly excluding already paired blocks
+        // 5. Shuffle values of remaining active blocks in pairs summing to 10
         const remainingNormal = active.filter((b) => !pairedIds.has(b.id));
         for (let i = 0; i < remainingNormal.length - 1; i += 2) {
             const v1 = Math.floor(Math.random() * 9) + 1;
             const v2 = 10 - v1;
             remainingNormal[i].value = v1;
             remainingNormal[i + 1].value = v2;
+        }
+        if (remainingNormal.length % 2 === 1) {
+            remainingNormal[remainingNormal.length - 1].value = Math.floor(Math.random() * 9) + 1;
         }
     }
 

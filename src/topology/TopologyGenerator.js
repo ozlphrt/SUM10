@@ -426,34 +426,7 @@ export class TopologyGenerator {
 
         // Guarantee at least one valid adjacent move is immediately open from the start
         if (!topology.hasAnyValidMove()) {
-            const clearBlocks = Array.from(topology.blocks.values())
-                .filter((b) => topology.canBlockSlideOut(b).canExit && b.type === 'normal');
-
-            let fixed = false;
-            for (let i = 0; i < clearBlocks.length; i++) {
-                for (let j = i + 1; j < clearBlocks.length; j++) {
-                    if (topology.areBlocksAdjacent(clearBlocks[i], clearBlocks[j])) {
-                        const v1 = this._randInt(1, 9);
-                        clearBlocks[i].value = v1;
-                        clearBlocks[j].value = 10 - v1;
-                        fixed = true;
-                        break;
-                    }
-                }
-                if (fixed) break;
-            }
-
-            // Fallback: link a clear block with its adjacent neighbor
-            if (!fixed && clearBlocks.length > 0) {
-                const b1 = clearBlocks[0];
-                const neighbors = Array.from(topology.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
-                if (neighbors.length > 0) {
-                    const b2 = neighbors[0];
-                    const v1 = this._randInt(1, 9);
-                    b1.value = v1;
-                    b2.value = 10 - v1;
-                }
-            }
+            topology.shuffleDeadlock();
         }
     }
 }
