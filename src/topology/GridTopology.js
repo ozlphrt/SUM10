@@ -469,11 +469,10 @@ export class GridTopology {
      */
     hasAnyValidMove() {
         const active = Array.from(this.blocks.values());
-        if (active.length === 0) return true; // Cleared
+        if (active.length <= 1) return true; // Cleared or final block ready to be tapped out
 
         // If a bomb exists, it's always an available tactical move
         if (active.some((b) => b.type === 'bomb')) return true;
-        if (active.length < 2) return false;
 
         // Check every pair of active blocks
         for (let i = 0; i < active.length; i++) {

@@ -410,12 +410,11 @@ export class TopologyGenerator {
         const normalBlocks = Array.from(topology.blocks.values()).filter((b) => b.type === 'normal');
         if (normalBlocks.length === 0) return;
 
-        // If there's an odd number of normal blocks (e.g. if a single special block was placed),
-        // remove one block or make the last normal block a wild so the normal block count is strictly even
+        // If there's an odd number of normal blocks (e.g. if an uneven number of blocks was placed),
+        // remove the odd block completely from the topology so the total block count is strictly even and 100% paired
         if (normalBlocks.length % 2 === 1) {
             const oddBlock = normalBlocks.pop();
-            oddBlock.type = 'wild';
-            oddBlock.value = 10;
+            topology.removeBlock(oddBlock.id);
         }
 
         // Shuffle candidate list for variety across runs

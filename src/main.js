@@ -498,6 +498,30 @@ class Sum10Game {
             return;
         }
 
+        // SPECIAL: If only 1 block is left on the board (e.g. wildcard or after bomb detonation),
+        // clicking it immediately launches it out as a victory clear!
+        if (this.topology.blocks.size === 1) {
+            this.isProcessingMatch = true;
+            this.renderer.hideExitBeam();
+            this.renderer.setBlockSelected(block.id, true);
+            sound.playWildChime();
+            this.showToast('✨ Final Block Cleared! +150 PTS', 1500);
+
+            setTimeout(() => {
+                sound.playFlick(block.length || 1);
+                this.renderer.flyOutBlocks([block.id]);
+                this.topology.removeBlock(block.id);
+                this.selectedBlock = null;
+                this._updateSelectionUI(null, null);
+                this.renderer.clearAllHighlights();
+                this.isProcessingMatch = false;
+                this.score += 150;
+                this.updateStats();
+                this._showLevelCompleteModal();
+            }, 80);
+            return;
+        }
+
         // Clicking the already selected block deselects it
         if (this.selectedBlock && this.selectedBlock.id === block.id) {
             const blockId = block.id;
