@@ -265,7 +265,7 @@ class Sum10Game {
         this.renderer.applyLevelTheme(level);
 
         this.updateStats();
-        this.showToast(`🏰 Level ${level}: ${config.shapeName} (Par ${this.parMoves}) — Sum to 10!`, 2500);
+        this.showToast(`Level ${level} • ${config.shapeName}`, 2000);
         this._checkDeadlock();
     }
 
@@ -274,7 +274,7 @@ class Sum10Game {
         const hasMove = this.topology.hasAnyValidMove();
         if (!hasMove) {
             if (this.btnShuffle) this.btnShuffle.style.display = 'flex';
-            this.showToast('⚠️ No unblocked pairs left! Tap Shuffle to break deadlock.', 4000);
+            this.showToast('⚠️ No moves left — tap Shuffle!', 3500);
         } else {
             if (this.btnShuffle) this.btnShuffle.style.display = 'none';
         }
@@ -377,7 +377,7 @@ class Sum10Game {
         const isAdjacent = this.topology.areBlocksAdjacent(first, second);
         if (!isAdjacent) {
             sound.playMismatch();
-            this.showToast('⚠️ Too far apart! You can only pair touching adjacent blocks.', 2200);
+            this.showToast('⚠️ Must be adjacent blocks', 1800);
             this.renderer.shakeBlock(second.id);
             return;
         }
@@ -404,14 +404,14 @@ class Sum10Game {
             if (!exitFirst.canExit || !exitSecond.canExit) {
                 sound.playMismatch();
                 if (!exitFirst.canExit && !exitSecond.canExit) {
-                    this.showToast('🚫 Both blocks are blocked! Clear their exit paths first.');
+                    this.showToast('🚫 Path blocked — clear exit route');
                     this.renderer.shakeBlock(first.id);
                     this.renderer.shakeBlock(second.id);
                 } else if (!exitFirst.canExit) {
-                    this.showToast(`🚫 Block [${firstDisp}] is obstructed! Clear its path first.`);
+                    this.showToast(`🚫 Block [${firstDisp}] is obstructed`);
                     this.renderer.shakeBlock(first.id);
                 } else {
-                    this.showToast(`🚫 Block [${secondDisp}] is obstructed! Clear its path first.`);
+                    this.showToast(`🚫 Block [${secondDisp}] is obstructed`);
                     this.renderer.shakeBlock(second.id);
                 }
 
