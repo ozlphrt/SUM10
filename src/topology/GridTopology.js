@@ -154,6 +154,19 @@ export class GridTopology {
     }
 
     /**
+     * Determines whether two blocks are physically adjacent in 3D
+     * (sharing a face or edge along X, Y, or Z).
+     * @param {BlockModel} blockA 
+     * @param {BlockModel} blockB 
+     * @returns {boolean}
+     */
+    areBlocksAdjacent(blockA, blockB) {
+        if (!blockA || !blockB || blockA.id === blockB.id) return false;
+        const neighbors = this.getNeighborBlocks(blockA.id);
+        return neighbors.has(blockB);
+    }
+
+    /**
      * Simulates downward gravity fall for any blocks that have lost support.
      * Iterates from bottom to top so lower drops happen first.
      * @returns {Array<{ block: BlockModel, oldGridY: number, newGridY: number, dropLayers: number }>}
@@ -353,14 +366,15 @@ export class GridTopology {
         const clearBlocks = active.filter((b) => this.canBlockSlideOut(b).canExit);
         if (clearBlocks.length < 2) return false;
 
-        // If any wildcard is clear, it can pair with any other clear block
-        if (clearBlocks.some((b) => b.type === 'wild')) return true;
-
-        // Check if any two clear blocks sum to 10
+        // Check if any two clear blocks are adjacent and form a valid match
         for (let i = 0; i < clearBlocks.length; i++) {
             for (let j = i + 1; j < clearBlocks.length; j++) {
-                if (clearBlocks[i].value + clearBlocks[j].value === 10) {
-                    return true;
+                const b1 = clearBlocks[i];
+                const b2 = clearBlocks[j];
+                // Both must be physically adjacent in 3D
+                if (this.areBlocksAdjacent(b1, b2)) {
+                    if (b1.type === 'wild' || b2.type === 'wild') return true;
+                    if (b1.value + b2.value === 10) return true;
                 }
             }
         }
@@ -370,7 +384,7 @@ export class GridTopology {
 
     /**
      * Shuffles values among remaining blocks to break deadlocks and guarantee
-     * that at least one clear exit pair sums to 10.
+     * that at least one clear exit pair is adjacent and sums to 10.
      */
     shuffleDeadlock() {
         const active = Array.from(this.blocks.values()).filter((b) => b.type === 'normal');
@@ -379,17 +393,34 @@ export class GridTopology {
         // Find clear exit blocks
         const clearBlocks = Array.from(this.blocks.values()).filter((b) => this.canBlockSlideOut(b).canExit && b.type === 'normal');
 
-        if (clearBlocks.length >= 2) {
-            // Pick two clear blocks and ensure their values sum to 10
-            const b1 = clearBlocks[0];
-            const b2 = clearBlocks[1];
-            const v1 = Math.floor(Math.random() * 9) + 1;
-            const v2 = 10 - v1;
-            b1.value = v1;
-            b2.value = v2;
+        // Look for an adjacent pair among clear blocks
+        let paired = false;
+        for (let i = 0; i < clearBlocks.length; i++) {
+            for (let j = i + 1; j < clearBlocks.length; j++) {
+                if (this.areBlocksAdjacent(clearBlocks[i], clearBlocks[j])) {
+                    const v1 = Math.floor(Math.random() * 9) + 1;
+                    clearBlocks[i].value = v1;
+                    clearBlocks[j].value = 10 - v1;
+                    paired = true;
+                    break;
+                }
+            }
+            if (paired) break;
         }
 
-        // Shuffle values of the remaining active blocks in pairs
+        // If no two clear blocks are currently adjacent, link a clear block with its adjacent neighbor
+        if (!paired && clearBlocks.length > 0) {
+            const b1 = clearBlocks[0];
+            const neighbors = Array.from(this.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
+            if (neighbors.length > 0) {
+                const b2 = neighbors[0];
+                const v1 = Math.floor(Math.random() * 9) + 1;
+                b1.value = v1;
+                b2.value = 10 - v1;
+            }
+        }
+
+        // Shuffle values of remaining active blocks in adjacent pairs
         const remainingNormal = active.filter((b) => !clearBlocks.slice(0, 2).includes(b));
         for (let i = 0; i < remainingNormal.length - 1; i += 2) {
             const v1 = Math.floor(Math.random() * 9) + 1;

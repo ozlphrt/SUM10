@@ -351,18 +351,28 @@ class Sum10Game {
             this._updateSelectionUI(displayVal, null);
             sound.playSelect(block.length);
             if (block.type === 'wild') {
-                this.showToast('🌟 Wildcard selected! Tap ANY block to match!');
+                this.showToast('🌟 Wildcard selected! Tap an adjacent block to match!');
             } else {
                 const needed = 10 - block.value;
-                this.showToast(`Selected [${block.value}]. Tap a [${needed}] or [★]!`);
+                this.showToast(`Selected [${block.value}]. Tap an adjacent [${needed}] or [★]!`);
             }
             return;
         }
 
-        // Second block selected -> evaluate sum
-        this.renderer.hideExitBeam();
         const first = this.selectedBlock;
         const second = block;
+
+        // Check physical 3D adjacency: blocks must touch each other along X, Y, or Z
+        const isAdjacent = this.topology.areBlocksAdjacent(first, second);
+        if (!isAdjacent) {
+            sound.playMismatch();
+            this.showToast('⚠️ Too far apart! You can only pair touching adjacent blocks.', 2200);
+            this.renderer.shakeBlock(second.id);
+            return;
+        }
+
+        // Adjacent partner tapped -> evaluate pair
+        this.renderer.hideExitBeam();
         this.renderer.setBlockSelected(second.id, true);
         this.movesCount++;
         this.updateStats();

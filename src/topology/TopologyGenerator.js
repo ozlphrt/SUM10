@@ -368,6 +368,92 @@ export class TopologyGenerator {
             }
         }
 
+        // 3. Post-placement adjacent pairing pass:
+        // Guarantees all normal blocks are paired with touching adjacent neighbors summing to 10
+        this._assignAdjacentPairValues(topology);
+
         return topology;
+    }
+
+    /**
+     * Traverses placed blocks in 3D and assigns values 1-9 such that physically touching
+     * adjacent blocks form pairs that sum to 10, ensuring solvable gameplay under the adjacency rule.
+     * @param {GridTopology} topology 
+     */
+    _assignAdjacentPairValues(topology) {
+        const normalBlocks = Array.from(topology.blocks.values()).filter((b) => b.type === 'normal');
+        if (normalBlocks.length === 0) return;
+
+        // Shuffle candidate list for variety across runs
+        for (let i = normalBlocks.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [normalBlocks[i], normalBlocks[j]] = [normalBlocks[j], normalBlocks[i]];
+        }
+
+        const pairedIds = new Set();
+
+        for (const block of normalBlocks) {
+            if (pairedIds.has(block.id)) continue;
+
+            // Find available touching neighbors
+            const neighbors = Array.from(topology.getNeighborBlocks(block.id))
+                .filter((n) => n.type === 'normal' && !pairedIds.has(n.id));
+
+            if (neighbors.length > 0) {
+                const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
+                const v1 = this._randInt(1, 9);
+                const v2 = 10 - v1;
+                block.value = v1;
+                partner.value = v2;
+                pairedIds.add(block.id);
+                pairedIds.add(partner.id);
+            }
+        }
+
+        // Any leftover blocks without unpaired neighbors get linked to an existing neighbor
+        for (const block of normalBlocks) {
+            if (!pairedIds.has(block.id)) {
+                const neighbors = Array.from(topology.getNeighborBlocks(block.id)).filter((n) => n.type === 'normal');
+                if (neighbors.length > 0) {
+                    const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    block.value = 10 - partner.value;
+                } else {
+                    block.value = this._randInt(1, 9);
+                }
+                pairedIds.add(block.id);
+            }
+        }
+
+        // Guarantee at least one valid adjacent move is immediately open from the start
+        if (!topology.hasAnyValidMove()) {
+            const clearBlocks = Array.from(topology.blocks.values())
+                .filter((b) => topology.canBlockSlideOut(b).canExit && b.type === 'normal');
+
+            let fixed = false;
+            for (let i = 0; i < clearBlocks.length; i++) {
+                for (let j = i + 1; j < clearBlocks.length; j++) {
+                    if (topology.areBlocksAdjacent(clearBlocks[i], clearBlocks[j])) {
+                        const v1 = this._randInt(1, 9);
+                        clearBlocks[i].value = v1;
+                        clearBlocks[j].value = 10 - v1;
+                        fixed = true;
+                        break;
+                    }
+                }
+                if (fixed) break;
+            }
+
+            // Fallback: link a clear block with its adjacent neighbor
+            if (!fixed && clearBlocks.length > 0) {
+                const b1 = clearBlocks[0];
+                const neighbors = Array.from(topology.getNeighborBlocks(b1.id)).filter((n) => n.type === 'normal');
+                if (neighbors.length > 0) {
+                    const b2 = neighbors[0];
+                    const v1 = this._randInt(1, 9);
+                    b1.value = v1;
+                    b2.value = 10 - v1;
+                }
+            }
+        }
     }
 }
