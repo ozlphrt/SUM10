@@ -237,15 +237,13 @@ export class GridTopology {
     /**
      * Checks if a block has an unobstructed path to slide out of the tower
      * along its assigned escape direction.
+    /**
+     * Checks if a block has an unobstructed path to slide out in a specific direction.
      * @param {BlockModel} block 
+     * @param {{x: number, y: number, z: number}} dir 
      * @returns {{canExit: boolean, stepsToExit: number}}
      */
-    canBlockSlideOut(block) {
-        const dir = block.direction;
-        if (!dir || (dir.x === 0 && dir.y === 0 && dir.z === 0)) {
-            return { canExit: false, stepsToExit: 0 };
-        }
-
+    _checkSlideInDirection(block, dir) {
         let steps = 0;
         const maxSteps = this.gridSize * 2;
         const currentVoxels = block.getOccupiedVoxels();
@@ -276,6 +274,47 @@ export class GridTopology {
         }
 
         return { canExit: false, stepsToExit: steps };
+    }
+
+    /**
+     * Checks if a block has an unobstructed path to slide out of the tower
+     * bidirectionally along its long axis (either positive or negative direction).
+     * Automatically assigns the clearer/shorter escape direction to the block.
+     * @param {BlockModel} block 
+     * @returns {{canExit: boolean, stepsToExit: number, direction: {x: number, y: number, z: number}}}
+     */
+    canBlockSlideOut(block) {
+        // Evaluate both directions along the block's long axis
+        const axisDirs = (block.orientation === 'X')
+            ? [{ x: -1, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }]
+            : [{ x: 0, y: 0, z: -1 }, { x: 0, y: 0, z: 1 }];
+
+        const candidateResults = axisDirs.map((dir) => ({
+            dir,
+            ...this._checkSlideInDirection(block, dir)
+        }));
+
+        const clearResults = candidateResults.filter((r) => r.canExit);
+
+        if (clearResults.length > 0) {
+            // If both directions are clear, choose the path with fewer steps to exit (closer to edge)
+            clearResults.sort((a, b) => a.stepsToExit - b.stepsToExit);
+            block.direction = { ...clearResults[0].dir };
+            return {
+                canExit: true,
+                stepsToExit: clearResults[0].stepsToExit,
+                direction: clearResults[0].dir
+            };
+        }
+
+        // If blocked in both directions, pick direction with the longest clearance for shake/nudge
+        candidateResults.sort((a, b) => b.stepsToExit - a.stepsToExit);
+        block.direction = { ...candidateResults[0].dir };
+        return {
+            canExit: false,
+            stepsToExit: candidateResults[0].stepsToExit,
+            direction: candidateResults[0].dir
+        };
     }
 
     /**

@@ -134,29 +134,33 @@ export function getBlockTexture(value, length = 1, orientation = 'X', direction 
         ctx.fillText(String(value), width / 2, height / 2 - 6);
     }
 
-    // Subtle arrow icon indicating sliding direction
+    // Bidirectional double-headed arrow icon indicating sliding along long axis
     ctx.save();
     ctx.translate(width / 2, height - 36);
 
-    let angle = 0;
-    if (orientation === 'X') {
-        angle = direction.x > 0 ? 0 : Math.PI;
-    } else if (orientation === 'Z') {
-        angle = direction.z > 0 ? Math.PI / 2 : -Math.PI / 2;
-    } else {
-        angle = direction.x > 0 ? 0 : (direction.x < 0 ? Math.PI : (direction.z > 0 ? Math.PI / 2 : -Math.PI / 2));
-    }
+    const angle = (orientation === 'Z') ? Math.PI / 2 : 0;
     ctx.rotate(angle);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
+
     ctx.beginPath();
-    ctx.moveTo(12, 0);
-    ctx.lineTo(-6, -8);
-    ctx.lineTo(-6, -3);
-    ctx.lineTo(-14, -3);
-    ctx.lineTo(-14, 3);
-    ctx.lineTo(-6, 3);
-    ctx.lineTo(-6, 8);
+    // Right arrowhead (+ direction)
+    ctx.moveTo(18, 0);
+    ctx.lineTo(10, -7);
+    ctx.lineTo(10, -3);
+    // Shaft connecting arrows
+    ctx.lineTo(-10, -3);
+    // Left arrowhead (- direction)
+    ctx.lineTo(-10, -7);
+    ctx.lineTo(-18, 0);
+    ctx.lineTo(-10, 7);
+    ctx.lineTo(-10, 3);
+    // Shaft return
+    ctx.lineTo(10, 3);
+    // Right arrowhead return
+    ctx.lineTo(10, 7);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
