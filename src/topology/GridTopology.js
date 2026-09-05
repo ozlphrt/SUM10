@@ -420,13 +420,8 @@ export class GridTopology {
         const mode = this.mode || 'sum10';
         if (mode === 'sum20') {
             return Number(b1.value) + Number(b2.value) === 20;
-        } else if (mode === 'shapes') {
-            return String(b1.value) === String(b2.value);
-        } else if (mode === 'alphabet') {
-            // Mirror cipher: charCode1 + charCode2 === 65 + 90 = 155
-            const c1 = String(b1.value).toUpperCase().charCodeAt(0);
-            const c2 = String(b2.value).toUpperCase().charCodeAt(0);
-            return c1 + c2 === 155;
+        } else if (mode === 'shapes' || mode === 'alphabet') {
+            return String(b1.value).toUpperCase() === String(b2.value).toUpperCase();
         } else {
             // Default sum10
             return Number(b1.value) + Number(b2.value) === 10;
@@ -450,10 +445,9 @@ export class GridTopology {
             const s = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             return [s, s];
         } else if (mode === 'alphabet') {
-            const idx = Math.floor(Math.random() * 13);
-            const char1 = String.fromCharCode(65 + idx);
-            const char2 = String.fromCharCode(90 - idx);
-            return Math.random() < 0.5 ? [char1, char2] : [char2, char1];
+            const idx = Math.floor(Math.random() * 26);
+            const char = String.fromCharCode(65 + idx);
+            return [char, char];
         } else {
             const v1 = Math.floor(Math.random() * 9) + 1;
             return [v1, 10 - v1];
@@ -608,11 +602,11 @@ export class GridTopology {
                     pool.push([s, s]);
                 }
             } else {
+                const LETTERS = [];
+                for (let c = 65; c <= 90; c++) LETTERS.push(String.fromCharCode(c));
                 for (let i = 0; i < half; i++) {
-                    const idx = i % 13;
-                    const c1 = String.fromCharCode(65 + idx);
-                    const c2 = String.fromCharCode(90 - idx);
-                    pool.push(Math.random() < 0.5 ? [c1, c2] : [c2, c1]);
+                    const char = LETTERS[i % LETTERS.length];
+                    pool.push([char, char]);
                 }
             }
             for (let i = pool.length - 1; i > 0; i--) {

@@ -113,11 +113,10 @@ export class TopologyGenerator {
             const shape = SHAPES[this._randInt(0, SHAPES.length - 1)];
             return [shape, shape]; // Identical matching pairs
         } else if (mode === 'alphabet') {
-            // Mirror cipher: A <-> Z, B <-> Y, C <-> X, ..., M <-> N
-            const idx = this._randInt(0, 12); // A through M
-            const char1 = String.fromCharCode(65 + idx);
-            const char2 = String.fromCharCode(90 - idx);
-            return Math.random() < 0.5 ? [char1, char2] : [char2, char1];
+            // Full alphabet A-Z: Identical matching letter pairs (A=A, B=B, ...)
+            const idx = this._randInt(0, 25); // A through Z (26 letters)
+            const char = String.fromCharCode(65 + idx);
+            return [char, char];
         } else {
             // Default sum10: 1 to 9 summing to 10
             const v1 = this._randInt(1, 9);
@@ -500,11 +499,12 @@ export class TopologyGenerator {
                 pairValuePool.push([s, s]);
             }
         } else if (mode === 'alphabet') {
+            // Full alphabet A-Z: Balanced distribution of identical matching letter pairs
+            const LETTERS = [];
+            for (let c = 65; c <= 90; c++) LETTERS.push(String.fromCharCode(c));
             for (let i = 0; i < totalPairs; i++) {
-                const idx = i % 13;
-                const c1 = String.fromCharCode(65 + idx);
-                const c2 = String.fromCharCode(90 - idx);
-                pairValuePool.push(Math.random() < 0.5 ? [c1, c2] : [c2, c1]);
+                const char = LETTERS[i % LETTERS.length];
+                pairValuePool.push([char, char]);
             }
         } else if (mode === 'sum20') {
             for (let i = 0; i < totalPairs; i++) {

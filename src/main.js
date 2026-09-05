@@ -310,7 +310,7 @@ class Sum10Game {
             sum10: { icon: '🔣', name: 'SUM 10', target: '10', op1: '+', op2: '=' },
             sum20: { icon: '🔢', name: 'SUM 20', target: '20', op1: '+', op2: '=' },
             shapes: { icon: '🔷', name: 'SHAPES', target: 'MATCH', op1: '=', op2: '➔' },
-            alphabet: { icon: '🔤', name: 'MIRROR', target: 'AZ', op1: '↔', op2: '➔' }
+            alphabet: { icon: '🔤', name: 'LETTERS', target: 'MATCH', op1: '=', op2: '➔' }
         };
         const info = MODE_INFO[this.gameMode] || MODE_INFO.sum10;
         if (this.valModeIcon) this.valModeIcon.textContent = info.icon;
@@ -420,9 +420,9 @@ class Sum10Game {
         this._saveProgress();
     }
 
-    _updateSelectionUI(val1 = null, val2 = null) {
+    _updateSelectionUI(firstBlock = null, secondBlock = null) {
         const eqPill = document.getElementById('zen-equation');
-        if (val1 === null) {
+        if (!firstBlock) {
             if (eqPill) eqPill.classList.remove('active');
             if (this.slot1Elem) this.slot1Elem.textContent = '?';
             if (this.slot2Elem) this.slot2Elem.textContent = '?';
@@ -447,6 +447,9 @@ class Sum10Game {
                 return String(v);
             };
 
+            const val1 = firstBlock.value;
+            const val2 = secondBlock ? secondBlock.value : null;
+
             if (this.slot1Elem) this.slot1Elem.textContent = formatVal(val1);
             if (this.slot2Elem) {
                 if (val2 !== null) {
@@ -455,15 +458,8 @@ class Sum10Game {
                     this.slot2Elem.textContent = '★';
                 } else if (this.gameMode === 'sum20' && typeof val1 === 'number') {
                     this.slot2Elem.textContent = 20 - val1;
-                } else if (this.gameMode === 'shapes' && typeof val1 === 'string') {
+                } else if ((this.gameMode === 'shapes' || this.gameMode === 'alphabet') && typeof val1 === 'string') {
                     this.slot2Elem.textContent = formatVal(val1);
-                } else if (this.gameMode === 'alphabet' && typeof val1 === 'string') {
-                    const code = val1.toUpperCase().charCodeAt(0);
-                    if (code >= 65 && code <= 90) {
-                        this.slot2Elem.textContent = String.fromCharCode(155 - code);
-                    } else {
-                        this.slot2Elem.textContent = '?';
-                    }
                 } else if (typeof val1 === 'number') {
                     // Default sum10: complement needed
                     this.slot2Elem.textContent = 10 - val1;
@@ -631,7 +627,7 @@ class Sum10Game {
                 if (isWildMatch) return `★ Wildcard Match! +${pointsEarned} PTS`;
                 if (mode === 'sum20') return `✨ ${firstDisp} + ${secondDisp} = 20! +${pointsEarned} PTS`;
                 if (mode === 'shapes') return `✨ ${firstDisp} = ${secondDisp}! +${pointsEarned} PTS`;
-                if (mode === 'alphabet') return `✨ ${firstDisp} ↔ ${secondDisp}! +${pointsEarned} PTS`;
+                if (mode === 'alphabet') return `✨ ${firstDisp} = ${secondDisp}! +${pointsEarned} PTS`;
                 return `✨ ${firstDisp} + ${secondDisp} = 10! +${pointsEarned} PTS`;
             })(this.gameMode);
 
@@ -690,7 +686,7 @@ class Sum10Game {
             const mismatchMsg = (function(mode) {
                 if (mode === 'sum20') return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 20)`;
                 if (mode === 'shapes') return `❌ Shapes do not match`;
-                if (mode === 'alphabet') return `❌ ${first.value} and ${second.value} are not mirror letters`;
+                if (mode === 'alphabet') return `❌ ${first.value} ≠ ${second.value} (Need matching ${first.value})`;
                 return `❌ ${first.value} + ${second.value} = ${Number(first.value) + Number(second.value)} (Need 10)`;
             })(this.gameMode);
             this.showToast(mismatchMsg, 1700);
